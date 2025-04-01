@@ -49,7 +49,8 @@ a subnetwork of protein interactions from INDRA database.</p>
 <span>  statement_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IncreaseAmount"</span>, <span class="st">"DecreaseAmount"</span><span class="op">)</span>,</span>
 <span>  paper_count_cutoff <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  evidence_count_cutoff <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  correlation_cutoff <span class="op">=</span> <span class="fl">0.3</span></span>
+<span>  correlation_cutoff <span class="op">=</span> <span class="fl">0.3</span>,</span>
+<span>  sources_filter <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -96,6 +97,11 @@ sentence.  Default is 1.</p></dd>
 cutoff for edges with correlation less than a specified cutoff.  Default is
 0.3</p></dd>
 
+
+<dt id="arg-sources-filter">sources_filter<a class="anchor" aria-label="anchor" href="#arg-sources-filter"></a></dt>
+<dd><p>filtering only on specific sources.  Default is no filter, i.e. NULL.
+Otherwise, should be a list, e.g. c('reach', 'medscan').</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -104,7 +110,7 @@ cutoff for edges with correlation less than a specified cutoff.  Default is
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">input</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">input</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdatatable.gitlab.io/data.table/reference/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>    <span class="st">"extdata/groupComparisonModel.csv"</span>,</span></span>
 <span class="r-in"><span>    package <span class="op">=</span> <span class="st">"MSstatsBioNet"</span></span></span>
 <span class="r-in"><span><span class="op">)</span><span class="op">)</span></span></span>
@@ -126,6 +132,9 @@ cutoff for edges with correlation less than a specified cutoff.  Default is
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                evidenceLink</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=8140@HGNC&amp;format=html</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=612@HGNC&amp;format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sourceCounts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 {"reach": 2}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 {"reach": 1}</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
