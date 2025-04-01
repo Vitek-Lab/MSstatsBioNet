@@ -47,7 +47,7 @@ getSubnetworkFromIndra <- function(input,
                                    correlation_cutoff = 0.3,
                                    sources_filter = NULL) {
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff)
-    .validateGetSubnetworkFromIndraInput(input, protein_level_data)
+    .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter)
     res <- .callIndraCogexApi(input$HgncId)
     res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)

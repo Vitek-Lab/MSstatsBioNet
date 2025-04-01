@@ -1,9 +1,10 @@
 #' Validate input for MSstatsBioNet getSubnetworkFromIndra
 #' @param input dataframe from MSstats groupComparison output
 #' @param protein_level_data dataframe from MSstats dataProcess output
+#' @param sources_filter sources filter
 #' @keywords internal
 #' @noRd
-.validateGetSubnetworkFromIndraInput <- function(input, protein_level_data) {
+.validateGetSubnetworkFromIndraInput <- function(input, protein_level_data, sources_filter) {
     if (!"HgncId" %in% colnames(input)) {
         stop("Invalid Input Error: Input must contain a column named 'HgncId'.")
     }
@@ -16,6 +17,11 @@
     if (!is.null(protein_level_data)) {
         if(!all(c("Protein", "LogIntensities", "originalRUN") %in% colnames(protein_level_data))) {
             stop("protein_level_data must contain 'Protein', 'LogIntensities', and 'originalRUN' columns.")
+        }
+    }
+    if (!is.null(sources_filter)) {
+        if (!is.character(sources_filter)) {
+            stop("sources_filter must be a character vector")
         }
     }
 }
@@ -64,8 +70,11 @@
     )
     if (!is.null(sources_filter)) {
         filtered_response = Filter(
-            function(statement) 
-                sum(names(fromJSON(statement$data$source_counts)) %in% sources_filter) > 0, 
+            function(statement) {
+                parsed <- tryCatch(fromJSON(statement$data$source_counts), error = function(e) NULL)
+                if (is.null(parsed)) return(FALSE)
+                return(any(names(parsed) %in% sources_filter))
+            }, 
             filtered_response
         )
     }
