@@ -1,9 +1,10 @@
 #' Validate input for MSstatsBioNet getSubnetworkFromIndra
 #' @param input dataframe from MSstats groupComparison output
 #' @param protein_level_data dataframe from MSstats dataProcess output
+#' @param sources_filter sources filter
 #' @keywords internal
 #' @noRd
-.validateGetSubnetworkFromIndraInput <- function(input, protein_level_data) {
+.validateGetSubnetworkFromIndraInput <- function(input, protein_level_data, sources_filter) {
     if (!"HgncId" %in% colnames(input)) {
         stop("Invalid Input Error: Input must contain a column named 'HgncId'.")
     }
@@ -16,6 +17,11 @@
     if (!is.null(protein_level_data)) {
         if(!all(c("Protein", "LogIntensities", "originalRUN") %in% colnames(protein_level_data))) {
             stop("protein_level_data must contain 'Protein', 'LogIntensities', and 'originalRUN' columns.")
+        }
+    }
+    if (!is.null(sources_filter)) {
+        if (!is.character(sources_filter)) {
+            stop("sources_filter must be a character vector")
         }
     }
 }
@@ -49,10 +55,12 @@
 #' @param res response from INDRA
 #' @param interaction_types interaction types to filter by
 #' @param evidence_count_cutoff number of evidence to filter on for each paper
+#' @param sources_filter list of sources to filter by. Default is NULL, i.e. no filter
 #' @return filtered list of INDRA statements
+#' @importFrom jsonlite fromJSON
 #' @keywords internal
 #' @noRd
-.filterIndraResponse <- function(res, interaction_types, evidence_count_cutoff) {
+.filterIndraResponse <- function(res, interaction_types, evidence_count_cutoff, sources_filter = NULL) {
     filtered_response = Filter(
         function(statement) statement$data$stmt_type %in% interaction_types, 
         res)
@@ -60,6 +68,16 @@
         function(statement) statement$data$evidence_count >= evidence_count_cutoff, 
         filtered_response
     )
+    if (!is.null(sources_filter)) {
+        filtered_response = Filter(
+            function(statement) {
+                parsed <- tryCatch(fromJSON(statement$data$source_counts), error = function(e) NULL)
+                if (is.null(parsed)) return(FALSE)
+                return(any(names(parsed) %in% sources_filter))
+            }, 
+            filtered_response
+        )
+    }
     return(filtered_response)
 }
 
@@ -182,6 +200,9 @@
         }, 1),
         evidenceLink = vapply(keys(res), function(x) {
             query(res, x)$evidence_list
+        }, ""),
+        sourceCounts = vapply(keys(res), function(x) {
+            query(res, x)$data$source_counts
         }, ""),
         stringsAsFactors = FALSE
     )

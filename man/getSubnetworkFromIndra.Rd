@@ -11,7 +11,8 @@ getSubnetworkFromIndra(
   statement_types = c("IncreaseAmount", "DecreaseAmount"),
   paper_count_cutoff = 1,
   evidence_count_cutoff = 1,
-  correlation_cutoff = 0.3
+  correlation_cutoff = 0.3,
+  sources_filter = NULL
 )
 }
 \arguments{
@@ -40,6 +41,9 @@ sentence.  Default is 1.}
 \item{correlation_cutoff}{if protein_level_abundance is not NULL, apply a 
 cutoff for edges with correlation less than a specified cutoff.  Default is
 0.3}
+
+\item{sources_filter}{filtering only on specific sources.  Default is no filter, i.e. NULL.
+Otherwise, should be a list, e.g. c('reach', 'medscan').}
 }
 \value{
 list of 2 data.frames, nodes and edges
