@@ -49,10 +49,12 @@
 #' @param res response from INDRA
 #' @param interaction_types interaction types to filter by
 #' @param evidence_count_cutoff number of evidence to filter on for each paper
+#' @param sources_filter list of sources to filter by. Default is NULL, i.e. no filter
 #' @return filtered list of INDRA statements
+#' @importFrom jsonlite fromJSON
 #' @keywords internal
 #' @noRd
-.filterIndraResponse <- function(res, interaction_types, evidence_count_cutoff) {
+.filterIndraResponse <- function(res, interaction_types, evidence_count_cutoff, sources_filter = NULL) {
     filtered_response = Filter(
         function(statement) statement$data$stmt_type %in% interaction_types, 
         res)
@@ -60,6 +62,13 @@
         function(statement) statement$data$evidence_count >= evidence_count_cutoff, 
         filtered_response
     )
+    if (!is.null(sources_filter)) {
+        filtered_response = Filter(
+            function(statement) 
+                sum(names(fromJSON(statement$data$source_counts)) %in% sources_filter) > 0, 
+            filtered_response
+        )
+    }
     return(filtered_response)
 }
 
@@ -182,6 +191,9 @@
         }, 1),
         evidenceLink = vapply(keys(res), function(x) {
             query(res, x)$evidence_list
+        }, ""),
+        sourceCounts = vapply(keys(res), function(x) {
+            query(res, x)$data$source_counts
         }, ""),
         stringsAsFactors = FALSE
     )

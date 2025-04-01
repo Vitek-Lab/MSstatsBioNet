@@ -22,6 +22,8 @@
 #' @param correlation_cutoff if protein_level_abundance is not NULL, apply a 
 #' cutoff for edges with correlation less than a specified cutoff.  Default is
 #' 0.3
+#' @param sources_filter filtering only on specific sources.  Default is no filter, i.e. NULL.
+#' Otherwise, should be a list, e.g. c('reach', 'medscan').
 #'
 #' @return list of 2 data.frames, nodes and edges
 #'
@@ -42,11 +44,12 @@ getSubnetworkFromIndra <- function(input,
                                    statement_types = c("IncreaseAmount", "DecreaseAmount"),
                                    paper_count_cutoff = 1,
                                    evidence_count_cutoff = 1,
-                                   correlation_cutoff = 0.3) {
+                                   correlation_cutoff = 0.3,
+                                   sources_filter = NULL) {
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data)
     res <- .callIndraCogexApi(input$HgncId)
-    res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff)
+    res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)
     edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)
     nodes <- .constructNodesDataFrame(input, edges)
