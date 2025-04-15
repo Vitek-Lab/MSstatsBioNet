@@ -1,9 +1,9 @@
 library(tidyverse)
 library(MSstatsBioNet)
 input <- data.table::fread(system.file(
-        "extdata/model.csv",
-        package = "MSstatsBioNet"
-    ))
+    "extdata/model.csv",
+    package = "MSstatsBioNet"
+))
 
 input = input %>% filter(Label == "DMSO-VTP50469") %>% filter(is.na(issue))
 annotated_df = annotateProteinInfoFromIndra(input, "Uniprot_Mnemonic")
