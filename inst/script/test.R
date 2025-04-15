@@ -61,6 +61,9 @@ for (index in seq(1, length(z$statements))) {
         edgeToMetadataMapping[[key]]$data$stmt_type <- c(edge$type)
         edgeToMetadataMapping[[key]]$source_id <- edge$subj$db_refs$HGNC
         edgeToMetadataMapping[[key]]$target_id <- edge$obj$db_refs$HGNC
+        edgeToMetadataMapping[[key]] <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(
+            edgeToMetadataMapping[[key]], annotated_df
+        )
     }
 }
 
@@ -85,10 +88,10 @@ for (key in keys(edgeToMetadataMapping)) {
 # Construct DF and sort
 edges <- data.frame(
     source = vapply(keys(edgeToMetadataMapping), function(x) {
-        query(edgeToMetadataMapping, x)$source_id
+        query(edgeToMetadataMapping, x)$source_uniprot_id
     }, ""),
     target = vapply(keys(edgeToMetadataMapping), function(x) {
-        query(edgeToMetadataMapping, x)$target_id
+        query(edgeToMetadataMapping, x)$target_uniprot_id
     }, ""),
     interaction = vapply(keys(edgeToMetadataMapping), function(x) {
         query(edgeToMetadataMapping, x)$data$stmt_type
@@ -102,6 +105,9 @@ edges <- data.frame(
     prob = vapply(keys(edgeToMetadataMapping), function(x) {
         query(edgeToMetadataMapping, x)$data$total_prob
     }, 1),
+    evidenceLink = vapply(keys(edgeToMetadataMapping), function(x) {
+        query(edgeToMetadataMapping, x)$evidence_list
+    }, ""),
     stringsAsFactors = FALSE
 )
 
