@@ -26,7 +26,7 @@ probability
 
 # Call INDRA
 library(httr)
-url = 'https://db.indra.bio/statements/from_agents?subject=7010@HGNC'
+url = 'https://db.indra.bio/statements/from_agents?subject=7010@HGNC&max_stmts=1000'
 response <- GET(url)
 z = content(response)
 
@@ -39,6 +39,8 @@ for (index in seq(1, length(z$statements))) {
     if (edge$type == "Complex") {
         next
     } else if (!("HGNC" %in% names(edge$obj$db_refs))) {
+        next
+    } else if (!(edge$obj$db_refs$HGNC %in% annotated_df$HgncId)) {
         next
     } else {
         key <- paste(edge$subj$db_refs$HGNC, edge$obj$db_refs$HGNC, sep = "_")
@@ -62,12 +64,45 @@ for (index in seq(1, length(z$statements))) {
     }
 }
 
+# Calculate probabilities
 for (key in keys(edgeToMetadataMapping)) {
     edgeToMetadataMapping[[key]]$data$stmt_type <-
         paste(unique(edgeToMetadataMapping[[key]]$data$stmt_type), 
               collapse = ", ")
+    prob_logFC = 0
+    logFC = annotated_df %>% filter(HgncId == edgeToMetadataMapping[[key]]$target_id)
+    logFC = logFC$log2FC[[1]]
+    if (logFC > para[1]) {
+        prob_logFC = 1 - pnorm(logFC, mean = para[1], sd = para[2])
+    } else {
+        prob_logFC = pnorm(logFC, mean = para[1], sd = para[2])
+    }
+    evidence_prob = dnbinom(min(10, edgeToMetadataMapping[[key]]$data$evidence_count), size = n, prob = p)
+    edgeToMetadataMapping[[key]]$data$total_prob = prob_logFC * evidence_prob
+    edgeToMetadataMapping[[key]]$data$logFC = logFC
 }
 
-
+# Construct DF and sort
+edges <- data.frame(
+    source = vapply(keys(edgeToMetadataMapping), function(x) {
+        query(edgeToMetadataMapping, x)$source_id
+    }, ""),
+    target = vapply(keys(edgeToMetadataMapping), function(x) {
+        query(edgeToMetadataMapping, x)$target_id
+    }, ""),
+    interaction = vapply(keys(edgeToMetadataMapping), function(x) {
+        query(edgeToMetadataMapping, x)$data$stmt_type
+    }, ""),
+    evidenceCount = vapply(keys(edgeToMetadataMapping), function(x) {
+        query(edgeToMetadataMapping, x)$data$evidence_count
+    }, 1),
+    logFC = vapply(keys(edgeToMetadataMapping), function(x) {
+        query(edgeToMetadataMapping, x)$data$logFC
+    }, 1),
+    prob = vapply(keys(edgeToMetadataMapping), function(x) {
+        query(edgeToMetadataMapping, x)$data$total_prob
+    }, 1),
+    stringsAsFactors = FALSE
+)
 
 
