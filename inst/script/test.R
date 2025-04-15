@@ -111,4 +111,4 @@ edges <- data.frame(
     stringsAsFactors = FALSE
 )
 
-
+bruh = MSstatsBioNet::getPathwaysFromIndra(annotated_df)
