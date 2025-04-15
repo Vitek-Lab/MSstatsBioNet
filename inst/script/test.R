@@ -29,3 +29,45 @@ library(httr)
 url = 'https://db.indra.bio/statements/from_agents?subject=7010@HGNC'
 response <- GET(url)
 z = content(response)
+
+library(r2r)
+edgeToMetadataMapping <- hashmap()
+
+for (index in seq(1, length(z$statements))) {
+    edge <- z$statements[[index]]
+    key <- ""
+    if (edge$type == "Complex") {
+        next
+    } else if (!("HGNC" %in% names(edge$obj$db_refs))) {
+        next
+    } else {
+        key <- paste(edge$subj$db_refs$HGNC, edge$obj$db_refs$HGNC, sep = "_")
+    }
+    
+    if (key %in% keys(edgeToMetadataMapping)) {
+        edgeToMetadataMapping[[key]]$data$evidence_count <-
+            edgeToMetadataMapping[[key]]$data$evidence_count +
+            z$evidence_counts[[index]]
+        edgeToMetadataMapping[[key]]$data$stmt_type <- unique(c(
+            edgeToMetadataMapping[[key]]$data$stmt_type,
+            edge$type))
+    } else {
+        # edge <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(edge, annotated_df)
+        edgeToMetadataMapping[[key]] <- edge
+        edgeToMetadataMapping[[key]]$data$evidence_count <-
+            z$evidence_counts[[index]]
+        edgeToMetadataMapping[[key]]$data$stmt_type <- c(edge$type)
+        edgeToMetadataMapping[[key]]$source_id <- edge$subj$db_refs$HGNC
+        edgeToMetadataMapping[[key]]$target_id <- edge$obj$db_refs$HGNC
+    }
+}
+
+for (key in keys(edgeToMetadataMapping)) {
+    edgeToMetadataMapping[[key]]$data$stmt_type <-
+        paste(unique(edgeToMetadataMapping[[key]]$data$stmt_type), 
+              collapse = ", ")
+}
+
+
+
+
