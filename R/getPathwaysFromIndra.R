@@ -35,10 +35,11 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
     
     # Call INDRA
     library(httr)
+    library(tidyverse)
     main_target_row = annotated_df %>% filter(Protein == main_target)
     source_id = main_target_row$HgncId
     url = paste('https://db.indra.bio/statements/from_agents?subject=',
-                source_id, '@HGNC')
+                source_id, '@HGNC', sep = "")
     response <- GET(url)
     z = content(response)
     
