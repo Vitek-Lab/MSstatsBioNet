@@ -20,7 +20,7 @@
 #'     "extdata/groupComparisonModel.csv",
 #'     package = "MSstatsBioNet"
 #' ))
-#' pathways <- getPathwaysFromIndra(annotated_df, "BRD4_HUMAN")
+#' pathways <- getPathwaysFromIndra(annotated_df, "P05067")
 #' head(pathways)
 #'
 getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
@@ -36,7 +36,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
     # probability
     
     # Call INDRA
-    main_target_row = annotated_df[annotated_df$Protein == "BRD4_HUMAN",]
+    main_target_row = annotated_df[annotated_df$Protein == main_target,]
     source_id = main_target_row$HgncId
     url = paste('https://db.indra.bio/statements/from_agents?subject=',
                 source_id, '@HGNC', sep = "")
@@ -44,6 +44,10 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
     z = content(response)
 
     edgeToMetadataMapping <- hashmap()
+    
+    if (length(z$statements) == 0) {
+        return(data.frame())
+    }
     
     for (index in seq(1, length(z$statements))) {
         edge <- z$statements[[index]]
