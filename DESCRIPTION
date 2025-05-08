@@ -1,7 +1,7 @@
 Package: MSstatsBioNet
 Type: Package
 Title: Network Analysis for MS-based Proteomics Experiments
-Version: 1.1.0
+Version: 1.1.1
 Authors@R: c(
     person("Anthony", "Wu", email = "wu.anthon@northeastern.edu", 
         role = c("aut", "cre")),
