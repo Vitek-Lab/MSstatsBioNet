@@ -100,7 +100,7 @@
 #' Add additional metadata to an edge
 #' @param edge object representation of an INDRA statement
 #' @param input filtered groupComparison result
-#' @param source_namespace namespace of the source, e.g. HGNC, CHEBI.
+#' @param source_namespace namespace of the source for evidence URL
 #' @return edge with additional metadata
 #' @keywords internal
 #' @noRd

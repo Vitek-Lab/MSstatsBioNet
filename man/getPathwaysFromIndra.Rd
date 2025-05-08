@@ -4,7 +4,11 @@
 \alias{getPathwaysFromIndra}
 \title{Get pathways ranked on relevance from INDRA DB}
 \usage{
-getPathwaysFromIndra(annotated_df, main_target = "MEN1_HUMAN")
+getPathwaysFromIndra(
+  annotated_df,
+  main_target = "MEN1_HUMAN",
+  target_type = "Protein"
+)
 }
 \arguments{
 \item{annotated_df}{output of \code{\link[MSstats]{groupComparison}} function's 
@@ -14,6 +18,8 @@ name columns}
 
 \item{main_target}{A main target, e.g. main target of a drug or protein of
 particular interest}
+
+\item{target_type}{One of either 'Protein' or 'Drug'.  Default is 'Protein'}
 }
 \value{
 df of pathways

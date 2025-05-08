@@ -10,6 +10,7 @@
 #' name columns
 #' @param main_target A main target, e.g. main target of a drug or protein of
 #' particular interest
+#' @param target_type One of either 'Protein' or 'Drug'.  Default is 'Protein'
 #'
 #' @return df of pathways
 #'
