@@ -39,7 +39,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
     # Call INDRA
     if (target_type == "Protein") {
         main_target_row = annotated_df[annotated_df$Protein == main_target,]
-        source_id = main_target_row$HgncId
+        source_id = as.character(main_target_row$HgncId)
         namespace = "@HGNC"
         id_field = "HGNC"
     } else if (target_type == "Drug") {
