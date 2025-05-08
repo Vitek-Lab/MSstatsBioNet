@@ -29,10 +29,10 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
     para <- fit$estimate
     # pnorm(0, mean = para[1], sd = para[2])
     
-    # Fit a negative binomial distribution with parameters
-    n = 0.5
-    p = 0.06
-    # probability <- dnbinom(2, size = n, prob = p)
+    # Fit a power-law-like curve
+    b = -0.08
+    m = -1.33
+    # 1 - 10^(m*log10(1000)+b)
     # probability
     
     # Call INDRA
@@ -96,8 +96,8 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
         } else {
             prob_logFC = pnorm(logFC, mean = para[1], sd = para[2])
         }
-        evidence_prob = dnbinom(min(10, edgeToMetadataMapping[[key]]$data$evidence_count), size = n, prob = p)
-        edgeToMetadataMapping[[key]]$data$total_prob = prob_logFC * evidence_prob
+        evidence_prob = 10^(m*log10(edgeToMetadataMapping[[key]]$data$evidence_count)+b)
+        edgeToMetadataMapping[[key]]$data$total_prob = 1 - ((1 - prob_logFC) * (1 - evidence_prob))
         edgeToMetadataMapping[[key]]$data$logFC = logFC
     }
     
