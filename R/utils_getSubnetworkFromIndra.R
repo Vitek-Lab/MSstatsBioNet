@@ -100,22 +100,25 @@
 #' Add additional metadata to an edge
 #' @param edge object representation of an INDRA statement
 #' @param input filtered groupComparison result
+#' @param source_namespace namespace of the source, e.g. HGNC, CHEBI.
 #' @return edge with additional metadata
 #' @keywords internal
 #' @noRd
-.addAdditionalMetadataToIndraEdge <- function(edge, input) {
+.addAdditionalMetadataToIndraEdge <- function(edge, input, source_namespace = "HGNC") {
     edge$evidence_list <- paste(
         "https://db.indra.bio/statements/from_agents?subject=",
-        edge$source_id, "@HGNC&object=",
+        edge$source_id, "@", source_namespace, "&object=",
         edge$target_id, "@HGNC&format=html",
         sep = ""
     )
     
     # Convert back to uniprot IDs
-    matched_rows_source <- input[which(input$HgncId == edge$source_id), ]
+    if (source_namespace == "HGNC") {
+        matched_rows_source <- input[which(input$HgncId == edge$source_id), ]
+    }
     matched_rows_target <- input[which(input$HgncId == edge$target_id), ]
     
-    if (nrow(matched_rows_source) != 1 || nrow(matched_rows_target) != 1) {
+    if ((source_namespace == "HGNC" && nrow(matched_rows_source) != 1) || nrow(matched_rows_target) != 1) {
         stop(paste0(
             "INDRA Exception: Unexpected number of matches for the following HGNC IDs in the input data: ", 
             edge$source_id, 
@@ -125,7 +128,11 @@
         ))
     } 
     
-    edge$source_uniprot_id <- matched_rows_source$Protein
+    if (source_namespace == "HGNC") {
+        edge$source_uniprot_id <- matched_rows_source$Protein
+    } else {
+        edge$source_uniprot_id <- edge$source_id
+    }
     edge$target_uniprot_id <- matched_rows_target$Protein
     
     return(edge)

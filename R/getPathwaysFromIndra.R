@@ -23,7 +23,7 @@
 #' pathways <- getPathwaysFromIndra(annotated_df, "P05067")
 #' head(pathways)
 #'
-getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
+getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', namespace = "HGNC") {
     log2fc_values <- annotated_df$log2FC
     fit <- fitdistr(log2fc_values, "normal")
     para <- fit$estimate
@@ -36,10 +36,14 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
     # probability
     
     # Call INDRA
-    main_target_row = annotated_df[annotated_df$Protein == main_target,]
-    source_id = main_target_row$HgncId
+    if (namespace == "HGNC") {
+        main_target_row = annotated_df[annotated_df$Protein == main_target,]
+        source_id = main_target_row$HgncId
+    } else {
+        source_id = main_target
+    }
     url = paste('https://db.indra.bio/statements/from_agents?subject=',
-                source_id, '@HGNC', sep = "")
+                source_id, '@', namespace, sep = "")
     response <- GET(url)
     z = content(response)
 
@@ -53,24 +57,24 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
         edge <- z$statements[[index]]
         if (edge$type == "Complex") {
             if (length(edge$members) == 2) {
-                if (isTRUE(edge$members[[1]]$db_refs$HGNC == source_id)) {
-                    subj = edge$members[[1]]$db_refs$HGNC
+                if (identical(edge$members[[1]]$db_refs[[namespace]], source_id)) {
+                    subj = source_id
                     obj = edge$members[[2]]$db_refs$HGNC
                     namespaces = names(edge$members[[2]]$db_refs)
                 } else {
                     subj = edge$members[[2]]$db_refs$HGNC
-                    obj = edge$members[[1]]$db_refs$HGNC
+                    obj = source_id
                     namespaces = names(edge$members[[1]]$db_refs)
                 }
             } else {
                 namespaces = c()
             }
         } else if (edge$type == "Phosphorylation") {
-            subj = edge$enz$db_refs$HGNC
+            subj = source_id
             obj = edge$sub$db_refs$HGNC
             namespaces = names(edge$sub$db_refs)
         } else {
-            subj = edge$subj$db_refs$HGNC
+            subj = source_id
             obj = edge$obj$db_refs$HGNC
             namespaces = names(edge$obj$db_refs)
         }
@@ -100,7 +104,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
             edgeToMetadataMapping[[key]]$source_id <- subj
             edgeToMetadataMapping[[key]]$target_id <- obj
             edgeToMetadataMapping[[key]] <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(
-                edgeToMetadataMapping[[key]], annotated_df
+                edgeToMetadataMapping[[key]], annotated_df, namespace
             )
         }
     }
