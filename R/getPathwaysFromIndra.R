@@ -1,5 +1,8 @@
 #' Get pathways ranked on relevance from INDRA DB
 #'
+#' @importFrom httr GET content
+#' @importFrom MASS fitdistr
+#' @importFrom r2r hashmap keys query
 #'
 #' @param annotated_df output of \code{\link[MSstats]{groupComparison}} function's 
 #' comparisionResult table, which contains a list of proteins and their 
@@ -17,11 +20,10 @@
 #'     "extdata/groupComparisonModel.csv",
 #'     package = "MSstatsBioNet"
 #' ))
-#' pathways <- getPathwaysFromIndra(annotated_df)
+#' pathways <- getPathwaysFromIndra(annotated_df, "BRD4_HUMAN")
 #' head(pathways)
 #'
 getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
-    library(MASS)
     log2fc_values <- annotated_df$log2FC
     fit <- fitdistr(log2fc_values, "normal")
     para <- fit$estimate
@@ -34,16 +36,13 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
     # probability
     
     # Call INDRA
-    library(httr)
-    library(tidyverse)
-    main_target_row = annotated_df %>% filter(Protein == main_target)
+    main_target_row = annotated_df[annotated_df$Protein == "BRD4_HUMAN",]
     source_id = main_target_row$HgncId
     url = paste('https://db.indra.bio/statements/from_agents?subject=',
                 source_id, '@HGNC', sep = "")
     response <- GET(url)
     z = content(response)
-    
-    library(r2r)
+
     edgeToMetadataMapping <- hashmap()
     
     for (index in seq(1, length(z$statements))) {
@@ -86,7 +85,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN') {
             paste(unique(edgeToMetadataMapping[[key]]$data$stmt_type), 
                   collapse = ", ")
         prob_logFC = 0
-        logFC = annotated_df %>% filter(HgncId == edgeToMetadataMapping[[key]]$target_id)
+        logFC = annotated_df[which(annotated_df$HgncId == edgeToMetadataMapping[[key]]$target_id),]
         logFC = logFC$log2FC[[1]]
         if (logFC > para[1]) {
             prob_logFC = 1 - pnorm(logFC, mean = para[1], sd = para[2])

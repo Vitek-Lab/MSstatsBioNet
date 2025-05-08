@@ -26,7 +26,7 @@ annotated_df <- data.table::fread(system.file(
     "extdata/groupComparisonModel.csv",
     package = "MSstatsBioNet"
 ))
-pathways <- getPathwaysFromIndra(annotated_df)
+pathways <- getPathwaysFromIndra(annotated_df, "BRD4_HUMAN")
 head(pathways)
 
 }
