@@ -23,7 +23,8 @@ Imports:
     httr,
     jsonlite,
     r2r,
-    tidyr
+    tidyr,
+    MASS
 Suggests: 
     data.table,
     BiocStyle,
