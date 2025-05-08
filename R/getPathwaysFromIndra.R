@@ -23,7 +23,7 @@
 #' pathways <- getPathwaysFromIndra(annotated_df, "P05067")
 #' head(pathways)
 #'
-getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', namespace = "HGNC") {
+getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', target_type = "Protein") {
     log2fc_values <- annotated_df$log2FC
     fit <- fitdistr(log2fc_values, "normal")
     para <- fit$estimate
@@ -36,14 +36,20 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', names
     # probability
     
     # Call INDRA
-    if (namespace == "HGNC") {
+    if (target_type == "Protein") {
         main_target_row = annotated_df[annotated_df$Protein == main_target,]
         source_id = main_target_row$HgncId
-    } else {
+        namespace = "@HGNC"
+        id_field = "HGNC"
+    } else if (target_type == "Drug") {
         source_id = main_target
+        namespace = ""
+        id_field = "TEXT"
+    } else {
+        stop("Invalid target type.")
     }
     url = paste('https://db.indra.bio/statements/from_agents?subject=',
-                source_id, '@', namespace, sep = "")
+                source_id, namespace, sep = "")
     response <- GET(url)
     z = content(response)
 
@@ -57,7 +63,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', names
         edge <- z$statements[[index]]
         if (edge$type == "Complex") {
             if (length(edge$members) == 2) {
-                if (identical(edge$members[[1]]$db_refs[[namespace]], source_id)) {
+                if (identical(edge$members[[1]]$db_refs[[id_field]], source_id)) {
                     subj = source_id
                     obj = edge$members[[2]]$db_refs$HGNC
                     namespaces = names(edge$members[[2]]$db_refs)
