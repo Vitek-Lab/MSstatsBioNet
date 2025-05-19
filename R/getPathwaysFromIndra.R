@@ -25,6 +25,7 @@
 #' head(pathways)
 #'
 getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', target_type = "Protein") {
+    annotated_df$Protein <- as.character(annotated_df$Protein)
     log2fc_values <- annotated_df$log2FC
     fit <- fitdistr(log2fc_values, "normal")
     para <- fit$estimate
@@ -159,4 +160,21 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
         }, ""),
         stringsAsFactors = FALSE
     )
+    
+    nodes <- .constructNodesDataFrame(
+        annotated_df, edges
+    )
+    if (!(main_target %in% nodes$id)) {
+        # add a row with the main target
+        nodes <- rbind(
+            nodes,
+            data.frame(
+                id = main_target,
+                logFC = 0,
+                pvalue = 0,
+                hgncName = main_target
+            )
+        )
+    }
+    return(list(nodes = nodes, edges = edges))
 }
