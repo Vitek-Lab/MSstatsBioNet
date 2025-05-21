@@ -50,7 +50,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
     } else {
         stop("Invalid target type.")
     }
-    url = paste('https://db.indra.bio/statements/from_agents?subject=',
+    url = paste('https://db.indra.bio/statements/from_agents?source_idect=',
                 source_id, namespace, sep = "")
     response <- GET(url)
     z = content(response)
@@ -66,23 +66,19 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
         if (edge$type == "Complex") {
             if (length(edge$members) == 2) {
                 if (identical(edge$members[[1]]$db_refs[[id_field]], source_id)) {
-                    subj = source_id
                     obj = edge$members[[2]]$db_refs$HGNC
                     namespaces = names(edge$members[[2]]$db_refs)
                 } else {
-                    subj = edge$members[[2]]$db_refs$HGNC
-                    obj = source_id
+                    obj = edge$members[[1]]$db_refs$HGNC
                     namespaces = names(edge$members[[1]]$db_refs)
                 }
             } else {
                 namespaces = c()
             }
         } else if (edge$type == "Phosphorylation") {
-            subj = source_id
             obj = edge$sub$db_refs$HGNC
             namespaces = names(edge$sub$db_refs)
         } else {
-            subj = source_id
             obj = edge$obj$db_refs$HGNC
             namespaces = names(edge$obj$db_refs)
         }
@@ -94,7 +90,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
             next
         }
         
-        key <- paste(subj, obj, sep = "_")
+        key <- paste(source_id, obj, sep = "_")
         
         if (key %in% keys(edgeToMetadataMapping)) {
             edgeToMetadataMapping[[key]]$data$evidence_count <-
@@ -109,7 +105,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
             edgeToMetadataMapping[[key]]$data$evidence_count <-
                 z$evidence_counts[[index]]
             edgeToMetadataMapping[[key]]$data$stmt_type <- c(edge$type)
-            edgeToMetadataMapping[[key]]$source_id <- subj
+            edgeToMetadataMapping[[key]]$source_id <- source_id
             edgeToMetadataMapping[[key]]$target_id <- obj
             edgeToMetadataMapping[[key]] <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(
                 edgeToMetadataMapping[[key]], annotated_df, namespace
