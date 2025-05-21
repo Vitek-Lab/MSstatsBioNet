@@ -50,7 +50,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
     } else {
         stop("Invalid target type.")
     }
-    url = paste('https://db.indra.bio/statements/from_agents?source_idect=',
+    url = paste('https://db.indra.bio/statements/from_agents?subject=',
                 source_id, namespace, sep = "")
     response <- GET(url)
     z = content(response)
