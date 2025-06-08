@@ -66,18 +66,14 @@ annotated_df = annotateProteinInfoFromIndra(input, "Uniprot")
 head(annotated_df)
 ```
 
-## Subnetwork Query
 
-The package provides a function `getSubnetworkFromIndra` that retrieves a
-subnetwork of proteins from the INDRA database based on differential abundance
-analysis results.  
+## getPathwaysFromIndra
+
+Here, we will get pathways from INDRA and rank them based on relevance.  We will see here that GAB1 is rated as the most relevant edge to track.
 
 ```{r}
-subnetwork <- getSubnetworkFromIndra(annotated_df)
-head(subnetwork$nodes)
-head(subnetwork$edges)
+pathways = getPathwaysFromIndra(annotated_df, main_target = "P00533")
 ```
-
 
 ## Visualize Networks
 
@@ -86,15 +82,19 @@ The function `visualizeNetworks` then takes the output of
 Cytoscape desktop to be open for the visualization to work.
 
 ```{r}
-visualizeNetworks(subnetwork$nodes, subnetwork$edges)
+visualizeNetworks(pathways$nodes, pathways$edges)
 ```
 
-## getPathwaysFromIndra
+## Subnetwork Query
 
-Here, we will get pathways from INDRA and rank them based on relevance.  We will see here that GAB1 is rated as the most relevant edge to track.
+The package provides a function `getSubnetworkFromIndra` that retrieves a
+subnetwork of proteins from the INDRA database based on differential abundance
+analysis results.  This function may help finding off target subnetworks.  
 
 ```{r}
-print("hello world")
+subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05)
+head(subnetwork$nodes)
+head(subnetwork$edges)
 ```
 
 # Session info
