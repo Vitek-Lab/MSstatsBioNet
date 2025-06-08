@@ -120,7 +120,7 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
                   collapse = ", ")
         prob_logFC = 0
         logFC = annotated_df[which(annotated_df$HgncId == edgeToMetadataMapping[[key]]$target_id),]
-        logFC = logFC$log2FC[[1]]
+        logFC = logFC$log2FC[which.max(abs(logFC$log2FC))]
         if (logFC > para[1]) {
             prob_logFC = 1 - pnorm(logFC, mean = para[1], sd = para[2])
         } else {
