@@ -73,6 +73,8 @@ Here, we will get pathways from INDRA and rank them based on relevance.  We will
 
 ```{r}
 pathways = getPathwaysFromIndra(annotated_df, main_target = "P00533")
+# optional: filter by phosphorylation
+pathways$edges = pathways$edges %>% filter(str_detect(interaction, "Phosphorylation"))
 ```
 
 ## Visualize Networks
@@ -82,7 +84,7 @@ The function `visualizeNetworks` then takes the output of
 Cytoscape desktop to be open for the visualization to work.
 
 ```{r}
-visualizeNetworks(pathways$nodes, pathways$edges)
+visualizeNetworks(subnetwork$nodes, subnetwork$edges)
 ```
 
 ## Subnetwork Query
