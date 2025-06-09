@@ -75,12 +75,12 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
             } else {
                 namespaces = c()
             }
-        } else if (edge$type == "Phosphorylation") {
-            obj = edge$sub$db_refs$HGNC
-            namespaces = names(edge$sub$db_refs)
-        } else {
+        } else if (edge$type %in% c("Activation", "Inhibition", "IncreaseAmount", "DecreaseAmount")) {
             obj = edge$obj$db_refs$HGNC
             namespaces = names(edge$obj$db_refs)
+        } else {
+            obj = edge$sub$db_refs$HGNC
+            namespaces = names(edge$sub$db_refs)
         }
         
         # Filter out edges with no HGNC ID or not in the dataset
