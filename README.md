@@ -18,7 +18,7 @@ BiocManager::install("MSstatsBioNet")
 You can install the development version of this package through Github:
 
 ```
-devtools::install_github("Vitek-Lab/MSstatsConvert", build_vignettes = TRUE)
+devtools::install_github("Vitek-Lab/MSstatsBioNet", build_vignettes = TRUE)
 ```
 
 ## License
