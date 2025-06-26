@@ -36,4 +36,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git push upstream devel
+          if git push upstream devel; then
+            echo "Successfully pushed to Bioconductor"
+          else
+            echo "Push failed - likely due to version bumps in Bioconductor"
+            echo "Run the Sync from Bioconductor workflow to resolve this"
+            exit 1  
+          fi

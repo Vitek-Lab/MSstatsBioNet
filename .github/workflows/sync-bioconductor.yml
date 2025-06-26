@@ -1,0 +1,53 @@
+name: Sync from Bioconductor
+on:
+  workflow_dispatch:     # Allow manual trigger
+
+jobs:
+  sync-from-bioc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Need full history for rebase
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.BIOC_SSH_PRIVATE_KEY }}
+      - name: Add SSH host key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -H git.bioconductor.org >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      - name: Add Bioconductor remote
+        run: |
+          git remote remove upstream || true
+          git remote add upstream git@git.bioconductor.org:packages/MSstatsBioNet.git
+      - name: Sync with Bioconductor
+        run: |
+          set -euo pipefail
+          git fetch upstream
+        
+          # Check if Bioconductor has changes we don't have
+          if ! git merge-base --is-ancestor upstream/devel HEAD; then
+            echo "Bioconductor has new changes - rebasing our branch"
+          
+            # Show what they changed
+            echo "New commits from Bioconductor:"
+            git log --oneline HEAD..upstream/devel
+          
+            # Rebase our commits on top of theirs
+            git rebase upstream/devel -X theirs
+          
+            # Push the rebased branch back to GitHub
+            git push origin devel --force-with-lease
+          
+            echo "Successfully synced with Bioconductor"
+          else
+            echo "Already up to date with Bioconductor"
+          fi
