@@ -18,10 +18,10 @@ jobs:
         ssh-private-key: ${{ secrets.BIOC_SSH_PRIVATE_KEY }}
         
     - name: Add SSH host key
-        run: |
-          mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          ssh-keyscan -H git.bioconductor.org >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
+      run: |
+        mkdir -p ~/.ssh && chmod 700 ~/.ssh
+        ssh-keyscan -H git.bioconductor.org >> ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
 
     - name: Configure git
       run: |
