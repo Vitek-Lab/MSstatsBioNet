@@ -1,0 +1,32 @@
+name: Push to Bioconductor Git Mirror
+on:
+  push:
+    branches: [ devel ]
+
+jobs:
+  push-to-bioc-git:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup R and Bioconductor
+        uses: grimbough/bioc-actions/setup-bioc@v1
+        with:
+          bioc-version: devel
+      - name: Install dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+      - name: Build, Install, Check
+        uses: grimbough/bioc-actions/build-install-check@v1
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.BIOC_SSH_PRIVATE_KEY }}
+      - name: Add SSH host key
+        run: |
+          ssh-keyscan -H git.bioconductor.org >> ~/.ssh/known_hosts
+      - name: Add Bioconductor remote
+        run: |
+          git remote add upstream git@git.bioconductor.org:packages/MSstatsBioNet.git
+      - name: Push to Bioconductor
+        run: |
+          git push upstream devel
