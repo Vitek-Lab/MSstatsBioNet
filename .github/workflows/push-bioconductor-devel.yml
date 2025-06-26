@@ -40,6 +40,6 @@ jobs:
             echo "Successfully pushed to Bioconductor"
           else
             echo "Push failed - likely due to version bumps in Bioconductor"
-            echo "Run the --Sync from Bioconductor-- workflow to resolve this"
+            echo "Run the Sync from Bioconductor workflow to resolve this"
             exit 1  
           fi

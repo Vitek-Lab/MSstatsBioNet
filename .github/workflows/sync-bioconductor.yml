@@ -17,6 +17,12 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.BIOC_SSH_PRIVATE_KEY }}
         
+    - name: Add SSH host key
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -H git.bioconductor.org >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
     - name: Configure git
       run: |
         git config user.name "github-actions[bot]"
@@ -24,6 +30,7 @@ jobs:
         
     - name: Sync with Bioconductor
       run: |
+        git remote remove upstream || true
         git remote add upstream git@git.bioconductor.org:packages/MSstatsBioNet.git
         git fetch upstream
         
