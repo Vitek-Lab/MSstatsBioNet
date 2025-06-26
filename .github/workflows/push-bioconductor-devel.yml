@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup R and Bioconductor
         uses: grimbough/bioc-actions/setup-bioc@v1
         with:
@@ -23,10 +25,15 @@ jobs:
           ssh-private-key: ${{ secrets.BIOC_SSH_PRIVATE_KEY }}
       - name: Add SSH host key
         run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
           ssh-keyscan -H git.bioconductor.org >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
       - name: Add Bioconductor remote
         run: |
+          git remote remove upstream || true
           git remote add upstream git@git.bioconductor.org:packages/MSstatsBioNet.git
       - name: Push to Bioconductor
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git push upstream devel
