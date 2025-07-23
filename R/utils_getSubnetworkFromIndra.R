@@ -61,24 +61,26 @@
 #' @keywords internal
 #' @noRd
 .filterIndraResponse <- function(res, interaction_types, evidence_count_cutoff, sources_filter = NULL) {
-    filtered_response = Filter(
-        function(statement) statement$data$stmt_type %in% interaction_types, 
-        res)
-    filtered_response = Filter(
+    if (!is.null(interaction_types)) {
+        res = Filter(
+            function(statement) statement$data$stmt_type %in% interaction_types, 
+            res)
+    }
+    res = Filter(
         function(statement) statement$data$evidence_count >= evidence_count_cutoff, 
-        filtered_response
+        res
     )
     if (!is.null(sources_filter)) {
-        filtered_response = Filter(
+        res = Filter(
             function(statement) {
                 parsed <- tryCatch(fromJSON(statement$data$source_counts), error = function(e) NULL)
                 if (is.null(parsed)) return(FALSE)
                 return(any(names(parsed) %in% sources_filter))
             }, 
-            filtered_response
+            res
         )
     }
-    return(filtered_response)
+    return(res)
 }
 
 #' Filter groupComparison result input based on user-defined cutoffs
