@@ -14,7 +14,7 @@ getSubnetworkFromIndra(
   correlation_cutoff = 0.3,
   sources_filter = NULL,
   logfc_cutoff = NULL,
-  filter_exempt_proteins = NULL
+  force_include_proteins = NULL
 )
 }
 \arguments{
@@ -51,7 +51,7 @@ Otherwise, should be a list, e.g. c('reach', 'medscan').}
 Only proteins with |logFC| greater than this value will be retained. Default 
 is NULL, i.e. no logFC filtering.}
 
-\item{filter_exempt_proteins}{character vector of protein identifiers to exempt 
+\item{force_include_proteins}{character vector of protein identifiers to exempt 
 from all filtering steps. These proteins will be retained regardless of p-value, 
 logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.}
 }

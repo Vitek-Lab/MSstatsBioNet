@@ -27,7 +27,7 @@
 #' @param logfc_cutoff absolute log fold change cutoff for filtering proteins. 
 #' Only proteins with |logFC| greater than this value will be retained. Default 
 #' is NULL, i.e. no logFC filtering.
-#' @param filter_exempt_proteins character vector of protein identifiers to exempt 
+#' @param force_include_proteins character vector of protein identifiers to exempt 
 #' from all filtering steps. These proteins will be retained regardless of p-value, 
 #' logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.
 #'
@@ -53,8 +53,8 @@ getSubnetworkFromIndra <- function(input,
                                    correlation_cutoff = 0.3,
                                    sources_filter = NULL,
                                    logfc_cutoff = NULL,
-                                   filter_exempt_proteins = NULL) {
-    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, filter_exempt_proteins)
+                                   force_include_proteins = NULL) {
+    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_proteins)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter)
     res <- .callIndraCogexApi(input$HgncId)
     res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)

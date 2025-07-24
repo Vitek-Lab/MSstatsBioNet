@@ -87,22 +87,22 @@
 #' @param input groupComparison result
 #' @param pvalueCutoff p-value cutoff
 #' @param logfc_cutoff logFC cutoff
-#' @param filter_exempt_proteins list of proteins to exempt from filtering
+#' @param force_include_proteins list of proteins to exempt from filtering
 #' @return filtered groupComparison result
 #' @keywords internal
 #' @noRd
-.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, filter_exempt_proteins) {
+.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, force_include_proteins) {
     # Extract exempt proteins before any filtering
     exempt_proteins <- NULL
-    if (!is.null(filter_exempt_proteins)) {
-        if (!is.character(filter_exempt_proteins)) {
-            stop("filter_exempt_proteins must be a character vector")
+    if (!is.null(force_include_proteins)) {
+        if (!is.character(force_include_proteins)) {
+            stop("force_include_proteins must be a character vector")
         }
-        missing_prots <- setdiff(filter_exempt_proteins, input$Protein)
+        missing_prots <- setdiff(force_include_proteins, input$Protein)
         if (length(missing_prots) > 0) {
-            warning("filter_exempt_proteins not found: ", paste(missing_prots, collapse = ", "))
+            warning("force_include_proteins not found: ", paste(missing_prots, collapse = ", "))
         }
-        exempt_proteins <- input[input$Protein %in% filter_exempt_proteins,]
+        exempt_proteins <- input[input$Protein %in% force_include_proteins,]
     }
     
     # Apply standard filtering
