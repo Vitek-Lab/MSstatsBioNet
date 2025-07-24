@@ -86,19 +86,48 @@
 #' Filter groupComparison result input based on user-defined cutoffs
 #' @param input groupComparison result
 #' @param pvalueCutoff p-value cutoff
+#' @param logfc_cutoff logFC cutoff
+#' @param force_include_proteins list of proteins to exempt from filtering
 #' @return filtered groupComparison result
 #' @keywords internal
 #' @noRd
-.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff) {
+.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, force_include_proteins) {
+    # Extract exempt proteins before any filtering
+    exempt_proteins <- NULL
+    if (!is.null(force_include_proteins)) {
+        if (!is.character(force_include_proteins)) {
+            stop("force_include_proteins must be a character vector")
+        }
+        missing_prots <- setdiff(force_include_proteins, input$Protein)
+        if (length(missing_prots) > 0) {
+            warning("force_include_proteins not found: ", paste(missing_prots, collapse = ", "))
+        }
+        exempt_proteins <- input[input$Protein %in% force_include_proteins,]
+    }
+    
+    # Apply standard filtering
     input <- input[!is.na(input$adj.pvalue),]
     if (!is.null(pvalueCutoff)) {
         input <- input[input$adj.pvalue < pvalueCutoff, ]
     }
+    if (!is.null(logfc_cutoff)) {
+        if (!is.numeric(logfc_cutoff) || length(logfc_cutoff) != 1 || logfc_cutoff <= 0) {
+            stop("logfc_cutoff must be a single positive numeric value")
+        }
+        input <- input[!is.na(input$log2FC) & abs(input$log2FC) > logfc_cutoff, ]
+    }
     input <- input[is.na(input$issue), ]
+    
+    # Combine filtered data with exempt proteins and remove duplicates
+    if (!is.null(exempt_proteins) && nrow(exempt_proteins) > 0) {
+        combined_input <- rbind(exempt_proteins, input)
+        # Remove duplicates based on Protein column, keeping first occurrence
+        input <- combined_input[!duplicated(combined_input$Protein), ]
+    }
+    
     input$Protein <- as.character(input$Protein)
     return(input)
 }
-
 #' Add additional metadata to an edge
 #' @param edge object representation of an INDRA statement
 #' @param input filtered groupComparison result
