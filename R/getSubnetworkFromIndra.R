@@ -24,6 +24,9 @@
 #' 0.3
 #' @param sources_filter filtering only on specific sources.  Default is no filter, i.e. NULL.
 #' Otherwise, should be a list, e.g. c('reach', 'medscan').
+#' @param logfc_cutoff filtering only on proteins with absolute log fold change
+#' greater than a cutoff.
+#' @param filter_exempt_proteins list of proteins to exempt in filtering.  Default is NULL.
 #'
 #' @return list of 2 data.frames, nodes and edges
 #'
@@ -45,8 +48,10 @@ getSubnetworkFromIndra <- function(input,
                                    paper_count_cutoff = 1,
                                    evidence_count_cutoff = 1,
                                    correlation_cutoff = 0.3,
-                                   sources_filter = NULL) {
-    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff)
+                                   sources_filter = NULL,
+                                   logfc_cutoff = NULL,
+                                   filter_exempt_proteins = NULL) {
+    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, filter_exempt_proteins)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter)
     res <- .callIndraCogexApi(input$HgncId)
     res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)

@@ -86,19 +86,41 @@
 #' Filter groupComparison result input based on user-defined cutoffs
 #' @param input groupComparison result
 #' @param pvalueCutoff p-value cutoff
+#' @param logfc_cutoff logFC cutoff
+#' @param filter_exempt_proteins list of proteins to exempt from filtering
 #' @return filtered groupComparison result
 #' @keywords internal
 #' @noRd
-.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff) {
+.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, filter_exempt_proteins) {
+    # Extract exempt proteins before any filtering
+    exempt_proteins <- NULL
+    if (!is.null(filter_exempt_proteins)) {
+        if (!is.character(filter_exempt_proteins)) {
+            stop("filter_exempt_proteins must be a character vector")
+        }
+        exempt_proteins <- input[input$Protein %in% filter_exempt_proteins,]
+    }
+    
+    # Apply standard filtering
     input <- input[!is.na(input$adj.pvalue),]
     if (!is.null(pvalueCutoff)) {
         input <- input[input$adj.pvalue < pvalueCutoff, ]
     }
+    if (!is.null(logfc_cutoff)) {
+        input <- input[input$log2FC > logfc_cutoff | input$log2FC < -logfc_cutoff, ]
+    }
     input <- input[is.na(input$issue), ]
+    
+    # Combine filtered data with exempt proteins and remove duplicates
+    if (!is.null(exempt_proteins) && nrow(exempt_proteins) > 0) {
+        combined_input <- rbind(input, exempt_proteins)
+        # Remove duplicates based on Protein column, keeping first occurrence
+        input <- combined_input[!duplicated(combined_input$Protein), ]
+    }
+    
     input$Protein <- as.character(input$Protein)
     return(input)
 }
-
 #' Add additional metadata to an edge
 #' @param edge object representation of an INDRA statement
 #' @param input filtered groupComparison result
