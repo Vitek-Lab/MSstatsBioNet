@@ -24,9 +24,12 @@
 #' 0.3
 #' @param sources_filter filtering only on specific sources.  Default is no filter, i.e. NULL.
 #' Otherwise, should be a list, e.g. c('reach', 'medscan').
-#' @param logfc_cutoff filtering only on proteins with absolute log fold change
-#' greater than a cutoff.
-#' @param filter_exempt_proteins list of proteins to exempt in filtering.  Default is NULL.
+#' @param logfc_cutoff absolute log fold change cutoff for filtering proteins. 
+#' Only proteins with |logFC| greater than this value will be retained. Default 
+#' is NULL, i.e. no logFC filtering.
+#' @param filter_exempt_proteins character vector of protein identifiers to exempt 
+#' from all filtering steps. These proteins will be retained regardless of p-value, 
+#' logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.
 #'
 #' @return list of 2 data.frames, nodes and edges
 #'

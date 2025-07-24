@@ -47,10 +47,13 @@ cutoff for edges with correlation less than a specified cutoff.  Default is
 \item{sources_filter}{filtering only on specific sources.  Default is no filter, i.e. NULL.
 Otherwise, should be a list, e.g. c('reach', 'medscan').}
 
-\item{logfc_cutoff}{filtering only on proteins with absolute log fold change
-greater than a cutoff.}
+\item{logfc_cutoff}{absolute log fold change cutoff for filtering proteins. 
+Only proteins with |logFC| greater than this value will be retained. Default 
+is NULL, i.e. no logFC filtering.}
 
-\item{filter_exempt_proteins}{list of proteins to exempt in filtering.  Default is NULL.}
+\item{filter_exempt_proteins}{character vector of protein identifiers to exempt 
+from all filtering steps. These proteins will be retained regardless of p-value, 
+logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.}
 }
 \value{
 list of 2 data.frames, nodes and edges
