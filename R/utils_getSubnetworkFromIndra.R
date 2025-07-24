@@ -107,13 +107,16 @@
         input <- input[input$adj.pvalue < pvalueCutoff, ]
     }
     if (!is.null(logfc_cutoff)) {
-        input <- input[input$log2FC > logfc_cutoff | input$log2FC < -logfc_cutoff, ]
+        if (!is.numeric(logfc_cutoff) || length(logfc_cutoff) != 1 || logfc_cutoff <= 0) {
+            stop("logfc_cutoff must be a single positive numeric value")
+        }
+        input <- input[!is.na(input$log2FC) & abs(input$log2FC) > logfc_cutoff, ]
     }
     input <- input[is.na(input$issue), ]
     
     # Combine filtered data with exempt proteins and remove duplicates
     if (!is.null(exempt_proteins) && nrow(exempt_proteins) > 0) {
-        combined_input <- rbind(input, exempt_proteins)
+        combined_input <- rbind(exempt_proteins, input)
         # Remove duplicates based on Protein column, keeping first occurrence
         input <- combined_input[!duplicated(combined_input$Protein), ]
     }

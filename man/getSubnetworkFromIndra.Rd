@@ -12,7 +12,9 @@ getSubnetworkFromIndra(
   paper_count_cutoff = 1,
   evidence_count_cutoff = 1,
   correlation_cutoff = 0.3,
-  sources_filter = NULL
+  sources_filter = NULL,
+  logfc_cutoff = NULL,
+  filter_exempt_proteins = NULL
 )
 }
 \arguments{
@@ -44,6 +46,11 @@ cutoff for edges with correlation less than a specified cutoff.  Default is
 
 \item{sources_filter}{filtering only on specific sources.  Default is no filter, i.e. NULL.
 Otherwise, should be a list, e.g. c('reach', 'medscan').}
+
+\item{logfc_cutoff}{filtering only on proteins with absolute log fold change
+greater than a cutoff.}
+
+\item{filter_exempt_proteins}{list of proteins to exempt in filtering.  Default is NULL.}
 }
 \value{
 list of 2 data.frames, nodes and edges
