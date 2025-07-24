@@ -98,6 +98,10 @@
         if (!is.character(filter_exempt_proteins)) {
             stop("filter_exempt_proteins must be a character vector")
         }
+        missing_prots <- setdiff(filter_exempt_proteins, input$Protein)
+        if (length(missing_prots) > 0) {
+            warning("filter_exempt_proteins not found: ", paste(missing_prots, collapse = ", "))
+        }
         exempt_proteins <- input[input$Protein %in% filter_exempt_proteins,]
     }
     
