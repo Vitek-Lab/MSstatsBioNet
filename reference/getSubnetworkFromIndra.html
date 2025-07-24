@@ -50,7 +50,9 @@ a subnetwork of protein interactions from INDRA database.</p>
 <span>  paper_count_cutoff <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  evidence_count_cutoff <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  correlation_cutoff <span class="op">=</span> <span class="fl">0.3</span>,</span>
-<span>  sources_filter <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  sources_filter <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  logfc_cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  force_include_proteins <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -101,6 +103,18 @@ cutoff for edges with correlation less than a specified cutoff.  Default is
 <dt id="arg-sources-filter">sources_filter<a class="anchor" aria-label="anchor" href="#arg-sources-filter"></a></dt>
 <dd><p>filtering only on specific sources.  Default is no filter, i.e. NULL.
 Otherwise, should be a list, e.g. c('reach', 'medscan').</p></dd>
+
+
+<dt id="arg-logfc-cutoff">logfc_cutoff<a class="anchor" aria-label="anchor" href="#arg-logfc-cutoff"></a></dt>
+<dd><p>absolute log fold change cutoff for filtering proteins.
+Only proteins with |logFC| greater than this value will be retained. Default
+is NULL, i.e. no logFC filtering.</p></dd>
+
+
+<dt id="arg-force-include-proteins">force_include_proteins<a class="anchor" aria-label="anchor" href="#arg-force-include-proteins"></a></dt>
+<dd><p>character vector of protein identifiers to exempt
+from all filtering steps. These proteins will be retained regardless of p-value,
+logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.</p></dd>
 
 </dl></div>
     <div class="section level2">
