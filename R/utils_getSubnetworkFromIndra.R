@@ -116,7 +116,9 @@
         }
         input <- input[!is.na(input$log2FC) & abs(input$log2FC) > logfc_cutoff, ]
     }
-    input <- input[is.na(input$issue), ]
+    if ("issue" %in% colnames(input)) {
+        input <- input[is.na(input$issue), ]
+    }
     
     # Combine filtered data with exempt proteins and remove duplicates
     if (!is.null(exempt_proteins) && nrow(exempt_proteins) > 0) {
@@ -295,7 +297,7 @@
         edges <- edges[which(abs(edges$correlation) >= correlation_cutoff), ]
     }
     if (nrow(edges) == 0) {
-        warning("No edges remain after applying filters. Consider relaxing filters")
+        stop("No edges remain after applying filters. Consider relaxing filters")
     }
     return(edges)
 }
