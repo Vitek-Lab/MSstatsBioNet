@@ -183,17 +183,11 @@
     edgeToMetadataMapping <- hashmap()
 
     for (edge in res) {
-        key <- paste(edge$source_id, edge$target_id, sep = "_")
+        key <- paste(edge$source_id, edge$target_id, edge$data$stmt_type, sep = "_")
         if (key %in% keys(edgeToMetadataMapping)) {
             edgeToMetadataMapping[[key]]$data$evidence_count <-
                 edgeToMetadataMapping[[key]]$data$evidence_count +
                 edge$data$evidence_count
-            edgeToMetadataMapping[[key]]$data$stmt_type <- unique(c(
-                edgeToMetadataMapping[[key]]$data$stmt_type,
-                edge$data$stmt_type))
-            edgeToMetadataMapping[[key]]$data$stmt_type <- unique(c(
-                edgeToMetadataMapping[[key]]$data$stmt_type,
-                edge$data$stmt_type))
             edgeToMetadataMapping[[key]]$data$paper_count <- 
                 edgeToMetadataMapping[[key]]$data$paper_count + 1
         } else {
@@ -201,12 +195,6 @@
             edge$data$paper_count <- 1
             edgeToMetadataMapping[[key]] <- edge
         }
-    }
-    
-    for (key in keys(edgeToMetadataMapping)) {
-        edgeToMetadataMapping[[key]]$data$stmt_type <-
-            paste(unique(edgeToMetadataMapping[[key]]$data$stmt_type), 
-                  collapse = ", ")
     }
 
     return(edgeToMetadataMapping)
