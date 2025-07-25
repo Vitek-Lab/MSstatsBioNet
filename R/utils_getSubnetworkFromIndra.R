@@ -111,7 +111,7 @@
         input <- input[input$adj.pvalue < pvalueCutoff, ]
     }
     if (!is.null(logfc_cutoff)) {
-        if (!is.numeric(logfc_cutoff) || length(logfc_cutoff) != 1 || logfc_cutoff <= 0) {
+        if (!is.numeric(logfc_cutoff) || length(logfc_cutoff) != 1 || logfc_cutoff < 0) {
             stop("logfc_cutoff must be a single positive numeric value")
         }
         input <- input[!is.na(input$log2FC) & abs(input$log2FC) > logfc_cutoff, ]
