@@ -261,7 +261,7 @@
     nodes <- data.frame(
         id = input$Protein,
         logFC = input$log2FC,
-        pvalue = input$adj.pvalue,
+        adj.pvalue = input$adj.pvalue,
         hgncName = if ("HgncName" %in% colnames(input) && is.character(input$HgncName)) input$HgncName else NA,
         stringsAsFactors = FALSE
     )
