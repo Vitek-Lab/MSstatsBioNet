@@ -11,14 +11,6 @@ exportNetworkToHTML(
   displayLabelType = "id",
   ...
 )
-
-exportNetworkToHTML(
-  nodes,
-  edges,
-  filename = "network_visualization.html",
-  displayLabelType = "id",
-  ...
-)
 }
 \arguments{
 \item{nodes}{Data frame with node information}
@@ -33,13 +25,8 @@ exportNetworkToHTML(
 }
 \value{
 Invisibly returns the file path of the created HTML file
-
-Invisibly returns the file path of the created HTML file
 }
 \description{
-Convenience function that takes nodes and edges data directly and creates
-both the configuration and HTML export in one step.
-
 Convenience function that takes nodes and edges data directly and creates
 both the configuration and HTML export in one step.
 }

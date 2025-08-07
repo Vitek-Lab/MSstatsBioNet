@@ -14,17 +14,6 @@ exportCytoscapeToHTML(
   custom_css = "",
   custom_js = ""
 )
-
-exportCytoscapeToHTML(
-  config,
-  filename = "network_visualization.html",
-  title = "Network Visualization",
-  width = "100\%",
-  height = "600px",
-  include_controls = TRUE,
-  custom_css = "",
-  custom_js = ""
-)
 }
 \arguments{
 \item{config}{Configuration object from generateCytoscapeConfig()}
@@ -45,13 +34,8 @@ exportCytoscapeToHTML(
 }
 \value{
 Invisibly returns the file path of the created HTML file
-
-Invisibly returns the file path of the created HTML file
 }
 \description{
-This function takes a Cytoscape configuration object and creates a complete
-standalone HTML file that can be opened in any web browser.
-
 This function takes a Cytoscape configuration object and creates a complete
 standalone HTML file that can be opened in any web browser.
 }
