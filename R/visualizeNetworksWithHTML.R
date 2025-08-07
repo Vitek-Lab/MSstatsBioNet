@@ -524,6 +524,7 @@ convertLayoutToJS <- function(layout_list) {
 #' # Export to HTML
 #' exportCytoscapeToHTML(config, "my_network.html")
 #' }
+#' @noRd
 exportCytoscapeToHTML <- function(config, 
                                   filename = "network_visualization.html",
                                   title = "Network Visualization",
@@ -642,7 +643,8 @@ exportCytoscapeToHTML <- function(config,
             margin-bottom: 20px;
         }
         
-        #', config$container_id, ' {
+        #'
+        , config$container_id, ' {
             width: ', width, ';
             height: ', height, ';
             border: 1px solid #ddd;
