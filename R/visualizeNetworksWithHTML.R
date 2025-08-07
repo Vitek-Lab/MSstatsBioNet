@@ -286,7 +286,7 @@ createEdgeElements <- function(edges) {
 #' @param container_id ID of the HTML container element (default: 'network-cy')
 #' @param event_handlers Optional list of event handler configurations
 #' @param layout_options Optional list of layout configuration options
-#' 
+#' @export
 #' @return List containing:
 #'   - elements: Combined node and edge elements
 #'   - style: Cytoscape style configuration
@@ -745,10 +745,10 @@ exportCytoscapeToHTML <- function(config,
         
         <div class="info-panel">
             <strong>Instructions:</strong> 
-            • Click and drag to pan the network
-            • Use mouse wheel to zoom in/out
-            • Click on nodes or edges to select them
-            ', if(include_controls) '• Use the buttons above for common navigation actions' else '', '
+            Click and drag to pan the network
+            | Use mouse wheel to zoom in/out
+            | Click on nodes or edges to select them
+            ', if(include_controls) '| Use the buttons above for common navigation actions' else '', '
         </div>
     </div>
     
@@ -887,7 +887,7 @@ exportCytoscapeToHTML <- function(config,
 #' @param filename Output HTML filename
 #' @param displayLabelType Type of label to display ("id" or "hgncName")
 #' @param ... Additional arguments passed to exportCytoscapeToHTML()
-#' 
+#' @export
 #' @return Invisibly returns the file path of the created HTML file
 exportNetworkToHTML <- function(nodes, edges, 
                                 filename = "network_visualization.html",
@@ -909,6 +909,7 @@ exportNetworkToHTML <- function(nodes, edges,
 #' 
 #' Creates a temporary HTML file and opens it in the default web browser
 #' @export
+#' @importFrom utils browseURL
 #' @param nodes Data frame with node information
 #' @param edges Data frame with edge information
 #' @param displayLabelType Type of label to display ("id" or "hgncName")
