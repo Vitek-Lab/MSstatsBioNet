@@ -907,6 +907,69 @@ exportCytoscapeToHTML <- function(config,
             background-color: #fff;
         }
         
+        #legend {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #333;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        
+        .legend-gradient {
+            height: 120px;
+            width: 20px;
+            border: 2px solid #333;
+            border-radius: 3px;
+            margin-right: 8px;
+            background: linear-gradient(to top, #ADD8E6, #D3D3D3, #FFA590);
+        }
+        
+        .legend-gradient-labels {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 120px;
+            font-size: 11px;
+        }
+        
+        .edge-legend {
+            margin-top: 20px;
+        }
+        
+        .edge-legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+        
+        .edge-legend-line {
+            width: 30px;
+            height: 2px;
+            margin-right: 8px;
+        }
+        
         ', controls_css, '
         
         ', custom_css, '
@@ -928,7 +991,12 @@ exportCytoscapeToHTML <- function(config,
         
         ', controls_html, '
         
-        <div id="', config$container_id, '"></div>
+        <div style="display: flex; gap: 20px;">
+            <div id="', config$container_id, '" style="flex: 1;"></div>
+            <div id="legend" style="width: 200px; flex-shrink: 0;">
+                <!-- Legend will be populated by JavaScript -->
+            </div>
+        </div>
         
         <div class="info-panel">
             <strong>Instructions:</strong> 
@@ -940,6 +1008,83 @@ exportCytoscapeToHTML <- function(config,
     </div>
     
     <script>
+        // Function to create the legend
+        function createLegend(cy) {
+            const legendDiv = document.getElementById("legend");
+            
+            // Check if nodes have logFC data
+            const nodes = cy.nodes();
+            let hasLogFC = false;
+            let logFCValues = [];
+            
+            nodes.forEach(function(node) {
+                const nodeData = node.data();
+                // Try to extract logFC from color or check if we can determine logFC values
+                // Since we only have access to the final colors, we\'ll create a standard legend
+                hasLogFC = true; // Assume we have logFC if we\'re showing the legend
+            });
+            
+            let legendHTML = "";
+            
+            if (hasLogFC) {
+                legendHTML += `
+                    <div class="legend-title">Node Colors (logFC)</div>
+                    <div class="legend-item">
+                        <div class="legend-gradient"></div>
+                        <div class="legend-gradient-labels">
+                            <div>Upregulated</div>
+                            <div>Neutral (0)</div>
+                            <div>Downregulated</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 10px; color: #666;">
+                        Log Fold Change values
+                    </div>
+                `;
+            } else {
+                legendHTML += `
+                    <div class="legend-title">Node Colors</div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #D3D3D3;"></div>
+                        <span>Default</span>
+                    </div>
+                `;
+            }
+            
+            // Add edge legend
+            legendHTML += `
+                <div class="edge-legend">
+                    <div class="legend-title">Edge Types</div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background-color: #44AA44;"></div>
+                        <span>Activation</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background-color: #FF4444;"></div>
+                        <span>Inhibition</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background-color: #4488FF;"></div>
+                        <span>Increase Amount</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background-color: #FF8844;"></div>
+                        <span>Decrease Amount</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background-color: #9932CC; border-style: dashed; border-width: 1px; height: 0px; border-top-width: 2px;"></div>
+                        <span>Phosphorylation</span>
+                    </div>
+                    <div class="edge-legend-item">
+                        <div class="edge-legend-line" style="background-color: #8B4513;"></div>
+                        <span>Complex</span>
+                    </div>
+                </div>
+            `;
+            
+            legendDiv.innerHTML = legendHTML;
+        }
+        
         // Wait for DOM to be fully loaded
         document.addEventListener("DOMContentLoaded", function() {
             try {
@@ -958,6 +1103,9 @@ exportCytoscapeToHTML <- function(config,
                 });
                 
                 ', controls_js, '
+                
+                // Create legend
+                createLegend(cy);
                 
                 ', custom_js, '
                 
