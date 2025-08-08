@@ -14,7 +14,8 @@ getSubnetworkFromIndra(
   correlation_cutoff = 0.3,
   sources_filter = NULL,
   logfc_cutoff = NULL,
-  force_include_proteins = NULL
+  force_include_proteins = NULL,
+  force_include_other = NULL
 )
 }
 \arguments{
@@ -54,6 +55,10 @@ is NULL, i.e. no logFC filtering.}
 \item{force_include_proteins}{character vector of protein identifiers to exempt 
 from all filtering steps. These proteins will be retained regardless of p-value, 
 logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.}
+
+\item{force_include_other}{character vector of identifiers to include in the
+network, regardless if those ids are in the input data. Should be formatted
+as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".}
 }
 \value{
 list of 2 data.frames, nodes and edges
