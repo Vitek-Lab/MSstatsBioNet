@@ -107,8 +107,8 @@ getPathwaysFromIndra <- function(annotated_df, main_target = 'MEN1_HUMAN', targe
             edgeToMetadataMapping[[key]]$data$stmt_type <- c(edge$type)
             edgeToMetadataMapping[[key]]$source_id <- source_id
             edgeToMetadataMapping[[key]]$target_id <- obj
-            edgeToMetadataMapping[[key]] <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(
-                edgeToMetadataMapping[[key]], annotated_df, namespace
+            edgeToMetadataMapping[[key]] <- .addAdditionalMetadataToIndraEdge(
+                edgeToMetadataMapping[[key]], annotated_df
             )
         }
     }

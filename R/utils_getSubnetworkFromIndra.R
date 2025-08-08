@@ -2,13 +2,16 @@
 #' @param input dataframe from MSstats groupComparison output
 #' @param protein_level_data dataframe from MSstats dataProcess output
 #' @param sources_filter sources filter
+#' @param force_include_other character vector of identifiers to include in the
+#' network.
 #' @keywords internal
 #' @noRd
-.validateGetSubnetworkFromIndraInput <- function(input, protein_level_data, sources_filter) {
+.validateGetSubnetworkFromIndraInput <- function(input, protein_level_data, sources_filter, force_include_other) {
     if (!"HgncId" %in% colnames(input)) {
         stop("Invalid Input Error: Input must contain a column named 'HgncId'.")
     }
-    if (nrow(input) >= 400) {
+    num_proteins = nrow(input) + ifelse(!is.null(force_include_other), length(force_include_other), 0)
+    if (num_proteins >= 400) {
         stop("Invalid Input Error: INDRA query must contain less than 400 proteins.  Consider lowering your p-value cutoff")
     }
     if (nrow(input) == 0) {
@@ -39,13 +42,15 @@
         "https://discovery.indra.bio/api/indra_subnetwork_relations"
 
     groundings <- lapply(hgncIds, function(x) list("HGNC", x))
-    groundings <- c(groundings, lapply(force_include_other, function(x) {
-        parts <- unlist(strsplit(x, ":"))
-        if (length(parts) != 2) {
-            stop(paste0("Invalid identifier format: ", x, ". Expected format is 'namespace:identifier', e.g. 'HGNC:1234' or 'CHEBI:4911'."))
-        }
-        list(parts[1], parts[2])
-    }))
+    if (!is.null(force_include_other)) {
+        groundings <- c(groundings, lapply(force_include_other, function(x) {
+            parts <- unlist(strsplit(x, ":"))
+            if (length(parts) != 2) {
+                stop(paste0("Invalid identifier format: ", x, ". Expected format is 'namespace:identifier', e.g. 'HGNC:1234' or 'CHEBI:4911'."))
+            }
+            list(parts[1], parts[2])
+        }))
+    }
     groundings <- list(nodes = groundings)
     groundings <- jsonlite::toJSON(groundings, auto_unbox = TRUE)
 
@@ -141,40 +146,31 @@
 #' Add additional metadata to an edge
 #' @param edge object representation of an INDRA statement
 #' @param input filtered groupComparison result
-#' @param source_namespace namespace of the source for evidence URL
 #' @return edge with additional metadata
 #' @keywords internal
 #' @noRd
-.addAdditionalMetadataToIndraEdge <- function(edge, input, source_namespace = "@HGNC") {
+.addAdditionalMetadataToIndraEdge <- function(edge, input) {
     edge$evidence_list <- paste(
         "https://db.indra.bio/statements/from_agents?subject=",
-        edge$source_id, source_namespace, "&object=",
-        edge$target_id, "@HGNC&format=html",
+        edge$source_id, "@", edge$source_ns, "&object=",
+        edge$target_id, "@", edge$target_ns, "&format=html",
         sep = ""
     )
     
     # Convert back to uniprot IDs
-    if (source_namespace == "@HGNC") {
-        matched_rows_source <- input[which(input$HgncId == edge$source_id), ]
-    }
-    matched_rows_target <- input[which(input$HgncId == edge$target_id), ]
-    
-    if ((source_namespace == "@HGNC" && nrow(matched_rows_source) != 1) || nrow(matched_rows_target) != 1) {
-        stop(paste0(
-            "INDRA Exception: Unexpected number of matches for the following HGNC IDs in the input data: ", 
-            edge$source_id, 
-            " or ", 
-            edge$target_id, 
-            ". Each ID must match exactly one entry in the input data, but 0 or multiple matches were found. Please check the input data for duplicates or missing entries."
-        ))
-    } 
-    
-    if (source_namespace == "@HGNC") {
-        edge$source_uniprot_id <- matched_rows_source$Protein
+    matched_rows_source <- input[which(input$HgncId == edge$source_id), ]
+    if (nrow(matched_rows_source) != 1) {
+        edge$source_uniprot_id <- edge$source_name
     } else {
-        edge$source_uniprot_id <- edge$source_id
+        edge$source_uniprot_id <- matched_rows_source$Protein
     }
-    edge$target_uniprot_id <- matched_rows_target$Protein
+    
+    matched_rows_target <- input[which(input$HgncId == edge$target_id), ]
+    if (nrow(matched_rows_target) != 1) {
+        edge$target_uniprot_id <- edge$target_name
+    } else {
+        edge$target_uniprot_id <- matched_rows_target$Protein
+    }
     
     return(edge)
 }
@@ -266,14 +262,25 @@
 #' @keywords internal
 #' @noRd
 .constructNodesDataFrame <- function(input, edges) {
+    # Get unique nodes from edges
+    node_ids <- unique(c(edges$source, edges$target))
+    
+    # Create base nodes dataframe
     nodes <- data.frame(
-        id = input$Protein,
-        logFC = input$log2FC,
-        adj.pvalue = input$adj.pvalue,
-        hgncName = if ("HgncName" %in% colnames(input) && is.character(input$HgncName)) input$HgncName else NA,
+        id = node_ids,
         stringsAsFactors = FALSE
     )
-    nodes <- nodes[which(nodes$id %in% edges$source | nodes$id %in% edges$target),]
+    
+    # Add attributes from input where available
+    nodes$logFC <- input$log2FC[match(nodes$id, input$Protein)]
+    nodes$adj.pvalue <- input$adj.pvalue[match(nodes$id, input$Protein)]
+    nodes$hgncName <- if ("HgncName" %in% colnames(input) && is.character(input$HgncName)) {
+        hgnc_value <- input$HgncName[match(nodes$id, input$Protein)]
+        ifelse(is.na(hgnc_value), nodes$id, hgnc_value)
+    } else {
+        nodes$id
+    }
+    
     return(nodes)
 }
 
