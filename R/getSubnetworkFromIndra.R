@@ -30,6 +30,9 @@
 #' @param force_include_proteins character vector of protein identifiers to exempt 
 #' from all filtering steps. These proteins will be retained regardless of p-value, 
 #' logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.
+#' @param force_include_other character vector of identifiers to include in the
+#' network, regardless if those ids are in the input data. Should be formatted
+#' as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".
 #'
 #' @return list of 2 data.frames, nodes and edges
 #'
@@ -53,10 +56,11 @@ getSubnetworkFromIndra <- function(input,
                                    correlation_cutoff = 0.3,
                                    sources_filter = NULL,
                                    logfc_cutoff = NULL,
-                                   force_include_proteins = NULL) {
+                                   force_include_proteins = NULL,
+                                   force_include_other = NULL) {
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_proteins)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter)
-    res <- .callIndraCogexApi(input$HgncId)
+    res <- .callIndraCogexApi(input$HgncId, force_include_other)
     res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)
     edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)

@@ -28,16 +28,24 @@
 
 #' Call INDRA Cogex API and return response
 #' @param hgncIds list of hgnc ids
+#' @param force_include_other list of identifiers to include in the network
 #' @return list of INDRA statements
 #' @importFrom jsonlite toJSON
 #' @importFrom httr POST add_headers content
 #' @keywords internal
 #' @noRd
-.callIndraCogexApi <- function(hgncIds) {
+.callIndraCogexApi <- function(hgncIds, force_include_other) {
     indraCogexUrl <-
         "https://discovery.indra.bio/api/indra_subnetwork_relations"
 
     groundings <- lapply(hgncIds, function(x) list("HGNC", x))
+    groundings <- c(groundings, lapply(force_include_other, function(x) {
+        parts <- unlist(strsplit(x, ":"))
+        if (length(parts) != 2) {
+            stop(paste0("Invalid identifier format: ", x, ". Expected format is 'namespace:identifier', e.g. 'HGNC:1234' or 'CHEBI:4911'."))
+        }
+        list(parts[1], parts[2])
+    }))
     groundings <- list(nodes = groundings)
     groundings <- jsonlite::toJSON(groundings, auto_unbox = TRUE)
 
