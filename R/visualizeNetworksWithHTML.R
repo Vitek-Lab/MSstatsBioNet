@@ -281,8 +281,9 @@ createEdgeElements <- function(edges) {
 #' used to render a network visualization. It's decoupled from any specific
 #' UI framework.
 #' 
-#' @param node_elements List of node elements created by createNodeElements()
-#' @param edge_elements List of edge elements created by createEdgeElements()
+#' @param nodes List of nodes from getSubnetworkFromIndra
+#' @param edges List of edges from getSubnetworkFromIndra
+#' @param display_label_type column of nodes table for displaying node names
 #' @param container_id ID of the HTML container element (default: 'network-cy')
 #' @param event_handlers Optional list of event handler configurations
 #' @param layout_options Optional list of layout configuration options
@@ -293,10 +294,15 @@ createEdgeElements <- function(edges) {
 #'   - layout: Layout configuration
 #'   - container_id: Container element ID
 #'   - js_code: Complete JavaScript code (for backward compatibility)
-generateCytoscapeConfig <- function(node_elements, edge_elements, 
+generateCytoscapeConfig <- function(nodes, edges, 
+                                    display_label_type = "id",
                                     container_id = "network-cy",
                                     event_handlers = NULL,
                                     layout_options = NULL) {
+    
+    # Create elements
+    node_elements <- createNodeElements(nodes, display_label_type)
+    edge_elements <- createEdgeElements(edges)
     
     # Default layout options
     default_layout <- list(
@@ -517,8 +523,6 @@ convertLayoutToJS <- function(layout_list) {
 #' @examples
 #' \dontrun{
 #' # Assuming you have nodes and edges data
-#' node_elements <- createNodeElements(nodes)
-#' edge_elements <- createEdgeElements(edges)
 #' config <- generateCytoscapeConfig(node_elements, edge_elements)
 #' 
 #' # Export to HTML
@@ -894,12 +898,8 @@ exportNetworkToHTML <- function(nodes, edges,
                                 displayLabelType = "id",
                                 ...) {
     
-    # Create elements
-    node_elements <- createNodeElements(nodes, displayLabelType)
-    edge_elements <- createEdgeElements(edges)
-    
     # Generate configuration
-    config <- generateCytoscapeConfig(node_elements, edge_elements)
+    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType)
     
     # Export to HTML
     exportCytoscapeToHTML(config, filename, ...)
@@ -917,13 +917,9 @@ exportNetworkToHTML <- function(nodes, edges,
 previewNetworkInBrowser <- function(nodes, edges, 
                                     displayLabelType = "id",
                                     ...) {
-    
-    # Create elements
-    node_elements <- createNodeElements(nodes, displayLabelType)
-    edge_elements <- createEdgeElements(edges)
-    
+
     # Generate configuration
-    config <- generateCytoscapeConfig(node_elements, edge_elements)
+    config <- generateCytoscapeConfig(node_elements, edge_elements, display_label_type = displayLabelType)
     
     # Create temporary filename
     temp_file <- tempfile(fileext = ".html")

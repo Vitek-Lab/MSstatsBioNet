@@ -236,10 +236,7 @@ test_that("generateCytoscapeConfig creates complete configuration", {
     nodes <- create_mock_subnetwork_nodes()
     edges <- create_mock_subnetwork_edges()
     
-    node_elements <- createNodeElements(nodes, "id")
-    edge_elements <- createEdgeElements(edges)
-    
-    config <- generateCytoscapeConfig(node_elements, edge_elements)
+    config <- generateCytoscapeConfig(nodes, edges)
     
     expect_type(config, "list")
     expect_true("elements" %in% names(config))
@@ -257,15 +254,12 @@ test_that("generateCytoscapeConfig accepts custom parameters", {
     nodes <- create_mock_subnetwork_nodes()
     edges <- create_mock_subnetwork_edges()
     
-    node_elements <- createNodeElements(nodes, "id")
-    edge_elements <- createEdgeElements(edges)
-    
     custom_layout <- list(name = "grid", fit = FALSE)
     custom_handlers <- list(edge_click = "function() { console.log('test'); }")
     
     config <- generateCytoscapeConfig(
-        node_elements, 
-        edge_elements,
+        nodes, 
+        edges,
         container_id = "custom-container",
         event_handlers = custom_handlers,
         layout_options = custom_layout
@@ -275,4 +269,59 @@ test_that("generateCytoscapeConfig accepts custom parameters", {
     expect_equal(config$layout$name, "grid")
     expect_false(config$layout$fit)
     expect_true(grepl("console.log", config$js_code))
+})
+
+
+# =============================================================================
+# TESTS FOR STYLE CONVERSION FUNCTIONS
+# =============================================================================
+
+test_that("convertStyleToJS creates valid JavaScript", {
+    style_list <- list(
+        list(
+            selector = "node",
+            style = list(
+                `background-color` = "data(color)",
+                width = "60px"
+            )
+        )
+    )
+    
+    js_style <- convertStyleToJS(style_list)
+    expect_type(js_style, "character")
+    expect_true(grepl("selector", js_style))
+    expect_true(grepl("background-color", js_style))
+    expect_true(grepl("data\\(color\\)", js_style))
+})
+
+test_that("convertLayoutToJS creates valid JavaScript", {
+    layout_list <- list(
+        name = "dagre",
+        fit = TRUE,
+        padding = 30
+    )
+    
+    js_layout <- convertLayoutToJS(layout_list)
+    expect_type(js_layout, "character")
+    expect_true(grepl("\"name\": \"dagre\"", js_layout))
+    expect_true(grepl("\"fit\": true", js_layout))
+    expect_true(grepl("\"padding\": 30", js_layout))
+})
+
+test_that("createNodeElements handles different label types", {
+    nodes <- create_mock_subnetwork_nodes()
+    
+    # Test with id labels
+    elements_id <- createNodeElements(nodes, "id")
+    expect_true(all(grepl("P53_HUMAN|MDM2_HUMAN|ATM_HUMAN|BRCA1_HUMAN", elements_id)))
+    
+    # Test with hgncName labels
+    elements_hgnc <- createNodeElements(nodes, "hgncName")
+    expect_true(all(grepl("TP53|MDM2|ATM|BRCA1", elements_hgnc)))
+    
+    # Test with nodes missing hgncName
+    nodes_no_hgnc <- nodes
+    nodes_no_hgnc$hgncName <- NA
+    elements_fallback <- createNodeElements(nodes_no_hgnc, "hgncName")
+    expect_true(all(grepl("P53_HUMAN|MDM2_HUMAN|ATM_HUMAN|BRCA1_HUMAN", elements_fallback)))
 })
