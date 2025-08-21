@@ -5,17 +5,20 @@
 \title{Generate Cytoscape visualization configuration}
 \usage{
 generateCytoscapeConfig(
-  node_elements,
-  edge_elements,
+  nodes,
+  edges,
+  display_label_type = "id",
   container_id = "network-cy",
   event_handlers = NULL,
   layout_options = NULL
 )
 }
 \arguments{
-\item{node_elements}{List of node elements created by createNodeElements()}
+\item{nodes}{List of nodes from getSubnetworkFromIndra}
 
-\item{edge_elements}{List of edge elements created by createEdgeElements()}
+\item{edges}{List of edges from getSubnetworkFromIndra}
+
+\item{display_label_type}{column of nodes table for displaying node names}
 
 \item{container_id}{ID of the HTML container element (default: 'network-cy')}
 
