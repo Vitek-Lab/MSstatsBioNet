@@ -919,7 +919,7 @@ previewNetworkInBrowser <- function(nodes, edges,
                                     ...) {
 
     # Generate configuration
-    config <- generateCytoscapeConfig(node_elements, edge_elements, display_label_type = displayLabelType)
+    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType)
     
     # Create temporary filename
     temp_file <- tempfile(fileext = ".html")
