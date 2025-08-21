@@ -141,6 +141,49 @@
     }
     
     input$Protein <- as.character(input$Protein)
+    # TODO: Make PTM processing more robust
+    if ("GlobalProtein" %in% colnames(input)) {
+        input$Site <- as.character(input$Protein)
+        input$Protein <- as.character(input$GlobalProtein)
+        # Summarize rows by protein: mean adj.pvalue and log2FC, keep other columns
+        if (any(duplicated(input$Protein))) {
+            # Get unique proteins
+            unique_proteins <- unique(input$Protein)
+            
+            # Initialize result data frame
+            result_list <- list()
+            
+            for (i in seq_along(unique_proteins)) {
+                protein <- unique_proteins[i]
+                protein_rows <- input[input$Protein == protein, , drop = FALSE]
+                
+                if (nrow(protein_rows) == 1) {
+                    # Single row, keep as is
+                    result_list[[i]] <- protein_rows
+                } else {
+                    # Multiple rows, summarize
+                    summarized_row <- protein_rows[1, , drop = FALSE]  # Start with first row
+                    
+                    # Calculate mean for adj.pvalue if it exists
+                    if ("adj.pvalue" %in% names(protein_rows) && is.numeric(protein_rows$adj.pvalue)) {
+                        summarized_row$adj.pvalue <- mean(protein_rows$adj.pvalue, na.rm = TRUE)
+                    }
+                    
+                    # Calculate mean for log2FC if it exists
+                    if ("log2FC" %in% names(protein_rows) && is.numeric(protein_rows$log2FC)) {
+                        summarized_row$log2FC <- mean(protein_rows$log2FC, na.rm = TRUE)
+                    }
+                    
+                    result_list[[i]] <- summarized_row
+                }
+            }
+            
+            # Combine all results
+            input <- do.call(rbind, result_list)
+            rownames(input) <- NULL
+        }
+    }
+
     return(input)
 }
 #' Add additional metadata to an edge

@@ -55,13 +55,19 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 #'        It can be either "Uniprot" or "Uniprot_Mnemonic".
 #' @return A data frame with populated Uniprot IDs.
 .populateUniprotIdsInDataFrame <- function(df, proteinIdType) {
+        # TODO: Handle PTM dataset more robustly
+        if ("GlobalProtein" %in% colnames(df)) {
+            protein_ids = df$GlobalProtein
+        } else {
+            protein_ids = df$Protein
+        }
         df$UniprotId <- NA
         if (proteinIdType == "Uniprot") {
-                df$UniprotId <- as.character(df$Protein)
+                df$UniprotId <- as.character(protein_ids)
         }
         
         if (proteinIdType == "Uniprot_Mnemonic") {
-                mnemonicProteins <- df$Protein
+                mnemonicProteins <- protein_ids
                 if (length(mnemonicProteins) > 0) {
                         uniprotMapping <- .callGetUniprotIdsFromUniprotMnemonicIdsApi(as.list(mnemonicProteins))
                         for (mnemonicId in names(uniprotMapping)) {
