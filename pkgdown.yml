@@ -3,7 +3,7 @@ pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   MSstatsBioNet: MSstatsBioNet.html
-last_built: 2025-08-20T23:58Z
+last_built: 2025-08-21T16:42Z
 urls:
   reference: https://vitek-lab.github.io/MSstatsBioNet/reference
   article: https://vitek-lab.github.io/MSstatsBioNet/articles
