@@ -264,6 +264,7 @@ createEdgeElements <- function(edges) {
                             "', interaction: '", row$interaction,
                             "', edge_type: '", row$edge_type,
                             "', category: '", row$category,
+                            "', evidenceLink: '", row$evidenceLink,
                             "', color: '", style$color,
                             "', line_style: '", style$style,
                             "', arrow_shape: '", style$arrow,
