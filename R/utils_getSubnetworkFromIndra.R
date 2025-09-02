@@ -10,7 +10,8 @@
     if (!"HgncId" %in% colnames(input)) {
         stop("Invalid Input Error: Input must contain a column named 'HgncId'.")
     }
-    num_proteins = nrow(input) + ifelse(!is.null(force_include_other), length(force_include_other), 0)
+    num_proteins = length(unique(input$HgncId)) + 
+        ifelse(!is.null(force_include_other), length(force_include_other), 0)
     if (num_proteins >= 400) {
         stop("Invalid Input Error: INDRA query must contain less than 400 proteins.  Consider lowering your p-value cutoff")
     }
@@ -41,6 +42,7 @@
     indraCogexUrl <-
         "https://discovery.indra.bio/api/indra_subnetwork_relations"
 
+    hgncIds = unique(hgncIds)
     groundings <- lapply(hgncIds, function(x) list("HGNC", x))
     if (!is.null(force_include_other)) {
         groundings <- c(groundings, lapply(force_include_other, function(x) {
@@ -141,49 +143,14 @@
     }
     
     input$Protein <- as.character(input$Protein)
-    # TODO: Make PTM processing more robust
+    
+    # Handle PTMs in Protein column
+    input$Site = ifelse(grepl("_[A-Z][0-9]", input$Protein),
+                        gsub(".*?_(?=[A-Z][0-9])", "", input$Protein, perl = TRUE),
+                        NA_character_)
     if ("GlobalProtein" %in% colnames(input)) {
-        input$Site <- as.character(input$Protein)
-        input$Protein <- as.character(input$GlobalProtein)
-        # Summarize rows by protein: mean adj.pvalue and log2FC, keep other columns
-        if (any(duplicated(input$Protein))) {
-            # Get unique proteins
-            unique_proteins <- unique(input$Protein)
-            
-            # Initialize result data frame
-            result_list <- list()
-            
-            for (i in seq_along(unique_proteins)) {
-                protein <- unique_proteins[i]
-                protein_rows <- input[input$Protein == protein, , drop = FALSE]
-                
-                if (nrow(protein_rows) == 1) {
-                    # Single row, keep as is
-                    result_list[[i]] <- protein_rows
-                } else {
-                    # Multiple rows, summarize
-                    summarized_row <- protein_rows[1, , drop = FALSE]  # Start with first row
-                    
-                    # Calculate mean for adj.pvalue if it exists
-                    if ("adj.pvalue" %in% names(protein_rows) && is.numeric(protein_rows$adj.pvalue)) {
-                        summarized_row$adj.pvalue <- mean(protein_rows$adj.pvalue, na.rm = TRUE)
-                    }
-                    
-                    # Calculate mean for log2FC if it exists
-                    if ("log2FC" %in% names(protein_rows) && is.numeric(protein_rows$log2FC)) {
-                        summarized_row$log2FC <- mean(protein_rows$log2FC, na.rm = TRUE)
-                    }
-                    
-                    result_list[[i]] <- summarized_row
-                }
-            }
-            
-            # Combine all results
-            input <- do.call(rbind, result_list)
-            rownames(input) <- NULL
-        }
+        input$Protein = input$GlobalProtein
     }
-
     return(input)
 }
 #' Add additional metadata to an edge
@@ -202,17 +169,19 @@
     
     # Convert back to uniprot IDs
     matched_rows_source <- input[which(input$HgncId == edge$source_id), ]
-    if (nrow(matched_rows_source) != 1) {
+    uniprot_ids_source <- unique(matched_rows_source$Protein)
+    if (length(uniprot_ids_source) != 1) {
         edge$source_uniprot_id <- edge$source_name
     } else {
-        edge$source_uniprot_id <- matched_rows_source$Protein
+        edge$source_uniprot_id <- uniprot_ids_source
     }
     
     matched_rows_target <- input[which(input$HgncId == edge$target_id), ]
-    if (nrow(matched_rows_target) != 1) {
+    uniprot_ids_target = unique(matched_rows_target$Protein)
+    if (length(uniprot_ids_target) != 1) {
         edge$target_uniprot_id <- edge$target_name
     } else {
-        edge$target_uniprot_id <- matched_rows_target$Protein
+        edge$target_uniprot_id <- uniprot_ids_target
     }
     
     return(edge)
@@ -317,24 +286,31 @@
 #' @keywords internal
 #' @noRd
 .constructNodesDataFrame <- function(input, edges) {
-    # Get unique nodes from edges
-    node_ids <- unique(c(edges$source, edges$target))
+    nodes = input[, c("Protein", "log2FC", "adj.pvalue", "HgncName", "Site")]
+    colnames(nodes) = c("id", "logFC", "adj.pvalue", "hgncName", "Site")
     
-    # Create base nodes dataframe
-    nodes <- data.frame(
-        id = node_ids,
-        stringsAsFactors = FALSE
-    )
-    
-    # Add attributes from input where available
-    nodes$logFC <- input$log2FC[match(nodes$id, input$Protein)]
-    nodes$adj.pvalue <- input$adj.pvalue[match(nodes$id, input$Protein)]
-    nodes$hgncName <- if ("HgncName" %in% colnames(input) && is.character(input$HgncName)) {
-        hgnc_value <- input$HgncName[match(nodes$id, input$Protein)]
-        ifelse(is.na(hgnc_value), nodes$id, hgnc_value)
-    } else {
-        nodes$id
-    }
+    nodes = nodes[nodes$id %in% c(edges$source, edges$target), ]
+    nodes$hgncName = ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
+    # 
+    # # Get unique nodes from edges
+    # node_ids <- unique(c(edges$source, edges$target))
+    # 
+    # # Create base nodes dataframe
+    # nodes <- data.frame(
+    #     id = node_ids,
+    #     stringsAsFactors = FALSE
+    # )
+    # 
+    # # Add attributes from input where available
+    # nodes$logFC <- input$log2FC[match(nodes$id, input$Protein)]
+    # nodes$adj.pvalue <- input$adj.pvalue[match(nodes$id, input$Protein)]
+    # nodes$hgncName <- if ("HgncName" %in% colnames(input) && is.character(input$HgncName)) {
+    #     hgnc_value <- input$HgncName[match(nodes$id, input$Protein)]
+    #     ifelse(is.na(hgnc_value), nodes$id, hgnc_value)
+    # } else {
+    #     nodes$id
+    # }
+    # nodes$site <- input$Site[match(nodes$id, input$Protein)]
     
     return(nodes)
 }
