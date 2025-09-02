@@ -222,6 +222,7 @@
 #' Collapse duplicate INDRA statements into a mapping of edge to metadata
 #' @param res INDRA response
 #' @param input filtered groupComparison result
+#' @importFrom jsonlite fromJSON
 #' @importFrom r2r hashmap keys
 #' @return processed edge to metadata mapping
 #' @keywords internal
@@ -231,6 +232,13 @@
 
     for (edge in res) {
         key <- paste(edge$source_id, edge$target_id, edge$data$stmt_type, sep = "_")
+        json_object <- fromJSON(edge$data$stmt_json)
+        if (!is.null(json_object$residue) && !is.null(json_object$position)) {
+            edge$site = paste0(json_object$residue, json_object$position)
+            key <- paste(key, edge$site, sep = "_")
+        } else {
+            edge$site = NA_character_
+        }
         if (key %in% keys(edgeToMetadataMapping)) {
             edgeToMetadataMapping[[key]]$data$evidence_count <-
                 edgeToMetadataMapping[[key]]$data$evidence_count +
@@ -252,6 +260,7 @@
 #' @param input filtered groupComparison result
 #' @param protein_level_data output of dataProcess
 #' @importFrom r2r query keys
+#' @importFrom jsonlite fromJSON
 #' @return edge data.frame
 #' @keywords internal
 #' @noRd
@@ -278,6 +287,9 @@
         }, ""),
         sourceCounts = vapply(keys(res), function(x) {
             query(res, x)$data$source_counts
+        }, ""),
+        site = vapply(keys(res), function(x) {
+            query(res, x)$site
         }, ""),
         stringsAsFactors = FALSE
     )
