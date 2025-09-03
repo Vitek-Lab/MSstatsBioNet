@@ -74,42 +74,67 @@ getRelationshipProperties <- function() {
     )
 }
 
-#' Calculate PTM site overlap between edge targets and nodes
+#' Calculate PTM site overlap between edge targets and nodes with aggregation
 #' @param edges Data frame with edge information including 'target' and 'site' columns
 #' @param nodes Data frame with node information including 'id' and 'Site' columns
-#' @return Vector of overlap descriptions for each edge
+#' @return Vector of overlap descriptions for each unique edge (after consolidation)
 #' @noRd
-calculatePTMOverlap <- function(edges, nodes) {
-    overlap_info <- character(nrow(edges))
+calculatePTMOverlapAggregated <- function(edges, nodes) {
+    if (nrow(edges) == 0) return(character(0))
     
-    for (i in 1:nrow(edges)) {
-        edge <- edges[i, ]
-        overlap_sites <- c()
+    # Group edges by source-target-interaction to match consolidation logic
+    edges$edge_key <- paste(edges$source, edges$target, edges$interaction, sep = "-")
+    unique_edges <- unique(edges$edge_key)
+    
+    overlap_info <- character(length(unique_edges))
+    names(overlap_info) <- unique_edges
+    
+    for (edge_key in unique_edges) {
+        # Get all edges with this source-target-interaction combination
+        matching_edges <- edges[edges$edge_key == edge_key, ]
+        all_overlap_sites <- c()
         
-        # Check if edge has target and site information
-        if (!is.na(edge$target) && "site" %in% names(edge) && !is.na(edge$site)) {
-            # Find matching node
-            target_node <- nodes[nodes$id == edge$target, ]
+        # Process each matching edge to find PTM overlaps
+        for (i in 1:nrow(matching_edges)) {
+            edge <- matching_edges[i, ]
             
-            if (nrow(target_node) > 0 && "Site" %in% names(target_node) && !is.na(target_node$Site[1])) {
-                edge_sites <- trimws(unlist(strsplit(as.character(edge$site), "[,;|]")))
-                node_sites <- trimws(unlist(strsplit(as.character(target_node$Site[1]), "[,;|]")))
+            # Check if edge has target and site information
+            if (!is.na(edge$target) && "site" %in% names(edge) && !is.na(edge$site)) {
+                # Find matching nodes with the same target ID
+                target_nodes <- nodes[nodes$id == edge$target, ]
                 
-                # Find overlapping sites
-                overlap_sites <- intersect(edge_sites, node_sites)
-                overlap_sites <- overlap_sites[overlap_sites != "" & !is.na(overlap_sites)]
+                if (nrow(target_nodes) > 0 && "Site" %in% names(target_nodes)) {
+                    edge_sites <- trimws(unlist(strsplit(as.character(edge$site), "[,;|]")))
+                    
+                    # Check each target node row for site matches
+                    for (j in 1:nrow(target_nodes)) {
+                        if (!is.na(target_nodes$Site[j])) {
+                            node_sites <- trimws(unlist(strsplit(as.character(target_nodes$Site[j]), "[,;|]")))
+                            
+                            # Find overlapping sites for this edge-node combination
+                            overlap_sites <- intersect(edge_sites, node_sites)
+                            overlap_sites <- overlap_sites[overlap_sites != "" & !is.na(overlap_sites)]
+                            
+                            # Add to the aggregate list
+                            all_overlap_sites <- c(all_overlap_sites, overlap_sites)
+                        }
+                    }
+                }
             }
         }
         
-        # Create tooltip text
-        if (length(overlap_sites) > 0) {
-            if (length(overlap_sites) == 1) {
-                overlap_info[i] <- paste0("Overlapping PTM site: ", overlap_sites[1])
+        # Remove duplicates and create tooltip text for this consolidated edge
+        unique_overlap_sites <- unique(all_overlap_sites)
+        unique_overlap_sites <- unique_overlap_sites[unique_overlap_sites != "" & !is.na(unique_overlap_sites)]
+        
+        if (length(unique_overlap_sites) > 0) {
+            if (length(unique_overlap_sites) == 1) {
+                overlap_info[edge_key] <- paste0("Overlapping PTM site: ", unique_overlap_sites[1])
             } else {
-                overlap_info[i] <- paste0("Overlapping PTM sites: ", paste(overlap_sites, collapse = ", "))
+                overlap_info[edge_key] <- paste0("Overlapping PTM sites: ", paste(unique_overlap_sites, collapse = ", "))
             }
         } else {
-            overlap_info[i] <- "No overlapping PTM sites found"
+            overlap_info[edge_key] <- "No overlapping PTM sites found"
         }
     }
     
@@ -126,11 +151,11 @@ consolidateEdges <- function(edges, nodes = NULL) {
         stop("Missing required columns: ", paste(missing_cols, collapse = ", "))
     }
     
-    # Calculate PTM overlap information if nodes are provided
-    ptm_overlap <- if (!is.null(nodes)) {
-        calculatePTMOverlap(edges, nodes)
+    # Calculate aggregated PTM overlap information if nodes are provided
+    ptm_overlap_map <- if (!is.null(nodes)) {
+        calculatePTMOverlapAggregated(edges, nodes)
     } else {
-        rep("", nrow(edges))
+        NULL
     }
     
     relationship_props <- getRelationshipProperties()
@@ -140,7 +165,6 @@ consolidateEdges <- function(edges, nodes = NULL) {
     for (i in 1:nrow(edges)) {
         edge <- edges[i, ]
         pair_key <- paste(sort(c(edge$source, edge$target)), edge$interaction, collapse = "-")
-        reverse_key <- paste(sort(c(edge$source, edge$target), decreasing = TRUE), edge$interaction, sep = "-")
         
         # Skip if we've already processed this pair
         if (pair_key %in% processed_pairs) next
@@ -162,6 +186,14 @@ consolidateEdges <- function(edges, nodes = NULL) {
         
         consolidation_type <- relationship_props[[category]]$consolidate
         
+        # Get PTM overlap info for this edge combination
+        edge_key <- paste(edge$source, edge$target, edge$interaction, sep = "-")
+        ptm_overlap_text <- if (!is.null(ptm_overlap_map) && edge_key %in% names(ptm_overlap_map)) {
+            ptm_overlap_map[[edge_key]]
+        } else {
+            ""
+        }
+        
         if (nrow(reverse_edges) > 0 && consolidation_type %in% c("undirected", "bidirectional")) {
             # Create consolidated edge
             if (consolidation_type == "undirected") {
@@ -172,7 +204,7 @@ consolidateEdges <- function(edges, nodes = NULL) {
                     interaction = edge$interaction,
                     edge_type = "undirected",
                     category = category,
-                    ptm_overlap = ptm_overlap[i],
+                    ptm_overlap = ptm_overlap_text,
                     stringsAsFactors = FALSE
                 )
             } else {
@@ -183,7 +215,7 @@ consolidateEdges <- function(edges, nodes = NULL) {
                     interaction = paste(edge$interaction, "(bidirectional)"),
                     edge_type = "bidirectional", 
                     category = category,
-                    ptm_overlap = ptm_overlap[i],
+                    ptm_overlap = ptm_overlap_text,
                     stringsAsFactors = FALSE
                 )
             }
@@ -194,8 +226,8 @@ consolidateEdges <- function(edges, nodes = NULL) {
                 consolidated_edge[[col]] <- edge[[col]]
             }
             
-            edge_key <- paste(edge$source, edge$target, consolidated_edge$interaction, sep = "-")
-            consolidated_edges[[edge_key]] <- consolidated_edge
+            edge_key_final <- paste(edge$source, edge$target, consolidated_edge$interaction, sep = "-")
+            consolidated_edges[[edge_key_final]] <- consolidated_edge
             
             # Mark both directions as processed
             processed_pairs <- c(processed_pairs, pair_key)
@@ -205,10 +237,10 @@ consolidateEdges <- function(edges, nodes = NULL) {
             directed_edge <- edge
             directed_edge$edge_type <- "directed"
             directed_edge$category <- category
-            directed_edge$ptm_overlap <- ptm_overlap[i]
+            directed_edge$ptm_overlap <- ptm_overlap_text
             
-            edge_key <- paste(edge$source, edge$target, edge$interaction, sep = "-")
-            consolidated_edges[[edge_key]] <- directed_edge
+            edge_key_final <- paste(edge$source, edge$target, edge$interaction, sep = "-")
+            consolidated_edges[[edge_key_final]] <- directed_edge
         }
     }
     
