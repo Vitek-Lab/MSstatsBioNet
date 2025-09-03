@@ -127,6 +127,7 @@ calculatePTMOverlapAggregated <- function(edges, nodes) {
         unique_overlap_sites <- unique(all_overlap_sites)
         unique_overlap_sites <- unique_overlap_sites[unique_overlap_sites != "" & !is.na(unique_overlap_sites)]
         
+        # CHANGED: Only create tooltip text if there are actual overlapping sites
         if (length(unique_overlap_sites) > 0) {
             if (length(unique_overlap_sites) == 1) {
                 overlap_info[edge_key] <- paste0("Overlapping PTM site: ", unique_overlap_sites[1])
@@ -134,7 +135,8 @@ calculatePTMOverlapAggregated <- function(edges, nodes) {
                 overlap_info[edge_key] <- paste0("Overlapping PTM sites: ", paste(unique_overlap_sites, collapse = ", "))
             }
         } else {
-            overlap_info[edge_key] <- "No overlapping PTM sites found"
+            # CHANGED: Return empty string instead of "No overlapping PTM sites found"
+            overlap_info[edge_key] <- ""
         }
     }
     
@@ -237,7 +239,7 @@ consolidateEdges <- function(edges, nodes = NULL) {
             directed_edge <- edge
             directed_edge$edge_type <- "directed"
             directed_edge$category <- category
-            directed_edge$ptm_overlap <- ptm_overlap_text
+            directed_edge$ptm_overlap = ptm_overlap_text
             
             edge_key_final <- paste(edge$source, edge$target, edge$interaction, sep = "-")
             consolidated_edges[[edge_key_final]] <- directed_edge
@@ -543,7 +545,7 @@ generateJavaScriptCode <- function(config) {
         event_handlers_js <- paste(handlers, collapse = "\n    ")
     }
     
-    # Generate the complete JavaScript code with tooltip functionality
+    # Generate the complete JavaScript code with modified tooltip functionality
     js_code <- paste0("
     cytoscape.use(cytoscapeDagre);
     var cy = cytoscape({
@@ -574,11 +576,11 @@ generateJavaScriptCode <- function(config) {
     `;
     document.body.appendChild(tooltip);
     
-    // Add tooltip event handlers for edges with PTM overlap information
+    // Only show tooltip if there's actual PTM overlap information
     cy.on('mouseover', 'edge', function(evt) {
         var edge = evt.target;
         var tooltipText = edge.data('tooltip');
-        if (tooltipText && tooltipText.trim() !== '') {
+        if (tooltipText && tooltipText.trim() !== '' && tooltipText.trim() !== 'No overlapping PTM sites found') {
             tooltip.innerHTML = tooltipText;
             tooltip.style.display = 'block';
         }
