@@ -257,6 +257,11 @@ createEdgeElements <- function(edges) {
         # Get styling for this edge
         style <- getEdgeStyle(row$interaction, row$category, row$edge_type)
         
+        # Sanitize optional evidenceLink
+        evidence_link <- if ("evidenceLink" %in% names(row)) row$evidenceLink else NA_character_
+        evidence_link <- ifelse(is.na(evidence_link) | evidence_link == "NA", "", evidence_link)
+        evidence_link <- escape_js_string(evidence_link)
+        
         # Create edge data with styling information
         edge_data <- paste0("{ data: { source: '", row$source, 
                             "', target: '", row$target, 
@@ -264,6 +269,7 @@ createEdgeElements <- function(edges) {
                             "', interaction: '", row$interaction,
                             "', edge_type: '", row$edge_type,
                             "', category: '", row$category,
+                            "', evidenceLink: '", evidence_link,
                             "', color: '", style$color,
                             "', line_style: '", style$style,
                             "', arrow_shape: '", style$arrow,
@@ -273,6 +279,17 @@ createEdgeElements <- function(edges) {
     }
     
     return(edge_elements)
+}
+
+# Helper to safely embed strings into JS single-quoted literals
+escape_js_string <- function(x) {
+    if (is.null(x)) return("")
+    x <- as.character(x)
+    x <- gsub("\\\\", "\\\\\\\\", x)  # backslashes
+    x <- gsub("'", "\\\\'", x)        # single quotes
+    x <- gsub("\r", "\\\\r", x)
+    x <- gsub("\n", "\\\\n", x)
+    x
 }
 
 #' Generate Cytoscape visualization configuration
