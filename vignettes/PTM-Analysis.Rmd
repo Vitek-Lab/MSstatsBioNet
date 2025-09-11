@@ -22,14 +22,11 @@ knitr::opts_chunk$set(
 Run this code below to install MSstatsBioNet from bioconductor
 
 ```{r eval = FALSE}
-# if (!require("BiocManager", quietly = TRUE)) {
-#     install.packages("BiocManager")
-# }
-# 
-# BiocManager::install("MSstatsBioNet")
+if (!require("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
 
-install.packages("devtools")
-devtools::install_github("Vitek-Lab/MSstatsBioNet@feature-ptm", build_vignettes = TRUE)
+BiocManager::install("MSstatsBioNet")
 ```
 
 ## Dataset
@@ -38,17 +35,10 @@ We will be taking a subset of the dataset found in this [paper](https://www.bior
 
 ```{r}
 input = data.table::fread(system.file(
-    "extdata/2_egf_data.csv",
+    "extdata/garrido-2024.csv",
     package = "MSstatsBioNet"
 ))
 head(input)
-```
-
-I'm going to do some renaming of the columns such that the PTM analysis goes smoothly.  Specifically, the `GlobalProtein` column will be renamed to `Protein` and the `Protein` column will be renamed to `Site`.  In the future, you won't need to do this.
-```{r}
-library(tidyverse)
-input <- input %>%
-    rename(Site = Protein, Protein = GlobalProtein)
 ```
 
 ## ID Conversion
@@ -66,27 +56,6 @@ annotated_df = annotateProteinInfoFromIndra(input, "Uniprot")
 head(annotated_df)
 ```
 
-
-## getPathwaysFromIndra
-
-Here, we will get pathways from INDRA and rank them based on relevance.  We will see here that GAB1 is rated as the most relevant edge to track.
-
-```{r}
-pathways = getPathwaysFromIndra(annotated_df, main_target = "P00533")
-# optional: filter by phosphorylation
-pathways$edges = pathways$edges %>% filter(str_detect(interaction, "Phosphorylation"))
-```
-
-## Visualize Networks
-
-The function `visualizeNetworks` then takes the output of 
-`getSubnetworkFromIndra` and visualizes the subnetwork. The function requires
-Cytoscape desktop to be open for the visualization to work.
-
-```{r}
-visualizeNetworks(subnetwork$nodes, subnetwork$edges)
-```
-
 ## Subnetwork Query
 
 The package provides a function `getSubnetworkFromIndra` that retrieves a
@@ -94,7 +63,7 @@ subnetwork of proteins from the INDRA database based on differential abundance
 analysis results.  This function may help finding off target subnetworks.  
 
 ```{r}
-subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation", "Activation", "Inhibition"))
+subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), logfc_cutoff = 1, force_include_proteins = c("P00533_Y1110"))
 head(subnetwork$nodes)
 head(subnetwork$edges)
 ```
