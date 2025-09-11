@@ -326,7 +326,7 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
 createEdgeElements <- function(edges, nodes = NULL) {
     if (nrow(edges) == 0) return(list())
     
-    # First consolidate edges (now includes PTM overlap calculation)
+    # First consolidate edges
     consolidated_edges <- consolidateEdges(edges, nodes)
     
     edge_elements <- list()
@@ -402,7 +402,7 @@ generateCytoscapeConfig <- function(nodes, edges,
                                     event_handlers = NULL,
                                     layout_options = NULL) {
     
-    # Create elements (now passing nodes to edge creation for PTM overlap)
+    # Create elements
     node_elements <- createNodeElements(nodes, display_label_type)
     edge_elements <- createEdgeElements(edges, nodes)
     

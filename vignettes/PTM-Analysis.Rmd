@@ -68,6 +68,14 @@ head(subnetwork$nodes)
 head(subnetwork$edges)
 ```
 
+## Network Visualization
+
+Visualize the subnetwork on your browser
+
+```{r}
+previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "hgncName")
+```
+
 # Session info
 
 ```{r}
