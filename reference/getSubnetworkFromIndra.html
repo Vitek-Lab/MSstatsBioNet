@@ -19,6 +19,10 @@ a subnetwork of protein interactions from INDRA database."></head><body>
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/MSstatsBioNet.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/PTM-Analysis.html">PTM Analysis</a></li>
+  </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -142,10 +146,11 @@ as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".</p></dd>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         package or utilizing the results based on this package.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         See the LICENSE file for more details.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       id     logFC adj.pvalue hgncName</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 P05067 0.7360012 0.02030666      APP</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 O60313 0.9299641 0.01958418     OPA1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 P05090 0.5683951 0.01371505     APOD</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        id     logFC adj.pvalue hgncName   Site</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;char&gt;     &lt;num&gt;      &lt;num&gt;   &lt;char&gt; &lt;char&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: O60313 0.9299641 0.01958418     OPA1   &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: P05067 0.7360012 0.02030666      APP   &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: P05090 0.5683951 0.01371505     APOD   &lt;NA&gt;</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   source target    interaction evidenceCount paperCount</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 P05067 O60313 DecreaseAmount             5          2</span>
@@ -153,9 +158,9 @@ as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                evidenceLink</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=8140@HGNC&amp;format=html</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=612@HGNC&amp;format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   sourceCounts</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 {"reach": 2}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 {"reach": 1}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   sourceCounts site</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 {"reach": 2} &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 {"reach": 1} &lt;NA&gt;</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
