@@ -291,26 +291,6 @@
     
     nodes = nodes[nodes$id %in% c(edges$source, edges$target), ]
     nodes$hgncName = ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
-    # 
-    # # Get unique nodes from edges
-    # node_ids <- unique(c(edges$source, edges$target))
-    # 
-    # # Create base nodes dataframe
-    # nodes <- data.frame(
-    #     id = node_ids,
-    #     stringsAsFactors = FALSE
-    # )
-    # 
-    # # Add attributes from input where available
-    # nodes$logFC <- input$log2FC[match(nodes$id, input$Protein)]
-    # nodes$adj.pvalue <- input$adj.pvalue[match(nodes$id, input$Protein)]
-    # nodes$hgncName <- if ("HgncName" %in% colnames(input) && is.character(input$HgncName)) {
-    #     hgnc_value <- input$HgncName[match(nodes$id, input$Protein)]
-    #     ifelse(is.na(hgnc_value), nodes$id, hgnc_value)
-    # } else {
-    #     nodes$id
-    # }
-    # nodes$site <- input$Site[match(nodes$id, input$Protein)]
     
     return(nodes)
 }
