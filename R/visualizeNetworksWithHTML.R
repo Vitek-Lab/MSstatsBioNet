@@ -427,7 +427,7 @@ generateCytoscapeConfig <- function(nodes, edges,
         }
     }
     
-    # Define the style configuration with tooltip support
+    # Define the style configuration
     style_config <- list(
         list(
             selector = "node",
@@ -545,7 +545,7 @@ generateJavaScriptCode <- function(config) {
         event_handlers_js <- paste(handlers, collapse = "\n    ")
     }
     
-    # Generate the complete JavaScript code with modified tooltip functionality
+    # Generate the complete JavaScript code
     js_code <- paste0("
     cytoscape.use(cytoscapeDagre);
     var cy = cytoscape({
@@ -754,7 +754,7 @@ exportCytoscapeToHTML <- function(config,
     });'
     }
     
-    # Create the complete HTML content with enhanced tooltip description
+    # Create the complete HTML content
     html_content <- paste0('<!DOCTYPE html>
 <html lang="en">
 <head>
