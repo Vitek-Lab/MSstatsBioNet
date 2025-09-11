@@ -127,7 +127,6 @@ calculatePTMOverlapAggregated <- function(edges, nodes) {
         unique_overlap_sites <- unique(all_overlap_sites)
         unique_overlap_sites <- unique_overlap_sites[unique_overlap_sites != "" & !is.na(unique_overlap_sites)]
         
-        # CHANGED: Only create tooltip text if there are actual overlapping sites
         if (length(unique_overlap_sites) > 0) {
             if (length(unique_overlap_sites) == 1) {
                 overlap_info[edge_key] <- paste0("Overlapping PTM site: ", unique_overlap_sites[1])
@@ -135,7 +134,6 @@ calculatePTMOverlapAggregated <- function(edges, nodes) {
                 overlap_info[edge_key] <- paste0("Overlapping PTM sites: ", paste(unique_overlap_sites, collapse = ", "))
             }
         } else {
-            # CHANGED: Return empty string instead of "No overlapping PTM sites found"
             overlap_info[edge_key] <- ""
         }
     }
