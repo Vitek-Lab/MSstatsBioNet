@@ -146,8 +146,11 @@
     
     # Handle PTMs in Protein column
     input$Site = ifelse(grepl("_[A-Z][0-9]", input$Protein),
-                        gsub(".*?_(?=[A-Z][0-9])", "", input$Protein, perl = TRUE),
-                        NA_character_)
+                        gsub("^_", "", 
+                             gsub("^[^_]*_|_(?![A-Z][0-9])[^_]*", "", input$Protein, perl = TRUE)
+                         ),
+                        NA_character_
+                )
     if ("GlobalProtein" %in% colnames(input)) {
         input$Protein = input$GlobalProtein
     }
