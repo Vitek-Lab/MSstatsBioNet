@@ -109,7 +109,7 @@ calculatePTMOverlapAggregated <- function(edges, nodes) {
                     # Check each target node row for site matches
                     for (j in 1:nrow(target_nodes)) {
                         if (!is.na(target_nodes$Site[j])) {
-                            node_sites <- trimws(unlist(strsplit(as.character(target_nodes$Site[j]), "[,;|]")))
+                            node_sites <- trimws(unlist(strsplit(as.character(target_nodes$Site[j]), "_")))
                             
                             # Find overlapping sites for this edge-node combination
                             overlap_sites <- intersect(edge_sites, node_sites)
