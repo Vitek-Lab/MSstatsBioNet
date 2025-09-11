@@ -107,6 +107,8 @@
 #' @keywords internal
 #' @noRd
 .filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, force_include_proteins) {
+    input$Protein <- as.character(input$Protein)
+    
     # Extract exempt proteins before any filtering
     exempt_proteins <- NULL
     if (!is.null(force_include_proteins)) {
@@ -141,8 +143,6 @@
         # Remove duplicates based on Protein column, keeping first occurrence
         input <- combined_input[!duplicated(combined_input$Protein), ]
     }
-    
-    input$Protein <- as.character(input$Protein)
     
     # Handle PTMs in Protein column
     input$Site = ifelse(grepl("_[A-Z][0-9]", input$Protein),
