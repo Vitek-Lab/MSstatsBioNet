@@ -106,7 +106,11 @@ subnetwork of proteins from the INDRA database based on differential abundance
 analysis results.  
 
 ```{r}
-subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05)
+subnetwork <- getSubnetworkFromIndra(
+    annotated_df, 
+    pvalueCutoff = 0.05, 
+    statement_types = c("Complex", "IncreaseAmount", "DecreaseAmount", "Inhibition", "Activation", "Phosphorylation")
+)
 head(subnetwork$nodes)
 head(subnetwork$edges)
 ```
@@ -116,16 +120,18 @@ This package is distributed under the [Artistic-2.0](https://opensource.org/lice
 
 ## Visualize Networks
 
-The function `visualizeNetworks` then takes the output of 
+The function `previewNetworkInBrowser` then takes the output of 
 `getSubnetworkFromIndra` and visualizes the subnetwork. The function requires
-Cytoscape desktop to be open for the visualization to work.
+an internet browser to view the subnetwork
 
 ```{r}
-visualizeNetworks(subnetwork$nodes, subnetwork$edges)
+previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "hgncName")
 ```
-In the network diagram displayed in Cytoscape, you should see two arrows
-connecting two nodes, P16050 and P84243.  These arrows represent the 
-interactions between these two proteins, notably activation and phosphorylation.
+
+In the network diagram displayed using CytoscapeJS, you should see three arrows
+connecting two nodes, APP and APOD.  These arrows represent the 
+interactions between these two proteins, notably Activation, IncreaseAmount
+(e.g. via transcriptional regulation), and forming a protein complex.
 
 # Session info
 

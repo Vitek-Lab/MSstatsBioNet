@@ -1,8 +1,3 @@
-# =============================================================================
-# CYTOSCAPE VISUALIZATION PACKAGE FUNCTIONS
-# These functions should go in your separate package
-# =============================================================================
-
 #' Helper function to map logFC values to colors
 #' @param logFC_values Numeric vector of log fold change values
 #' @importFrom grDevices colorRamp rgb
@@ -79,14 +74,88 @@ getRelationshipProperties <- function() {
     )
 }
 
+#' Calculate PTM site overlap between edge targets and nodes with aggregation
+#' @param edges Data frame with edge information including 'target' and 'site' columns
+#' @param nodes Data frame with node information including 'id' and 'Site' columns
+#' @return Vector of overlap descriptions for each unique edge (after consolidation)
+#' @noRd
+calculatePTMOverlapAggregated <- function(edges, nodes) {
+    if (nrow(edges) == 0) return(character(0))
+    
+    # Group edges by source-target-interaction to match consolidation logic
+    edges$edge_key <- paste(edges$source, edges$target, edges$interaction, sep = "-")
+    unique_edges <- unique(edges$edge_key)
+    
+    overlap_info <- character(length(unique_edges))
+    names(overlap_info) <- unique_edges
+    
+    for (edge_key in unique_edges) {
+        # Get all edges with this source-target-interaction combination
+        matching_edges <- edges[edges$edge_key == edge_key, ]
+        all_overlap_sites <- c()
+        
+        # Process each matching edge to find PTM overlaps
+        for (i in 1:nrow(matching_edges)) {
+            edge <- matching_edges[i, ]
+            
+            # Check if edge has target and site information
+            if (!is.na(edge$target) && "site" %in% names(edge) && !is.na(edge$site)) {
+                # Find matching nodes with the same target ID
+                target_nodes <- nodes[nodes$id == edge$target, ]
+                
+                if (nrow(target_nodes) > 0 && "Site" %in% names(target_nodes)) {
+                    edge_sites <- trimws(unlist(strsplit(as.character(edge$site), "[,;|]")))
+                    
+                    # Check each target node row for site matches
+                    for (j in 1:nrow(target_nodes)) {
+                        if (!is.na(target_nodes$Site[j])) {
+                            node_sites <- trimws(unlist(strsplit(as.character(target_nodes$Site[j]), "_")))
+                            
+                            # Find overlapping sites for this edge-node combination
+                            overlap_sites <- intersect(edge_sites, node_sites)
+                            overlap_sites <- overlap_sites[overlap_sites != "" & !is.na(overlap_sites)]
+                            
+                            # Add to the aggregate list
+                            all_overlap_sites <- c(all_overlap_sites, overlap_sites)
+                        }
+                    }
+                }
+            }
+        }
+        
+        # Remove duplicates and create tooltip text for this consolidated edge
+        unique_overlap_sites <- unique(all_overlap_sites)
+        unique_overlap_sites <- unique_overlap_sites[unique_overlap_sites != "" & !is.na(unique_overlap_sites)]
+        
+        if (length(unique_overlap_sites) > 0) {
+            if (length(unique_overlap_sites) == 1) {
+                overlap_info[edge_key] <- paste0("Overlapping PTM site: ", unique_overlap_sites[1])
+            } else {
+                overlap_info[edge_key] <- paste0("Overlapping PTM sites: ", paste(unique_overlap_sites, collapse = ", "))
+            }
+        } else {
+            overlap_info[edge_key] <- ""
+        }
+    }
+    
+    return(overlap_info)
+}
+
 # Consolidate bidirectional edges based on relationship type
-consolidateEdges <- function(edges) {
+consolidateEdges <- function(edges, nodes = NULL) {
     if (nrow(edges) == 0) return(edges)
     
     required_cols <- c("source", "target", "interaction")
     missing_cols <- setdiff(required_cols, names(edges))
     if (length(missing_cols) > 0) {
         stop("Missing required columns: ", paste(missing_cols, collapse = ", "))
+    }
+    
+    # Calculate aggregated PTM overlap information if nodes are provided
+    ptm_overlap_map <- if (!is.null(nodes)) {
+        calculatePTMOverlapAggregated(edges, nodes)
+    } else {
+        NULL
     }
     
     relationship_props <- getRelationshipProperties()
@@ -96,7 +165,6 @@ consolidateEdges <- function(edges) {
     for (i in 1:nrow(edges)) {
         edge <- edges[i, ]
         pair_key <- paste(sort(c(edge$source, edge$target)), edge$interaction, collapse = "-")
-        reverse_key <- paste(sort(c(edge$source, edge$target), decreasing = TRUE), edge$interaction, sep = "-")
         
         # Skip if we've already processed this pair
         if (pair_key %in% processed_pairs) next
@@ -118,6 +186,14 @@ consolidateEdges <- function(edges) {
         
         consolidation_type <- relationship_props[[category]]$consolidate
         
+        # Get PTM overlap info for this edge combination
+        edge_key <- paste(edge$source, edge$target, edge$interaction, sep = "-")
+        ptm_overlap_text <- if (!is.null(ptm_overlap_map) && edge_key %in% names(ptm_overlap_map)) {
+            ptm_overlap_map[[edge_key]]
+        } else {
+            ""
+        }
+        
         if (nrow(reverse_edges) > 0 && consolidation_type %in% c("undirected", "bidirectional")) {
             # Create consolidated edge
             if (consolidation_type == "undirected") {
@@ -128,6 +204,7 @@ consolidateEdges <- function(edges) {
                     interaction = edge$interaction,
                     edge_type = "undirected",
                     category = category,
+                    ptm_overlap = ptm_overlap_text,
                     stringsAsFactors = FALSE
                 )
             } else {
@@ -138,6 +215,7 @@ consolidateEdges <- function(edges) {
                     interaction = paste(edge$interaction, "(bidirectional)"),
                     edge_type = "bidirectional", 
                     category = category,
+                    ptm_overlap = ptm_overlap_text,
                     stringsAsFactors = FALSE
                 )
             }
@@ -148,8 +226,8 @@ consolidateEdges <- function(edges) {
                 consolidated_edge[[col]] <- edge[[col]]
             }
             
-            edge_key <- paste(edge$source, edge$target, consolidated_edge$interaction, sep = "-")
-            consolidated_edges[[edge_key]] <- consolidated_edge
+            edge_key_final <- paste(edge$source, edge$target, consolidated_edge$interaction, sep = "-")
+            consolidated_edges[[edge_key_final]] <- consolidated_edge
             
             # Mark both directions as processed
             processed_pairs <- c(processed_pairs, pair_key)
@@ -159,9 +237,10 @@ consolidateEdges <- function(edges) {
             directed_edge <- edge
             directed_edge$edge_type <- "directed"
             directed_edge$category <- category
+            directed_edge$ptm_overlap = ptm_overlap_text
             
-            edge_key <- paste(edge$source, edge$target, edge$interaction, sep = "-")
-            consolidated_edges[[edge_key]] <- directed_edge
+            edge_key_final <- paste(edge$source, edge$target, edge$interaction, sep = "-")
+            consolidated_edges[[edge_key_final]] <- directed_edge
         }
     }
     
@@ -242,11 +321,11 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
     })
 }
 
-createEdgeElements <- function(edges) {
+createEdgeElements <- function(edges, nodes = NULL) {
     if (nrow(edges) == 0) return(list())
     
     # First consolidate edges
-    consolidated_edges <- consolidateEdges(edges)
+    consolidated_edges <- consolidateEdges(edges, nodes)
     
     edge_elements <- list()
     
@@ -262,7 +341,10 @@ createEdgeElements <- function(edges) {
         evidence_link <- ifelse(is.na(evidence_link) | evidence_link == "NA", "", evidence_link)
         evidence_link <- escape_js_string(evidence_link)
         
-        # Create edge data with styling information
+        # Escape quotes in tooltip text for JavaScript safety
+        tooltip_text <- gsub("'", "\\\\'", row$ptm_overlap)
+        
+        # Create edge data with styling information and PTM overlap tooltip
         edge_data <- paste0("{ data: { source: '", row$source, 
                             "', target: '", row$target, 
                             "', id: '", edge_key,
@@ -273,7 +355,8 @@ createEdgeElements <- function(edges) {
                             "', color: '", style$color,
                             "', line_style: '", style$style,
                             "', arrow_shape: '", style$arrow,
-                            "', width: ", style$width, " } }")
+                            "', width: ", style$width,
+                            ", tooltip: '", tooltip_text, "' } }")
         
         edge_elements[[edge_key]] <- edge_data
     }
@@ -319,7 +402,7 @@ generateCytoscapeConfig <- function(nodes, edges,
     
     # Create elements
     node_elements <- createNodeElements(nodes, display_label_type)
-    edge_elements <- createEdgeElements(edges)
+    edge_elements <- createEdgeElements(edges, nodes)
     
     # Default layout options
     default_layout <- list(
@@ -342,7 +425,7 @@ generateCytoscapeConfig <- function(nodes, edges,
         }
     }
     
-    # Define the style configuration (same as before)
+    # Define the style configuration
     style_config <- list(
         list(
             selector = "node",
@@ -468,6 +551,48 @@ generateJavaScriptCode <- function(config) {
         elements: [", elements_js, "],
         style: ", style_js, ",
         layout: ", layout_js, "
+    });
+    
+    // Create tooltip element
+    var tooltip = document.createElement('div');
+    tooltip.style.cssText = `
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-family: Arial, sans-serif;
+        white-space: nowrap;
+        pointer-events: none;
+        z-index: 9999;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        display: none;
+        max-width: 300px;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    `;
+    document.body.appendChild(tooltip);
+    
+    // Only show tooltip if there's actual PTM overlap information
+    cy.on('mouseover', 'edge', function(evt) {
+        var edge = evt.target;
+        var tooltipText = edge.data('tooltip');
+        if (tooltipText && tooltipText.trim() !== '' && tooltipText.trim() !== 'No overlapping PTM sites found') {
+            tooltip.innerHTML = tooltipText;
+            tooltip.style.display = 'block';
+        }
+    });
+    
+    cy.on('mousemove', 'edge', function(evt) {
+        if (tooltip.style.display === 'block') {
+            tooltip.style.left = evt.originalEvent.pageX + 10 + 'px';
+            tooltip.style.top = evt.originalEvent.pageY - 30 + 'px';
+        }
+    });
+    
+    cy.on('mouseout', 'edge', function(evt) {
+        tooltip.style.display = 'none';
     });
     
     ", event_handlers_js)
@@ -665,7 +790,7 @@ exportCytoscapeToHTML <- function(config,
         }
         
         #'
-        , config$container_id, ' {
+                           , config$container_id, ' {
             width: ', width, ';
             height: ', height, ';
             border: 1px solid #ddd;
@@ -768,6 +893,7 @@ exportCytoscapeToHTML <- function(config,
             <strong>Instructions:</strong> 
             Click and drag to pan the network
             | Use mouse wheel to zoom in/out
+            | <strong>Hover over edges to see PTM site overlap information</strong>
             | Click on nodes or edges to select them
             ', if(include_controls) '| Use the buttons above for common navigation actions' else '', '
         </div>
@@ -845,6 +971,10 @@ exportCytoscapeToHTML <- function(config,
                         <div class="edge-legend-line" style="background-color: #8B4513;"></div>
                         <span>Complex</span>
                     </div>
+                </div>
+                <div style="margin-top: 15px; padding: 8px; background-color: #e3f2fd; border-radius: 4px; font-size: 10px;">
+                    <strong>PTM Site Info:</strong><br>
+                    Hover over edges to see overlapping PTM sites between the edge target and node data
                 </div>
             `;
             
@@ -934,7 +1064,7 @@ exportNetworkToHTML <- function(nodes, edges,
 previewNetworkInBrowser <- function(nodes, edges, 
                                     displayLabelType = "id",
                                     ...) {
-
+    
     # Generate configuration
     config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType)
     

@@ -10,7 +10,8 @@
     if (!"HgncId" %in% colnames(input)) {
         stop("Invalid Input Error: Input must contain a column named 'HgncId'.")
     }
-    num_proteins = nrow(input) + ifelse(!is.null(force_include_other), length(force_include_other), 0)
+    num_proteins = length(unique(input$HgncId)) + 
+        ifelse(!is.null(force_include_other), length(force_include_other), 0)
     if (num_proteins >= 400) {
         stop("Invalid Input Error: INDRA query must contain less than 400 proteins.  Consider lowering your p-value cutoff")
     }
@@ -41,6 +42,7 @@
     indraCogexUrl <-
         "https://discovery.indra.bio/api/indra_subnetwork_relations"
 
+    hgncIds = unique(hgncIds)
     groundings <- lapply(hgncIds, function(x) list("HGNC", x))
     if (!is.null(force_include_other)) {
         groundings <- c(groundings, lapply(force_include_other, function(x) {
@@ -105,6 +107,8 @@
 #' @keywords internal
 #' @noRd
 .filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, force_include_proteins) {
+    input$Protein <- as.character(input$Protein)
+    
     # Extract exempt proteins before any filtering
     exempt_proteins <- NULL
     if (!is.null(force_include_proteins)) {
@@ -140,7 +144,16 @@
         input <- combined_input[!duplicated(combined_input$Protein), ]
     }
     
-    input$Protein <- as.character(input$Protein)
+    # Handle PTMs in Protein column
+    input$Site = ifelse(grepl("_[A-Z][0-9]", input$Protein),
+                        gsub("^_", "", 
+                             gsub("^[^_]*_|_(?![A-Z][0-9])[^_]*", "", input$Protein, perl = TRUE)
+                         ),
+                        NA_character_
+                )
+    if ("GlobalProtein" %in% colnames(input)) {
+        input$Protein = input$GlobalProtein
+    }
     return(input)
 }
 #' Add additional metadata to an edge
@@ -159,17 +172,19 @@
     
     # Convert back to uniprot IDs
     matched_rows_source <- input[which(input$HgncId == edge$source_id), ]
-    if (nrow(matched_rows_source) != 1) {
+    uniprot_ids_source <- unique(matched_rows_source$Protein)
+    if (length(uniprot_ids_source) != 1) {
         edge$source_uniprot_id <- edge$source_name
     } else {
-        edge$source_uniprot_id <- matched_rows_source$Protein
+        edge$source_uniprot_id <- uniprot_ids_source
     }
     
     matched_rows_target <- input[which(input$HgncId == edge$target_id), ]
-    if (nrow(matched_rows_target) != 1) {
+    uniprot_ids_target = unique(matched_rows_target$Protein)
+    if (length(uniprot_ids_target) != 1) {
         edge$target_uniprot_id <- edge$target_name
     } else {
-        edge$target_uniprot_id <- matched_rows_target$Protein
+        edge$target_uniprot_id <- uniprot_ids_target
     }
     
     return(edge)
@@ -179,6 +194,7 @@
 #' Collapse duplicate INDRA statements into a mapping of edge to metadata
 #' @param res INDRA response
 #' @param input filtered groupComparison result
+#' @importFrom jsonlite fromJSON
 #' @importFrom r2r hashmap keys
 #' @return processed edge to metadata mapping
 #' @keywords internal
@@ -188,6 +204,13 @@
 
     for (edge in res) {
         key <- paste(edge$source_id, edge$target_id, edge$data$stmt_type, sep = "_")
+        json_object <- fromJSON(edge$data$stmt_json)
+        if (!is.null(json_object$residue) && !is.null(json_object$position)) {
+            edge$site = paste0(json_object$residue, json_object$position)
+            key <- paste(key, edge$site, sep = "_")
+        } else {
+            edge$site = NA_character_
+        }
         if (key %in% keys(edgeToMetadataMapping)) {
             edgeToMetadataMapping[[key]]$data$evidence_count <-
                 edgeToMetadataMapping[[key]]$data$evidence_count +
@@ -209,6 +232,7 @@
 #' @param input filtered groupComparison result
 #' @param protein_level_data output of dataProcess
 #' @importFrom r2r query keys
+#' @importFrom jsonlite fromJSON
 #' @return edge data.frame
 #' @keywords internal
 #' @noRd
@@ -236,6 +260,9 @@
         sourceCounts = vapply(keys(res), function(x) {
             query(res, x)$data$source_counts
         }, ""),
+        site = vapply(keys(res), function(x) {
+            query(res, x)$site
+        }, ""),
         stringsAsFactors = FALSE
     )
     # add correlation - maybe create a separate function
@@ -262,24 +289,11 @@
 #' @keywords internal
 #' @noRd
 .constructNodesDataFrame <- function(input, edges) {
-    # Get unique nodes from edges
-    node_ids <- unique(c(edges$source, edges$target))
+    nodes = input[, c("Protein", "log2FC", "adj.pvalue", "HgncName", "Site")]
+    colnames(nodes) = c("id", "logFC", "adj.pvalue", "hgncName", "Site")
     
-    # Create base nodes dataframe
-    nodes <- data.frame(
-        id = node_ids,
-        stringsAsFactors = FALSE
-    )
-    
-    # Add attributes from input where available
-    nodes$logFC <- input$log2FC[match(nodes$id, input$Protein)]
-    nodes$adj.pvalue <- input$adj.pvalue[match(nodes$id, input$Protein)]
-    nodes$hgncName <- if ("HgncName" %in% colnames(input) && is.character(input$HgncName)) {
-        hgnc_value <- input$HgncName[match(nodes$id, input$Protein)]
-        ifelse(is.na(hgnc_value), nodes$id, hgnc_value)
-    } else {
-        nodes$id
-    }
+    nodes = nodes[nodes$id %in% c(edges$source, edges$target), ]
+    nodes$hgncName = ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
     
     return(nodes)
 }
