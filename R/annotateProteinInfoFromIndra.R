@@ -56,8 +56,9 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 #' @return A data frame with populated Uniprot IDs.
 .populateUniprotIdsInDataFrame <- function(df, proteinIdType) {
         if ("GlobalProtein" %in% colnames(df)) {
-            protein_ids = unique(df$GlobalProtein)
+            protein_ids = unique(as.character(df$GlobalProtein))
         } else {
+            df$Protein = as.character(df$Protein)
             df$GlobalProtein = ifelse(grepl("_[A-Z][0-9]", df$Protein),
                                  gsub("_[A-Z][0-9].*", "", df$Protein, perl = TRUE),
                                  df$Protein)
