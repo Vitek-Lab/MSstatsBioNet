@@ -245,6 +245,9 @@
         target = vapply(keys(res), function(x) {
             query(res, x)$target_uniprot_id
         }, ""),
+        site = vapply(keys(res), function(x) {
+            query(res, x)$site
+        }, ""),
         interaction = vapply(keys(res), function(x) {
             query(res, x)$data$stmt_type
         }, ""),
@@ -259,9 +262,6 @@
         }, ""),
         sourceCounts = vapply(keys(res), function(x) {
             query(res, x)$data$source_counts
-        }, ""),
-        site = vapply(keys(res), function(x) {
-            query(res, x)$site
         }, ""),
         stringsAsFactors = FALSE
     )
@@ -289,8 +289,8 @@
 #' @keywords internal
 #' @noRd
 .constructNodesDataFrame <- function(input, edges) {
-    nodes = input[, c("Protein", "log2FC", "adj.pvalue", "HgncName", "Site")]
-    colnames(nodes) = c("id", "logFC", "adj.pvalue", "hgncName", "Site")
+    nodes = input[, c("Protein", "HgncName", "Site", "log2FC", "adj.pvalue")]
+    colnames(nodes) = c("id", "hgncName", "Site", "logFC", "adj.pvalue")
     
     nodes = nodes[nodes$id %in% c(edges$source, edges$target), ]
     nodes$hgncName = ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
