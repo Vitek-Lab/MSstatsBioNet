@@ -808,7 +808,7 @@ exportCytoscapeToHTML <- function(config,
         .legend-title {
             font-weight: bold;
             margin-bottom: 10px;
-            font-size: 14px;
+            font-size: 16px;
             color: #333;
         }
         
@@ -841,7 +841,7 @@ exportCytoscapeToHTML <- function(config,
             flex-direction: column;
             justify-content: space-between;
             height: 120px;
-            font-size: 11px;
+            font-size: 14px;
         }
         
         .edge-legend {
@@ -852,7 +852,7 @@ exportCytoscapeToHTML <- function(config,
             display: flex;
             align-items: center;
             margin-bottom: 6px;
-            font-size: 11px;
+            font-size: 14px;
         }
         
         .edge-legend-line {
@@ -929,7 +929,7 @@ exportCytoscapeToHTML <- function(config,
                             <div>Downregulated</div>
                         </div>
                     </div>
-                    <div style="margin-top: 10px; font-size: 10px; color: #666;">
+                    <div style="margin-top: 10px; font-size: 14px; color: #666;">
                         Log Fold Change values
                     </div>
                 `;
