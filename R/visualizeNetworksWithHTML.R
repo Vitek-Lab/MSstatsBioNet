@@ -943,40 +943,48 @@ exportCytoscapeToHTML <- function(config,
                 `;
             }
             
-            // Add edge legend
-            legendHTML += `
-                <div class="edge-legend">
-                    <div class="legend-title">Edge Types</div>
-                    <div class="edge-legend-item">
-                        <div class="edge-legend-line" style="background-color: #44AA44;"></div>
-                        <span>Activation</span>
+            const edges = cy.edges();
+            
+            const edgeTypeConfigs = [
+                { type: "Activation", color: "#44AA44", label: "Activation", style: "" },
+                { type: "Inhibition", color: "#FF4444", label: "Inhibition", style: "" },
+                { type: "IncreaseAmount", color: "#4488FF", label: "Increase Amount", style: "" },
+                { type: "DecreaseAmount", color: "#FF8844", label: "Decrease Amount", style: "" },
+                { type: "Phosphorylation", color: "#9932CC", label: "Phosphorylation", style: "border-style: dashed; border-width: 1px; height: 0px; border-top-width: 2px;" },
+                { type: "Complex", color: "#8B4513", label: "Complex", style: "" }
+            ];
+            
+            const existingEdgeTypes = new Set();
+            edges.forEach(edge => {
+                const edgeType = edge.data("interaction");
+                if (edgeType) {
+                    existingEdgeTypes.add(edgeType);
+                }
+            });
+            
+            let edgeLegendItems = "";
+            edgeTypeConfigs.forEach(config => {
+                if (existingEdgeTypes.has(config.type)) {
+                    const styleAttr = config.style ? `style="background-color: ${config.color}; ${config.style}"` : `style="background-color: ${config.color};"`;
+                    edgeLegendItems += `
+                                <div class="edge-legend-item">
+                                    <div class="edge-legend-line" ${styleAttr}></div>
+                                    <span>${config.label}</span>
+                                </div>`;
+                }
+            });
+            
+            if (edgeLegendItems) {
+                legendHTML += `
+                    <div class="edge-legend">
+                        <div class="legend-title">Edge Types</div>${edgeLegendItems}
                     </div>
-                    <div class="edge-legend-item">
-                        <div class="edge-legend-line" style="background-color: #FF4444;"></div>
-                        <span>Inhibition</span>
+                    <div style="margin-top: 15px; padding: 8px; background-color: #e3f2fd; border-radius: 4px; font-size: 10px;">
+                        <strong>PTM Site Info:</strong><br>
+                        Hover over edges to see overlapping PTM sites between the edge target and node data
                     </div>
-                    <div class="edge-legend-item">
-                        <div class="edge-legend-line" style="background-color: #4488FF;"></div>
-                        <span>Increase Amount</span>
-                    </div>
-                    <div class="edge-legend-item">
-                        <div class="edge-legend-line" style="background-color: #FF8844;"></div>
-                        <span>Decrease Amount</span>
-                    </div>
-                    <div class="edge-legend-item">
-                        <div class="edge-legend-line" style="background-color: #9932CC; border-style: dashed; border-width: 1px; height: 0px; border-top-width: 2px;"></div>
-                        <span>Phosphorylation</span>
-                    </div>
-                    <div class="edge-legend-item">
-                        <div class="edge-legend-line" style="background-color: #8B4513;"></div>
-                        <span>Complex</span>
-                    </div>
-                </div>
-                <div style="margin-top: 15px; padding: 8px; background-color: #e3f2fd; border-radius: 4px; font-size: 10px;">
-                    <strong>PTM Site Info:</strong><br>
-                    Hover over edges to see overlapping PTM sites between the edge target and node data
-                </div>
-            `;
+                `;
+            }
             
             legendDiv.innerHTML = legendHTML;
         }
