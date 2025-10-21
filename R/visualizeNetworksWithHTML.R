@@ -435,7 +435,7 @@ generateCytoscapeConfig <- function(nodes, edges,
                 width = "function(ele) { var label = ele.data('label') || ''; var labelLength = label.length; return Math.max(60, Math.min(labelLength * 8 + 20, 150)); }",
                 height = "function(ele) { var label = ele.data('label') || ''; var labelLength = label.length; return Math.max(40, Math.min(labelLength * 2 + 30, 60)); }",
                 shape = "round-rectangle",
-                `font-size` = "11px",
+                `font-size` = "15px",
                 `font-weight` = "bold",
                 color = "#000",
                 `text-valign` = "center",
@@ -462,7 +462,7 @@ generateCytoscapeConfig <- function(nodes, edges,
                 `edge-text-rotation` = "autorotate",
                 `text-margin-y` = -12,
                 `text-halign` = "center",
-                `font-size` = "12px",
+                `font-size` = "16px",
                 `font-weight` = "bold",
                 color = "data(color)",
                 `text-background-color` = "#ffffff",
@@ -703,6 +703,7 @@ exportCytoscapeToHTML <- function(config,
       <button id="zoom-in-btn" class="control-btn">Zoom In</button>
       <button id="zoom-out-btn" class="control-btn">Zoom Out</button>
       <button id="reset-btn" class="control-btn">Reset View</button>
+      <button id="export-png-btn" class="control-btn export-btn">Export as PNG</button>
     </div>'
         
         controls_css <- '
@@ -720,6 +721,19 @@ exportCytoscapeToHTML <- function(config,
     }
     .control-btn:active {
       background-color: #dee2e6;
+    }
+    .export-btn {
+      background-color: #28a745;
+      color: white;
+      border-color: #28a745;
+      font-weight: bold;
+    }
+    .export-btn:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+    .export-btn:active {
+      background-color: #1e7e34;
     }'
         
         controls_js <- '
@@ -749,6 +763,55 @@ exportCytoscapeToHTML <- function(config,
     document.getElementById("reset-btn").addEventListener("click", function() {
       cy.reset();
       cy.fit();
+    });
+    
+    // Export PNG functionality
+    document.getElementById("export-png-btn").addEventListener("click", function() {
+      const exportBtn = this;
+      const originalText = exportBtn.textContent;
+      
+      // Disable button and show loading state
+      exportBtn.disabled = true;
+      exportBtn.textContent = "Exporting...";
+      
+      try {
+        // Generate high-resolution PNG (scale factor of 8 for high quality)
+        const png64 = cy.png({
+          output: "base64uri",
+          bg: "white",
+          full: true,  // Export the entire graph
+          scale: 10,    // 8x resolution for publication quality
+          maxWidth: 10000,  // Maximum width in pixels
+          maxHeight: 10000  // Maximum height in pixels
+        });
+        
+        // Create download link
+        const link = document.createElement("a");
+        link.href = png64;
+        link.download = "network_visualization_" + new Date().getTime() + ".png";
+        
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Show success feedback
+        exportBtn.textContent = "✓ Exported!";
+        exportBtn.style.backgroundColor = "#28a745";
+        
+        // Reset button after 2 seconds
+        setTimeout(function() {
+          exportBtn.disabled = false;
+          exportBtn.textContent = originalText;
+          exportBtn.style.backgroundColor = "";
+        }, 2000);
+        
+      } catch (error) {
+        console.error("Error exporting PNG:", error);
+        alert("Error exporting PNG: " + error.message);
+        exportBtn.disabled = false;
+        exportBtn.textContent = originalText;
+      }
     });'
     }
     
@@ -896,6 +959,7 @@ exportCytoscapeToHTML <- function(config,
             | <strong>Hover over edges to see PTM site overlap information</strong>
             | Click on nodes or edges to select them
             ', if(include_controls) '| Use the buttons above for common navigation actions' else '', '
+            ', if(include_controls) '| <strong>Export as PNG to save the current view in high resolution</strong>' else '', '
         </div>
     </div>
     
