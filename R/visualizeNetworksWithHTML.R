@@ -398,7 +398,8 @@ generateCytoscapeConfig <- function(nodes, edges,
                                     display_label_type = "id",
                                     container_id = "network-cy",
                                     event_handlers = NULL,
-                                    layout_options = NULL) {
+                                    layout_options = NULL,
+                                    node_font_size = 12) {
     
     # Create elements
     node_elements <- createNodeElements(nodes, display_label_type)
@@ -435,7 +436,7 @@ generateCytoscapeConfig <- function(nodes, edges,
                 width = "function(ele) { var label = ele.data('label') || ''; var labelLength = label.length; return Math.max(60, Math.min(labelLength * 8 + 20, 150)); }",
                 height = "function(ele) { var label = ele.data('label') || ''; var labelLength = label.length; return Math.max(40, Math.min(labelLength * 2 + 30, 60)); }",
                 shape = "round-rectangle",
-                `font-size` = "12px",
+                `font-size` = paste0(node_font_size, "px"),
                 `font-weight` = "bold",
                 color = "#000",
                 `text-valign` = "center",
@@ -1115,10 +1116,11 @@ exportCytoscapeToHTML <- function(config,
 exportNetworkToHTML <- function(nodes, edges, 
                                 filename = "network_visualization.html",
                                 displayLabelType = "id",
+                                nodeFontSize = 12,
                                 ...) {
     
     # Generate configuration
-    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType)
+    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType, node_font_size = nodeFontSize)
     
     # Export to HTML
     exportCytoscapeToHTML(config, filename, ...)
@@ -1135,10 +1137,11 @@ exportNetworkToHTML <- function(nodes, edges,
 #' @param ... Additional arguments passed to exportCytoscapeToHTML()
 previewNetworkInBrowser <- function(nodes, edges, 
                                     displayLabelType = "id",
+                                    nodeFontSize = 12,
                                     ...) {
     
     # Generate configuration
-    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType)
+    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType, node_font_size = nodeFontSize)
     
     # Create temporary filename
     temp_file <- tempfile(fileext = ".html")
