@@ -1023,7 +1023,8 @@ exportCytoscapeToHTML <- function(config,
             edges.forEach(edge => {
                 const edgeType = edge.data("interaction");
                 if (edgeType) {
-                    existingEdgeTypes.add(edgeType);
+                    const normalizedType = edgeType.replace(/ \((?:bi)?directional\)$/, "");
+                    existingEdgeTypes.add(normalizedType);
                 }
             });
             
