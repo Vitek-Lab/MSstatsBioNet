@@ -304,7 +304,7 @@
             adj.pvalue = 1,
             stringsAsFactors = FALSE
         )
-        nodes <- rbind(nodes, missing_nodes)
+        nodes <- rbind(nodes, extra_nodes)
     }
     nodes$hgncName = ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
     
