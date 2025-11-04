@@ -67,9 +67,9 @@
 }
 
 #' @importFrom httr GET status_code content
-.get_incorrect_curation_count <- function(stmt_hash) {
+.get_incorrect_curation_count <- function(stmt_hash, api_key) {
     stmt_hash_char <- as.character(stmt_hash)
-    url <- paste0("https://db.indra.bio/curation/list/", stmt_hash_char)
+    url <- paste0("https://db.indra.bio/curation/list/", stmt_hash_char, "?api_key=", api_key)
 
     tryCatch({
         response <- GET(url)
@@ -100,12 +100,13 @@
 #' @param sources_filter list of sources to filter by. Default is NULL, i.e. no filter
 #' @param filter_by_curation logical, whether to filter out statements that
 #' have been curated as incorrect in INDRA.  Default is FALSE.
+#' @param api_key string of INDRA API key for accessing curated statements.
 #' @return filtered list of INDRA statements
 #' @importFrom jsonlite fromJSON
 #' @keywords internal
 #' @noRd
 .filterIndraResponse <- function(res, interaction_types, evidence_count_cutoff, 
-                                 sources_filter = NULL, filter_by_curation = FALSE) {
+                                 sources_filter = NULL, filter_by_curation = FALSE, api_key = "") {
     if (!is.null(interaction_types)) {
         res = Filter(
             function(statement) statement$data$stmt_type %in% interaction_types, 
@@ -124,7 +125,7 @@
     if (filter_by_curation) {
         for (i in seq_along(res)) {
             stmt_hash <- res[[i]]$data$stmt_hash
-            incorrect_count <- .get_incorrect_curation_count(stmt_hash)
+            incorrect_count <- .get_incorrect_curation_count(stmt_hash, api_key)
             res[[i]]$data$evidence_count <- res[[i]]$data$evidence_count - incorrect_count
             Sys.sleep(0.1)
         }
@@ -362,17 +363,13 @@
 #' @noRd
 .filterEdgesDataFrame <- function(edges, 
                                   paper_count_cutoff,
-                                  correlation_cutoff,
-                                  filter_by_curation) {
+                                  correlation_cutoff) {
     edges <- edges[which(edges$paperCount >= paper_count_cutoff), ]
     if ("correlation" %in% colnames(edges)) {
         edges <- edges[which(abs(edges$correlation) >= correlation_cutoff), ]
     }
     if (nrow(edges) == 0) {
         stop("No edges remain after applying filters. Consider relaxing filters")
-    }
-    if (filter_by_curation) {
-        # count number of evidences that are curated as incorrect and subtract number from evidence count
     }
     return(edges)
 }

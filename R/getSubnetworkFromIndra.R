@@ -32,6 +32,7 @@
 #' as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".
 #' @param filter_by_curation logical, whether to filter out statements that
 #' have been curated as incorrect in INDRA.  Default is FALSE.
+#' @param api_key string of INDRA API key for accessing curated statements.
 #'
 #' @return list of 2 data.frames, nodes and edges
 #'
@@ -56,11 +57,12 @@ getSubnetworkFromIndra <- function(input,
                                    sources_filter = NULL,
                                    logfc_cutoff = NULL,
                                    force_include_other = NULL, 
-                                   filter_by_curation = FALSE) {
+                                   filter_by_curation = FALSE, 
+                                   api_key = "") {
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
     res <- .callIndraCogexApi(input$HgncId, force_include_other)
-    res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter, filter_by_curation)
+    res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter, filter_by_curation, api_key)
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)
     edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)
     nodes <- .constructNodesDataFrame(input, edges)

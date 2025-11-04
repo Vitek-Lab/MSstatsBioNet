@@ -15,7 +15,8 @@ getSubnetworkFromIndra(
   sources_filter = NULL,
   logfc_cutoff = NULL,
   force_include_other = NULL,
-  filter_by_curation = FALSE
+  filter_by_curation = FALSE,
+  api_key = ""
 )
 }
 \arguments{
@@ -58,6 +59,8 @@ as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".}
 
 \item{filter_by_curation}{logical, whether to filter out statements that
 have been curated as incorrect in INDRA.  Default is FALSE.}
+
+\item{api_key}{string of INDRA API key for accessing curated statements.}
 }
 \value{
 list of 2 data.frames, nodes and edges
