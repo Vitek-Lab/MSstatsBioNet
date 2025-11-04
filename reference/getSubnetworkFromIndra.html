@@ -56,7 +56,9 @@ a subnetwork of protein interactions from INDRA database.</p>
 <span>  correlation_cutoff <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>  sources_filter <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  logfc_cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  force_include_other <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  force_include_other <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  filter_by_curation <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  api_key <span class="op">=</span> <span class="st">""</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -119,6 +121,15 @@ is NULL, i.e. no logFC filtering.</p></dd>
 <dd><p>character vector of identifiers to include in the
 network, regardless if those ids are in the input data. Should be formatted
 as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".</p></dd>
+
+
+<dt id="arg-filter-by-curation">filter_by_curation<a class="anchor" aria-label="anchor" href="#arg-filter-by-curation"></a></dt>
+<dd><p>logical, whether to filter out statements that
+have been curated as incorrect in INDRA.  Default is FALSE.</p></dd>
+
+
+<dt id="arg-api-key">api_key<a class="anchor" aria-label="anchor" href="#arg-api-key"></a></dt>
+<dd><p>string of INDRA API key for accessing curated statements.</p></dd>
 
 </dl></div>
     <div class="section level2">
