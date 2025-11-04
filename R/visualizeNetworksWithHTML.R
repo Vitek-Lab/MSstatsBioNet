@@ -781,7 +781,7 @@ exportCytoscapeToHTML <- function(config,
           output: "base64uri",
           bg: "white",
           full: true,  // Export the entire graph
-          scale: 10,    // 8x resolution for publication quality
+          scale: 10,    // 10x resolution for publication quality
           maxWidth: 10000,  // Maximum width in pixels
           maxHeight: 10000  // Maximum height in pixels
         });
@@ -1023,7 +1023,7 @@ exportCytoscapeToHTML <- function(config,
             edges.forEach(edge => {
                 const edgeType = edge.data("interaction");
                 if (edgeType) {
-                    const normalizedType = edgeType.replace(/ \((?:bi)?directional\)$/, "");
+                    const normalizedType = edgeType.replace(" (bidirectional)", "");
                     existingEdgeTypes.add(normalizedType);
                 }
             });
