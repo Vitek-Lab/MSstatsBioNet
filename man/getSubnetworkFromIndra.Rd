@@ -8,13 +8,12 @@ getSubnetworkFromIndra(
   input,
   protein_level_data = NULL,
   pvalueCutoff = NULL,
-  statement_types = c("IncreaseAmount", "DecreaseAmount"),
+  statement_types = NULL,
   paper_count_cutoff = 1,
   evidence_count_cutoff = 1,
   correlation_cutoff = 0.3,
   sources_filter = NULL,
   logfc_cutoff = NULL,
-  force_include_proteins = NULL,
   force_include_other = NULL
 )
 }
@@ -33,7 +32,7 @@ and applying correlation cutoffs.}
 filtering}
 
 \item{statement_types}{list of interaction types to filter on.  Equivalent to
-statement type in INDRA.  Default is c("IncreaseAmount", "DecreaseAmount").}
+statement type in INDRA.  Default is NULL.}
 
 \item{paper_count_cutoff}{number of papers to filter on. Default is 1.}
 
@@ -51,10 +50,6 @@ Otherwise, should be a list, e.g. c('reach', 'medscan').}
 \item{logfc_cutoff}{absolute log fold change cutoff for filtering proteins. 
 Only proteins with |logFC| greater than this value will be retained. Default 
 is NULL, i.e. no logFC filtering.}
-
-\item{force_include_proteins}{character vector of protein identifiers to exempt 
-from all filtering steps. These proteins will be retained regardless of p-value, 
-logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.}
 
 \item{force_include_other}{character vector of identifiers to include in the
 network, regardless if those ids are in the input data. Should be formatted

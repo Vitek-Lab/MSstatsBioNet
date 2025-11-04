@@ -102,24 +102,25 @@
 #' @param input groupComparison result
 #' @param pvalueCutoff p-value cutoff
 #' @param logfc_cutoff logFC cutoff
-#' @param force_include_proteins list of proteins to exempt from filtering
+#' @param force_include_other list of identifiers to exempt from filtering
 #' @return filtered groupComparison result
 #' @keywords internal
 #' @noRd
-.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, force_include_proteins) {
+.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, force_include_other) {
     input$Protein <- as.character(input$Protein)
     
     # Extract exempt proteins before any filtering
     exempt_proteins <- NULL
-    if (!is.null(force_include_proteins)) {
-        if (!is.character(force_include_proteins)) {
-            stop("force_include_proteins must be a character vector")
+    if (!is.null(force_include_other)) {
+        if (!is.character(force_include_other)) {
+            stop("force_include_other must be a character vector")
         }
-        missing_prots <- setdiff(force_include_proteins, input$Protein)
-        if (length(missing_prots) > 0) {
-            warning("force_include_proteins not found: ", paste(missing_prots, collapse = ", "))
+        if ("HgncId" %in% colnames(input) && any(grepl("^HGNC:", force_include_other))) {
+            hgnc_ids_to_include <- gsub("^HGNC:", "", force_include_other[grepl("^HGNC:", force_include_other)])
+            exempt_proteins <- input[input$HgncId %in% hgnc_ids_to_include, ]
+        } else {
+            exempt_proteins <- data.frame()
         }
-        exempt_proteins <- input[input$Protein %in% force_include_proteins,]
     }
     
     # Apply standard filtering
@@ -293,6 +294,18 @@
     colnames(nodes) = c("id", "hgncName", "Site", "logFC", "adj.pvalue")
     
     nodes = nodes[nodes$id %in% c(edges$source, edges$target), ]
+    extra_force_include_other <- setdiff(unique(c(edges$source, edges$target)), nodes$id)
+    if (length(extra_force_include_other) > 0) {
+        extra_nodes <- data.frame(
+            id = extra_force_include_other,
+            hgncName = NA,
+            Site = NA,
+            logFC = 0,
+            adj.pvalue = 1,
+            stringsAsFactors = FALSE
+        )
+        nodes <- rbind(nodes, extra_nodes)
+    }
     nodes$hgncName = ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
     
     return(nodes)
