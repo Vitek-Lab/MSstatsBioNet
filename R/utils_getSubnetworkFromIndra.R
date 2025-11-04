@@ -67,6 +67,7 @@
 }
 
 #' @importFrom httr GET status_code content
+#' @importFrom jsonlite fromJSON
 .get_incorrect_curation_count <- function(stmt_hash, api_key) {
     stmt_hash_char <- as.character(stmt_hash)
     url <- paste0("https://db.indra.bio/curation/list/", stmt_hash_char, "?api_key=", api_key)
