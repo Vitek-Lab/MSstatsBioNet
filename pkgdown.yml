@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   MSstatsBioNet: MSstatsBioNet.html
   PTM-Analysis: PTM-Analysis.html
-last_built: 2025-11-04T16:55Z
+last_built: 2025-11-04T17:05Z
 urls:
   reference: https://vitek-lab.github.io/MSstatsBioNet/reference
   article: https://vitek-lab.github.io/MSstatsBioNet/articles
