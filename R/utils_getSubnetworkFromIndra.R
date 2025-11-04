@@ -102,7 +102,7 @@
 #' @param input groupComparison result
 #' @param pvalueCutoff p-value cutoff
 #' @param logfc_cutoff logFC cutoff
-#' @param force_include_other list of proteins to exempt from filtering
+#' @param force_include_other list of identifiers to exempt from filtering
 #' @return filtered groupComparison result
 #' @keywords internal
 #' @noRd
