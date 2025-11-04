@@ -797,7 +797,7 @@ exportCytoscapeToHTML <- function(config,
         document.body.removeChild(link);
         
         // Show success feedback
-        exportBtn.textContent = "✓ Exported!";
+        exportBtn.textContent = "Exported!";
         exportBtn.style.backgroundColor = "#28a745";
         
         // Reset button after 2 seconds
