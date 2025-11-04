@@ -14,7 +14,9 @@ getSubnetworkFromIndra(
   correlation_cutoff = 0.3,
   sources_filter = NULL,
   logfc_cutoff = NULL,
-  force_include_other = NULL
+  force_include_other = NULL,
+  filter_by_curation = FALSE,
+  api_key = ""
 )
 }
 \arguments{
@@ -54,6 +56,11 @@ is NULL, i.e. no logFC filtering.}
 \item{force_include_other}{character vector of identifiers to include in the
 network, regardless if those ids are in the input data. Should be formatted
 as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".}
+
+\item{filter_by_curation}{logical, whether to filter out statements that
+have been curated as incorrect in INDRA.  Default is FALSE.}
+
+\item{api_key}{string of INDRA API key for accessing curated statements.}
 }
 \value{
 list of 2 data.frames, nodes and edges
