@@ -50,13 +50,12 @@ a subnetwork of protein interactions from INDRA database.</p>
 <span>  <span class="va">input</span>,</span>
 <span>  protein_level_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pvalueCutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  statement_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"IncreaseAmount"</span>, <span class="st">"DecreaseAmount"</span><span class="op">)</span>,</span>
+<span>  statement_types <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  paper_count_cutoff <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  evidence_count_cutoff <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  correlation_cutoff <span class="op">=</span> <span class="fl">0.3</span>,</span>
 <span>  sources_filter <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  logfc_cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  force_include_proteins <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  force_include_other <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -86,7 +85,7 @@ filtering</p></dd>
 
 <dt id="arg-statement-types">statement_types<a class="anchor" aria-label="anchor" href="#arg-statement-types"></a></dt>
 <dd><p>list of interaction types to filter on.  Equivalent to
-statement type in INDRA.  Default is c("IncreaseAmount", "DecreaseAmount").</p></dd>
+statement type in INDRA.  Default is NULL.</p></dd>
 
 
 <dt id="arg-paper-count-cutoff">paper_count_cutoff<a class="anchor" aria-label="anchor" href="#arg-paper-count-cutoff"></a></dt>
@@ -116,12 +115,6 @@ Only proteins with |logFC| greater than this value will be retained. Default
 is NULL, i.e. no logFC filtering.</p></dd>
 
 
-<dt id="arg-force-include-proteins">force_include_proteins<a class="anchor" aria-label="anchor" href="#arg-force-include-proteins"></a></dt>
-<dd><p>character vector of protein identifiers to exempt
-from all filtering steps. These proteins will be retained regardless of p-value,
-logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.</p></dd>
-
-
 <dt id="arg-force-include-other">force_include_other<a class="anchor" aria-label="anchor" href="#arg-force-include-other"></a></dt>
 <dd><p>character vector of identifiers to include in the
 network, regardless if those ids are in the input data. Should be formatted
@@ -146,31 +139,36 @@ as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".</p></dd>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         package or utilizing the results based on this package.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         See the LICENSE file for more details.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        id hgncName   Site      logFC  adj.pvalue</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;char&gt;   &lt;char&gt; &lt;char&gt;      &lt;num&gt;       &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: O60313     OPA1   &lt;NA&gt;  0.9299641 0.019584180</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: P05067      APP   &lt;NA&gt;  0.7360012 0.020306662</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: P05090     APOD   &lt;NA&gt;  0.5683951 0.013715050</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: P05362    ICAM1   &lt;NA&gt; -2.0222933 0.001635934</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        id hgncName   Site     logFC  adj.pvalue</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;char&gt;   &lt;char&gt; &lt;char&gt;     &lt;num&gt;       &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: O00217   NDUFS8   &lt;NA&gt; 2.0285031 0.013821932</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: O60313     OPA1   &lt;NA&gt; 0.9299641 0.019584180</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: O75306   NDUFS2   &lt;NA&gt; 2.4745040 0.004457034</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: P05023   ATP1A1   &lt;NA&gt; 1.8391155 0.003251073</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: P05067      APP   &lt;NA&gt; 0.7360012 0.020306662</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: P05090     APOD   &lt;NA&gt; 0.5683951 0.013715050</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   source target site    interaction evidenceCount paperCount</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 P05067 O60313 &lt;NA&gt; DecreaseAmount             6          2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 P05067 P05090 &lt;NA&gt; IncreaseAmount             2          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 P05067 P05362 &lt;NA&gt; IncreaseAmount             3          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 O60313 P05067 &lt;NA&gt; DecreaseAmount             1          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 P05067 O60313 &lt;NA&gt; IncreaseAmount             1          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                evidenceLink</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=8140@HGNC&amp;format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=612@HGNC&amp;format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=5344@HGNC&amp;format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 https://db.indra.bio/statements/from_agents?subject=8140@HGNC&amp;object=620@HGNC&amp;format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=8140@HGNC&amp;format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   sourceCounts</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 {"reach": 3}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 {"reach": 2}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 {"reach": 3}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 {"reach": 1}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 {"reach": 1}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   source target site interaction evidenceCount paperCount</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 P05023 O75306 &lt;NA&gt;     Complex             1          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 O75306 P08574 &lt;NA&gt;     Complex             1          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 P05067 O60313 &lt;NA&gt;  Activation             2          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 O60313 O00217 &lt;NA&gt;     Complex             1          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 O75306 P05067 &lt;NA&gt;     Complex             1          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 P05362 P05067 &lt;NA&gt;     Complex            13          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                 evidenceLink</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  https://db.indra.bio/statements/from_agents?subject=799@HGNC&amp;object=7708@HGNC&amp;format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 https://db.indra.bio/statements/from_agents?subject=7708@HGNC&amp;object=2579@HGNC&amp;format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  https://db.indra.bio/statements/from_agents?subject=620@HGNC&amp;object=8140@HGNC&amp;format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 https://db.indra.bio/statements/from_agents?subject=8140@HGNC&amp;object=7715@HGNC&amp;format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  https://db.indra.bio/statements/from_agents?subject=7708@HGNC&amp;object=620@HGNC&amp;format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  https://db.indra.bio/statements/from_agents?subject=5344@HGNC&amp;object=620@HGNC&amp;format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                  sourceCounts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1              {"biogrid": 1}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2              {"biogrid": 1}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                {"reach": 2}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4              {"biogrid": 1}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5              {"biogrid": 1}</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 {"sparser": 10, "reach": 3}</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

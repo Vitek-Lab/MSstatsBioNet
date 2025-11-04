@@ -159,21 +159,21 @@ that retrieves a subnetwork of proteins from the INDRA database based on
 differential abundance analysis results. This function may help finding
 off target subnetworks.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">subnetwork</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra</a></span><span class="op">(</span><span class="va">annotated_df</span>, pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>, statement_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Phosphorylation"</span><span class="op">)</span>, logfc_cutoff <span class="op">=</span> <span class="fl">1</span>, force_include_proteins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"P00533_Y1110"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">subnetwork</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra</a></span><span class="op">(</span><span class="va">annotated_df</span>, pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>, statement_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Phosphorylation"</span><span class="op">)</span>, logfc_cutoff <span class="op">=</span> <span class="fl">1</span>, force_include_other <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HGNC:3236"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning in getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), : NOTICE: This function includes third-party software components</span></span>
 <span><span class="co">#&gt;         that are licensed under the BSD 2-Clause License. Please ensure to</span></span>
 <span><span class="co">#&gt;         include the third-party licensing agreements if redistributing this</span></span>
 <span><span class="co">#&gt;         package or utilizing the results based on this package.</span></span>
 <span><span class="co">#&gt;         See the LICENSE file for more details.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span>
-<span><span class="co">#&gt;        id hgncName           Site     logFC   adj.pvalue</span></span>
-<span><span class="co">#&gt;    &lt;char&gt;   &lt;char&gt;         &lt;char&gt;     &lt;num&gt;        &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: P00533     EGFR          Y1110 0.2106324 0.2525891386</span></span>
-<span><span class="co">#&gt; 2: P28482    MAPK1           Y187 1.1379894 0.0138506355</span></span>
-<span><span class="co">#&gt; 3: Q13480     GAB1 S650_S651_Y659 1.4252333 0.0050364009</span></span>
-<span><span class="co">#&gt; 4: Q13480     GAB1      S651_Y659 1.3470807 0.0447363036</span></span>
-<span><span class="co">#&gt; 5: Q13480     GAB1      Y627_T638 2.5847134 0.0032951498</span></span>
-<span><span class="co">#&gt; 6: Q13480     GAB1           Y659 2.9336603 0.0003464872</span></span>
+<span><span class="co">#&gt;        id hgncName        Site      logFC adj.pvalue</span></span>
+<span><span class="co">#&gt;    &lt;char&gt;   &lt;char&gt;      &lt;char&gt;      &lt;num&gt;      &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: P00533     EGFR S1039_S1042 -0.3200363 0.28024590</span></span>
+<span><span class="co">#&gt; 2: P00533     EGFR       S1064  0.3566531 0.06863598</span></span>
+<span><span class="co">#&gt; 3: P00533     EGFR   S991_S995 -0.1229037 0.57907374</span></span>
+<span><span class="co">#&gt; 4: P00533     EGFR        T693 -0.0233444 0.96083634</span></span>
+<span><span class="co">#&gt; 5: P00533     EGFR   T693_S695 -0.1659957 0.58809108</span></span>
+<span><span class="co">#&gt; 6: P00533     EGFR       Y1110  0.2106324 0.25258914</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   source target site     interaction evidenceCount paperCount</span></span>
 <span><span class="co">#&gt; 1 Q13480 P00533 &lt;NA&gt; Phosphorylation             2          1</span></span>
@@ -203,7 +203,7 @@ off target subnetworks.</p>
 <p>Visualize the subnetwork on your browser</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/previewNetworkInBrowser.html">previewNetworkInBrowser</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span>, displayLabelType <span class="op">=</span> <span class="st">"hgncName"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Network visualization exported to: /tmp/RtmpIpdIJU/file25c055d81665.html</span></span></code></pre></div>
+<span><span class="co">#&gt; Network visualization exported to: /tmp/RtmpOdbzDy/file1f2f74c56e5d.html</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
