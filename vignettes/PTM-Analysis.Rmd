@@ -63,7 +63,7 @@ subnetwork of proteins from the INDRA database based on differential abundance
 analysis results.  This function may help finding off target subnetworks.  
 
 ```{r}
-subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), logfc_cutoff = 1, force_include_proteins = c("P00533_Y1110"))
+subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), logfc_cutoff = 1, force_include_other = c("HGNC:3236"))
 head(subnetwork$nodes)
 head(subnetwork$edges)
 ```
