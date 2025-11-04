@@ -14,7 +14,7 @@
 #' @param pvalueCutoff p-value cutoff for filtering. Default is NULL, i.e. no
 #' filtering
 #' @param statement_types list of interaction types to filter on.  Equivalent to
-#' statement type in INDRA.  Default is c("IncreaseAmount", "DecreaseAmount").
+#' statement type in INDRA.  Default is NULL.
 #' @param paper_count_cutoff number of papers to filter on. Default is 1.
 #' @param evidence_count_cutoff number of evidence to filter on for each
 #' paper. E.g. A paper may have 5 sentences describing the same interaction vs 1
@@ -27,9 +27,6 @@
 #' @param logfc_cutoff absolute log fold change cutoff for filtering proteins. 
 #' Only proteins with |logFC| greater than this value will be retained. Default 
 #' is NULL, i.e. no logFC filtering.
-#' @param force_include_proteins character vector of protein identifiers to exempt 
-#' from all filtering steps. These proteins will be retained regardless of p-value, 
-#' logFC, or other filtering criteria. Default is NULL, i.e. no exemptions.
 #' @param force_include_other character vector of identifiers to include in the
 #' network, regardless if those ids are in the input data. Should be formatted
 #' as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".
@@ -50,15 +47,14 @@
 getSubnetworkFromIndra <- function(input, 
                                    protein_level_data = NULL,
                                    pvalueCutoff = NULL, 
-                                   statement_types = c("IncreaseAmount", "DecreaseAmount"),
+                                   statement_types = NULL,
                                    paper_count_cutoff = 1,
                                    evidence_count_cutoff = 1,
                                    correlation_cutoff = 0.3,
                                    sources_filter = NULL,
                                    logfc_cutoff = NULL,
-                                   force_include_proteins = NULL,
                                    force_include_other = NULL) {
-    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_proteins)
+    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
     res <- .callIndraCogexApi(input$HgncId, force_include_other)
     res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)
