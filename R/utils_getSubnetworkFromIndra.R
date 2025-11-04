@@ -127,6 +127,7 @@
             stmt_hash <- res[[i]]$data$stmt_hash
             incorrect_count <- .get_incorrect_curation_count(stmt_hash, api_key)
             res[[i]]$data$evidence_count <- res[[i]]$data$evidence_count - incorrect_count
+            # Todo: Also subtract source_counts accordingly if requested
             Sys.sleep(0.1)
         }
     }
