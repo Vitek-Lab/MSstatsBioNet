@@ -1153,7 +1153,13 @@ exportNetworkToHTML <- function(nodes, edges,
     event_handlers <- createEdgeClickHandler()
     
     # Generate configuration
-    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType, node_font_size = nodeFontSize)
+    config <- generateCytoscapeConfig(
+        nodes, 
+        edges, 
+        display_label_type = displayLabelType, 
+        node_font_size = nodeFontSize,
+        event_handlers = event_handlers
+    )
     
     # Export to HTML
     exportCytoscapeToHTML(config, filename, ...)
