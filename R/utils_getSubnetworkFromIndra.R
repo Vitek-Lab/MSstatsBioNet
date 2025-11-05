@@ -253,10 +253,10 @@
         } else {
             edge$site = NA_character_
         }
-        edge <- .addAdditionalMetadataToIndraEdge(edge, input)
-        edge$data$paper_count <- 1 # TODO: fix paper count
         if (!key %in% keys(edgeToMetadataMapping) || 
             edge$data$evidence_count > edgeToMetadataMapping[[key]]$data$evidence_count) {
+            edge <- .addAdditionalMetadataToIndraEdge(edge, input)
+            edge$data$paper_count <- 1 # TODO: fix paper count
             edgeToMetadataMapping[[key]] <- edge
         }
     }
