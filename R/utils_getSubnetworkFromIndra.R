@@ -253,15 +253,10 @@
         } else {
             edge$site = NA_character_
         }
-        if (key %in% keys(edgeToMetadataMapping)) {
-            edgeToMetadataMapping[[key]]$data$evidence_count <-
-                edgeToMetadataMapping[[key]]$data$evidence_count +
-                edge$data$evidence_count
-            edgeToMetadataMapping[[key]]$data$paper_count <- 
-                edgeToMetadataMapping[[key]]$data$paper_count + 1
-        } else {
+        if (!key %in% keys(edgeToMetadataMapping) || 
+            edge$data$evidence_count > edgeToMetadataMapping[[key]]$data$evidence_count) {
             edge <- .addAdditionalMetadataToIndraEdge(edge, input)
-            edge$data$paper_count <- 1
+            edge$data$paper_count <- 1 # TODO: fix paper count
             edgeToMetadataMapping[[key]] <- edge
         }
     }
@@ -304,6 +299,9 @@
         }, ""),
         sourceCounts = vapply(keys(res), function(x) {
             query(res, x)$data$source_counts
+        }, ""),
+        stmt_hash = vapply(keys(res), function(x) {
+            as.character(query(res, x)$data$stmt_hash)
         }, ""),
         stringsAsFactors = FALSE
     )

@@ -829,6 +829,23 @@ exportCytoscapeToHTML <- function(config,
     <script src="https://cdnjs.cloudflare.com/ajax/libs/graphlib/2.1.8/graphlib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
     <script src="https://unpkg.com/cytoscape-dagre@2.3.0/cytoscape-dagre.js"></script>
+    <script>
+        function openLinkInNewTab(url) {
+            try {
+                if (!url || typeof url !== "string") return;
+                url = url.trim();
+                if (!url || url === "NA" || url === "") return;
+                if (!/^https?:\\/\\//i.test(url)) {
+                    console.warn("Blocked non-http(s) URL:", url);
+                    return;
+                }
+                var win = window.open(url, "_blank", "noopener,noreferrer");
+                if (win) { win.opener = null; }
+            } catch (err) {
+                console.error("Error opening link:", err);
+            }
+        }
+    </script>
     
     <style>
         body {
@@ -1102,6 +1119,19 @@ exportCytoscapeToHTML <- function(config,
     invisible(normalizePath(filename))
 }
 
+#' @noRd
+createEdgeClickHandler <- function() {
+    list(
+        edge_click = "function(evt) {
+            var edge = evt.target;
+            var evidenceLink = edge.data('evidenceLink');
+            if (evidenceLink && evidenceLink !== '' && evidenceLink !== 'NA') {
+                openLinkInNewTab(evidenceLink);
+            }
+        }"
+    )
+}
+
 #' Export network data with Cytoscape visualization
 #' 
 #' Convenience function that takes nodes and edges data directly and creates
@@ -1120,8 +1150,16 @@ exportNetworkToHTML <- function(nodes, edges,
                                 nodeFontSize = 12,
                                 ...) {
     
+    event_handlers <- createEdgeClickHandler()
+    
     # Generate configuration
-    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType, node_font_size = nodeFontSize)
+    config <- generateCytoscapeConfig(
+        nodes, 
+        edges, 
+        display_label_type = displayLabelType, 
+        node_font_size = nodeFontSize,
+        event_handlers = event_handlers
+    )
     
     # Export to HTML
     exportCytoscapeToHTML(config, filename, ...)
@@ -1141,8 +1179,16 @@ previewNetworkInBrowser <- function(nodes, edges,
                                     nodeFontSize = 12,
                                     ...) {
     
+    event_handlers <- createEdgeClickHandler()
+    
     # Generate configuration
-    config <- generateCytoscapeConfig(nodes, edges, display_label_type = displayLabelType, node_font_size = nodeFontSize)
+    config <- generateCytoscapeConfig(
+        nodes, 
+        edges, 
+        display_label_type = displayLabelType, 
+        node_font_size = nodeFontSize,
+        event_handlers = event_handlers
+    )
     
     # Create temporary filename
     temp_file <- tempfile(fileext = ".html")
