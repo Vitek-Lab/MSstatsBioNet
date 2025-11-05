@@ -177,10 +177,10 @@ off target subnetworks.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   source target site     interaction evidenceCount paperCount</span></span>
 <span><span class="co">#&gt; 1 Q13480 P00533 &lt;NA&gt; Phosphorylation             2          1</span></span>
-<span><span class="co">#&gt; 2 P00533 P28482 &lt;NA&gt; Phosphorylation             8          3</span></span>
+<span><span class="co">#&gt; 2 P00533 P28482 &lt;NA&gt; Phosphorylation             6          1</span></span>
 <span><span class="co">#&gt; 3 P00533 Q13480 Y317 Phosphorylation             1          1</span></span>
-<span><span class="co">#&gt; 4 P00533 Q13480 &lt;NA&gt; Phosphorylation            32          4</span></span>
-<span><span class="co">#&gt; 5 P00533 Q13480 Y659 Phosphorylation            14          2</span></span>
+<span><span class="co">#&gt; 4 P00533 Q13480 &lt;NA&gt; Phosphorylation            24          1</span></span>
+<span><span class="co">#&gt; 5 P00533 Q13480 Y659 Phosphorylation            12          1</span></span>
 <span><span class="co">#&gt; 6 P28482 Q13480 S454 Phosphorylation             3          1</span></span>
 <span><span class="co">#&gt;                                                                                 evidenceLink</span></span>
 <span><span class="co">#&gt; 1 https://db.indra.bio/statements/from_agents?subject=4066@HGNC&amp;object=3236@HGNC&amp;format=html</span></span>
@@ -189,13 +189,20 @@ off target subnetworks.</p>
 <span><span class="co">#&gt; 4 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&amp;object=4066@HGNC&amp;format=html</span></span>
 <span><span class="co">#&gt; 5 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&amp;object=4066@HGNC&amp;format=html</span></span>
 <span><span class="co">#&gt; 6 https://db.indra.bio/statements/from_agents?subject=6871@HGNC&amp;object=4066@HGNC&amp;format=html</span></span>
-<span><span class="co">#&gt;                 sourceCounts</span></span>
-<span><span class="co">#&gt; 1 {"sparser": 1, "reach": 1}</span></span>
-<span><span class="co">#&gt; 2               {"reach": 1}</span></span>
-<span><span class="co">#&gt; 3              {"rlimsp": 1}</span></span>
-<span><span class="co">#&gt; 4               {"reach": 2}</span></span>
-<span><span class="co">#&gt; 5              {"bel_lc": 2}</span></span>
-<span><span class="co">#&gt; 6   {"hprd": 2, "signor": 1}</span></span></code></pre></div>
+<span><span class="co">#&gt;                                                        sourceCounts</span></span>
+<span><span class="co">#&gt; 1                                        {"sparser": 1, "reach": 1}</span></span>
+<span><span class="co">#&gt; 2                           {"sparser": 2, "reach": 3, "rlimsp": 1}</span></span>
+<span><span class="co">#&gt; 3                                                     {"rlimsp": 1}</span></span>
+<span><span class="co">#&gt; 4 {"reach": 14, "sparser": 5, "trips": 1, "bel_lc": 1, "rlimsp": 3}</span></span>
+<span><span class="co">#&gt; 5              {"pc": 1, "pe": 1, "hprd": 8, "psp": 1, "signor": 1}</span></span>
+<span><span class="co">#&gt; 6                                          {"hprd": 2, "signor": 1}</span></span>
+<span><span class="co">#&gt;            stmt_hash</span></span>
+<span><span class="co">#&gt; 1 -16511170354231920</span></span>
+<span><span class="co">#&gt; 2   4046712837468004</span></span>
+<span><span class="co">#&gt; 3  16300905780198240</span></span>
+<span><span class="co">#&gt; 4 -27721131241182416</span></span>
+<span><span class="co">#&gt; 5  28792790420132100</span></span>
+<span><span class="co">#&gt; 6   7148668566491587</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="network-visualization">Network Visualization<a class="anchor" aria-label="anchor" href="#network-visualization"></a>
@@ -203,7 +210,7 @@ off target subnetworks.</p>
 <p>Visualize the subnetwork on your browser</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/previewNetworkInBrowser.html">previewNetworkInBrowser</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span>, displayLabelType <span class="op">=</span> <span class="st">"hgncName"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Network visualization exported to: /tmp/RtmpoKcwJp/file1f2f94f2ca.html</span></span></code></pre></div>
+<span><span class="co">#&gt; Network visualization exported to: /tmp/RtmplClmUg/file1f20464ef49a.html</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
