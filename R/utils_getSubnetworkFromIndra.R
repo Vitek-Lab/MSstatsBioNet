@@ -306,7 +306,7 @@
             query(res, x)$data$source_counts
         }, ""),
         stmt_hash = vapply(keys(res), function(x) {
-            query(res, x)$data$stmt_hash
+            as.character(query(res, x)$data$stmt_hash)
         }, ""),
         stringsAsFactors = FALSE
     )
