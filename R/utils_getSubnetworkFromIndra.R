@@ -125,7 +125,8 @@
     }
     if (filter_by_curation) {
         for (i in seq_along(res)) {
-            stmt_hash <- res[[i]]$data$stmt_hash
+            stmt_json <- fromJSON(res[[i]]$data$stmt_json)
+            stmt_hash <- stmt_json$matches_hash
             incorrect_count <- .get_incorrect_curation_count(stmt_hash, api_key)
             res[[i]]$data$evidence_count <- res[[i]]$data$evidence_count - incorrect_count
             # Todo: Also subtract source_counts accordingly if requested
@@ -301,7 +302,8 @@
             query(res, x)$data$source_counts
         }, ""),
         stmt_hash = vapply(keys(res), function(x) {
-            as.character(query(res, x)$data$stmt_hash)
+            stmt_json <- fromJSON(query(res, x)$data$stmt_json)
+            stmt_json$matches_hash
         }, ""),
         stringsAsFactors = FALSE
     )
