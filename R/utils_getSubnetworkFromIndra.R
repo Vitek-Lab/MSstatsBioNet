@@ -253,15 +253,10 @@
         } else {
             edge$site = NA_character_
         }
-        if (key %in% keys(edgeToMetadataMapping)) {
-            edgeToMetadataMapping[[key]]$data$evidence_count <-
-                edgeToMetadataMapping[[key]]$data$evidence_count +
-                edge$data$evidence_count
-            edgeToMetadataMapping[[key]]$data$paper_count <- 
-                edgeToMetadataMapping[[key]]$data$paper_count + 1
-        } else {
-            edge <- .addAdditionalMetadataToIndraEdge(edge, input)
-            edge$data$paper_count <- 1
+        edge <- .addAdditionalMetadataToIndraEdge(edge, input)
+        edge$data$paper_count <- 1 # TODO: fix paper count
+        if (!key %in% keys(edgeToMetadataMapping) || 
+            edge$data$evidence_count > edgeToMetadataMapping[[key]]$data$evidence_count) {
             edgeToMetadataMapping[[key]] <- edge
         }
     }
