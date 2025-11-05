@@ -302,7 +302,8 @@
             query(res, x)$data$source_counts
         }, ""),
         stmt_hash = vapply(keys(res), function(x) {
-            as.character(query(res, x)$data$stmt_hash)
+            stmt_json <- fromJSON(query(res, x)$data$stmt_json)
+            stmt_json$matches_hash
         }, ""),
         stringsAsFactors = FALSE
     )
