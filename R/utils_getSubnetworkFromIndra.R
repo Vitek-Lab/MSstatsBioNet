@@ -305,6 +305,9 @@
         sourceCounts = vapply(keys(res), function(x) {
             query(res, x)$data$source_counts
         }, ""),
+        stmt_hash = vapply(keys(res), function(x) {
+            query(res, x)$data$stmt_hash
+        }, ""),
         stringsAsFactors = FALSE
     )
     # add correlation - maybe create a separate function
