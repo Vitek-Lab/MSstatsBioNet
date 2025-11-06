@@ -426,3 +426,119 @@
     correlations <- cor(wide_data, use = "pairwise.complete.obs")
     return(correlations)
 }
+
+#' Query INDRA API for evidence text
+#'
+#' @param stmt_hash A statement hash string
+#' @importFrom httr POST status_code content content_type_json
+#' @importFrom jsonlite fromJSON
+#' @return A list of evidence objects from the API, or NULL if error
+query_indra_evidence <- function(stmt_hash) {
+    url <- "https://discovery.indra.bio/api/get_evidences_for_stmt_hash"
+    
+    tryCatch({
+        response <- POST(
+            url,
+            body = list(stmt_hash = stmt_hash),
+            encode = "json",
+            content_type_json()
+        )
+        
+        if (status_code(response) != 200) {
+            warning(sprintf("API returned status %d for stmt_hash: %s", 
+                            status_code(response), stmt_hash))
+            return(NULL)
+        }
+        
+        content(response, as = "parsed")
+    }, error = function(e) {
+        warning(sprintf("Error querying stmt_hash %s: %s", stmt_hash, e$message))
+        return(NULL)
+    })
+}
+
+#' Extract evidence text from dataframe
+#'
+#' @param df A dataframe with columns: source, target, interaction, site, evidenceLink, stmt_hash
+#' @return A dataframe with additional 'text' column containing evidence sentences
+extract_evidence_text <- function(df) {
+    
+    # Validate required columns
+    required_cols <- c("source", "target", "interaction", "site", "evidenceLink", "stmt_hash")
+    missing_cols <- setdiff(required_cols, names(df))
+    
+    if (length(missing_cols) > 0) {
+        stop(sprintf("Missing required columns: %s", paste(missing_cols, collapse = ", ")))
+    }
+    
+    # Initialize results list
+    results_list <- list()
+    result_count <- 0
+    
+    # Get unique statement hashes
+    unique_hashes <- unique(df$stmt_hash)
+    n_hashes <- length(unique_hashes)
+    
+    cat(sprintf("Processing %d unique statement hashes...\n", n_hashes))
+    
+    # Process each unique statement hash
+    for (i in seq_along(unique_hashes)) {
+        stmt_hash <- unique_hashes[i]
+        
+        if (i %% 10 == 0) {
+            cat(sprintf("Progress: %d/%d\n", i, n_hashes))
+        }
+        
+        # Query API
+        evidence_list <- query_indra_evidence(stmt_hash)
+        
+        if (is.null(evidence_list) || length(evidence_list) == 0) {
+            next
+        }
+        
+        # Get all rows with this stmt_hash
+        matching_indices <- which(df$stmt_hash == stmt_hash)
+        
+        # Extract text from each evidence item
+        for (evidence in evidence_list) {
+            if (!is.null(evidence[["text"]]) && nchar(evidence[["text"]]) > 0) {
+                # Add a row for each matching original row
+                for (idx in matching_indices) {
+                    result_count <- result_count + 1
+                    results_list[[result_count]] <- data.frame(
+                        source = df$source[idx],
+                        target = df$target[idx],
+                        interaction = df$interaction[idx],
+                        site = df$site[idx],
+                        evidenceLink = df$evidenceLink[idx],
+                        stmt_hash = df$stmt_hash[idx],
+                        text = evidence[["text"]],
+                        pmid = if (is.null(evidence[["pmid"]])) "" else evidence[["pmid"]],
+                        stringsAsFactors = FALSE
+                    )
+                }
+            }
+        }
+    }
+    
+    # Combine all results
+    if (result_count == 0) {
+        warning("No evidence text found for any statement hash")
+        return(data.frame(
+            source = character(),
+            target = character(),
+            interaction = character(),
+            site = character(),
+            evidenceLink = character(),
+            stmt_hash = character(),
+            text = character(),
+            stringsAsFactors = FALSE
+        ))
+    }
+    
+    results_df <- do.call(rbind, results_list)
+    
+    cat(sprintf("\nComplete! Found %d evidence text entries.\n", nrow(results_df)))
+    
+    return(results_df)
+}
