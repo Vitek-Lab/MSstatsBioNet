@@ -66,10 +66,12 @@ getSubnetworkFromIndra <- function(input,
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)
     edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)
     nodes <- .constructNodesDataFrame(input, edges)
-    ptm_overlap <- calculatePTMOverlapAggregated(edges, nodes)
-    edges <- edges[ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")] != "", ]
-    edges <- edges[!is.na(edges$site),]
-    nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
+    if (nrow(edges[!is.na(edges$site), ]) > 0) {
+        ptm_overlap <- calculatePTMOverlapAggregated(edges, nodes)
+        edges <- edges[ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")] != "", ]
+        edges <- edges[!is.na(edges$site),]
+        nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
+    }
     if (filter_by_curation) {
         incorrect_counts <- numeric(nrow(edges))
         for (i in seq_len(nrow(edges))) {
