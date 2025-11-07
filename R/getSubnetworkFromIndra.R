@@ -76,7 +76,7 @@ getSubnetworkFromIndra <- function(input,
             edges$evidence_count[i] <- edges$evidence_count[i] - incorrect_count
             Sys.sleep(0.1)
         }
-        edges <- edges[edges$evidence_count >= evidence_count_cutoff, ]
+        edges <- edges[edges$evidenceCount >= evidence_count_cutoff, ]
         nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     }
     warning(
