@@ -71,7 +71,7 @@ getSubnetworkFromIndra <- function(input,
     nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     if (filter_by_curation) {
         for (i in seq(1, nrow(edges))) {
-            stmt_hash <- edges$statement_hash[i]
+            stmt_hash <- edges$stmt_hash[i]
             incorrect_count <- .get_incorrect_curation_count(stmt_hash, api_key)
             edges$evidence_count[i] <- edges$evidence_count[i] - incorrect_count
             Sys.sleep(0.1)
