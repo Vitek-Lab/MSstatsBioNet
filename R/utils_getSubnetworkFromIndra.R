@@ -123,16 +123,16 @@
             res
         )
     }
-    if (filter_by_curation) {
-        for (i in seq_along(res)) {
-            stmt_json <- fromJSON(res[[i]]$data$stmt_json)
-            stmt_hash <- stmt_json$matches_hash
-            incorrect_count <- .get_incorrect_curation_count(stmt_hash, api_key)
-            res[[i]]$data$evidence_count <- res[[i]]$data$evidence_count - incorrect_count
-            # Todo: Also subtract source_counts accordingly if requested
-            Sys.sleep(0.1)
-        }
-    }
+    # if (filter_by_curation) {
+    #     for (i in seq_along(res)) {
+    #         stmt_json <- fromJSON(res[[i]]$data$stmt_json)
+    #         stmt_hash <- stmt_json$matches_hash
+    #         incorrect_count <- .get_incorrect_curation_count(stmt_hash, api_key)
+    #         res[[i]]$data$evidence_count <- res[[i]]$data$evidence_count - incorrect_count
+    #         # Todo: Also subtract source_counts accordingly if requested
+    #         Sys.sleep(0.1)
+    #     }
+    # }
     res = Filter(
         function(statement) statement$data$evidence_count >= evidence_count_cutoff, 
         res
