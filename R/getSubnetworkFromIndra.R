@@ -70,12 +70,12 @@ getSubnetworkFromIndra <- function(input,
     edges <- edges[ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")] != "", ]
     nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     if (filter_by_curation) {
-        for (i in seq(1, nrow(edges))) {
-            stmt_hash <- edges$stmt_hash[i]
-            incorrect_count <- .get_incorrect_curation_count(stmt_hash, api_key)
-            edges$evidence_count[i] <- edges$evidence_count[i] - incorrect_count
+        incorrect_counts <- numeric(nrow(edges))
+        for (i in seq_len(nrow(edges))) {
+            incorrect_counts[i] <- .get_incorrect_curation_count(edges$stmt_hash[i], api_key)
             Sys.sleep(0.1)
         }
+        edges$evidenceCount <- edges$evidenceCount - incorrect_counts
         edges <- edges[edges$evidenceCount >= evidence_count_cutoff, ]
         nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     }
