@@ -81,3 +81,31 @@ test_that("annotateProteinInfoFromIndra returns NA for unknown protein id", {
     
     expect_equal(annotated_df$Protein, "ABC")
 })
+
+test_that("annotateProteinInfoFromIndra works correctly with HGNC name", {
+    df <- data.frame(Protein = c("EGFR"))
+    annotated_df <- annotateProteinInfoFromIndra(df, "Hgnc_Name")
+    
+    expect_true("Protein" %in% colnames(annotated_df))
+    expect_true("UniprotId" %in% colnames(annotated_df))
+    expect_true("HgncId" %in% colnames(annotated_df))
+    expect_true("HgncName" %in% colnames(annotated_df))
+    expect_true("IsTranscriptionFactor" %in% colnames(annotated_df))
+    expect_true("IsKinase" %in% colnames(annotated_df))
+    expect_true("IsPhosphatase" %in% colnames(annotated_df))
+    
+    expect_true(is.na(annotated_df$UniprotId))
+    expect_false(is.na(annotated_df$HgncId))
+    expect_false(is.na(annotated_df$HgncName))
+    expect_false(is.na(annotated_df$IsTranscriptionFactor))
+    expect_false(is.na(annotated_df$IsKinase))
+    expect_false(is.na(annotated_df$IsPhosphatase))
+    
+    expect_equal(annotated_df$Protein, "EGFR")
+    expect_equal(annotated_df$HgncId, "3236")
+    expect_equal(annotated_df$HgncName, "EGFR")
+    expect_type(annotated_df$IsTranscriptionFactor, "logical")
+    expect_type(annotated_df$IsKinase, "logical")
+    expect_type(annotated_df$IsPhosphatase, "logical")
+    
+})

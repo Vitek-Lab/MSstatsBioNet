@@ -75,3 +75,13 @@ test_that(".callIsTranscriptionFactorApi works correctly", {
     expected_value <- list("STAT1" = TRUE)
     expect_equal(result, expected_value)
 })
+
+test_that(".callGetHgncIdsFromGildaApi works correctly", {
+    hgnc_names <- list("EGFR", "CHEK1")
+    result <- .callGetHgncIdsFromGildaApi(hgnc_names)
+    expect_type(result, "character")
+    expect_true(length(result) == 2)
+    expected_value <- c("EGFR" = "3236", "CHEK1" = "1925")
+    expect_equal(result, expected_value)
+})
+
