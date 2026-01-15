@@ -13,7 +13,7 @@ corresponding p-values, logFCs, along with additional HGNC ID and HGNC
 name columns}
 
 \item{proteinIdType}{A character string specifying the type of protein ID. 
-It can be either "Uniprot" or "Uniprot_Mnemonic".}
+It can be either "Uniprot", "Uniprot_Mnemonic", or "Hgnc_Name".}
 }
 \value{
 A data frame with the following columns:

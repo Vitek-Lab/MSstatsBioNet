@@ -253,3 +253,66 @@ INDRA_API_URL = "https://discovery.indra.bio"
     })
     return(res)
 }
+
+#' Call gilda API to get HGNC IDs from HGNC names
+#' @param hgncNames list of hgnc names
+#' @return list of HGNC IDs
+#' @importFrom jsonlite toJSON
+#' @importFrom httr POST add_headers content
+#' @keywords internal
+#' @noRd
+.callGetHgncIdsFromGildaApi <- function(hgncNames) {
+    
+    if (!is.list(hgncNames)) {
+        stop("Input must be a list.")
+    }
+    
+    if (any(!sapply(hgncNames, is.character))) {
+        stop("All elements in the list must be character strings representing hgnc names.")
+    }
+    
+    if (length(hgncNames) == 0) {
+        stop("Input list must not be empty.")
+    }
+    
+    apiUrl <- file.path("https://grounding.indra.bio/", "ground_multi")
+    
+    requestBody <- lapply(hgncNames, function(hgnc_name) {
+        list(
+            text = hgnc_name,
+            organisms = list("9606")
+        )
+    })
+    requestBody <- jsonlite::toJSON(requestBody, auto_unbox = TRUE)
+    res <- tryCatch({
+        response <- POST(
+            apiUrl,
+            body = requestBody,
+            add_headers("Content-Type" = "application/json"),
+            encode = "raw"
+        )
+        content(response)
+    }, error = function(e) {
+        message("Error in API call: ", e)
+        NULL
+    })
+    
+    hgnc_mapping <- character(0)
+    
+    for (item in res) {
+        # Find the term where db == "HGNC"
+        hgnc_term <- NULL
+        for (entry in item) {
+            if (!is.null(entry$term$db) && entry$term$db == "HGNC") {
+                hgnc_term <- entry$term
+                break
+            }
+        }
+        
+        # Only add to mapping if HGNC term was found
+        if (!is.null(hgnc_term)) {
+            hgnc_mapping[hgnc_term$text] <- hgnc_term$id
+        }
+    }
+    return(hgnc_mapping)
+}

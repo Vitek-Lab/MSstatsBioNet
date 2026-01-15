@@ -4,10 +4,13 @@
 \alias{.populateHgncIdsInDataFrame}
 \title{Populate HGNC IDs in Data Frame}
 \usage{
-.populateHgncIdsInDataFrame(df)
+.populateHgncIdsInDataFrame(df, proteinIdType)
 }
 \arguments{
 \item{df}{A data frame containing protein information.}
+
+\item{proteinIdType}{A character string specifying the type of protein ID. 
+It can be either "Uniprot", "Uniprot_Mnemonic", or "Hgnc_Name".}
 }
 \value{
 A data frame with populated HGNC IDs.
