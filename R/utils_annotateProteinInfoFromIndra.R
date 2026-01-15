@@ -256,7 +256,7 @@ INDRA_API_URL = "https://discovery.indra.bio"
 
 #' Call gilda API to get HGNC IDs from HGNC names
 #' @param hgncNames list of hgnc names
-#' @return list of HGNC IDs
+#' @return named character vector mapping HGNC names to HGNC IDs
 #' @importFrom jsonlite toJSON
 #' @importFrom httr POST add_headers content
 #' @keywords internal
@@ -296,6 +296,10 @@ INDRA_API_URL = "https://discovery.indra.bio"
         message("Error in API call: ", e)
         NULL
     })
+    
+    if (is.null(res)) {
+        return(NULL)
+    }
     
     hgnc_mapping <- character(0)
     
