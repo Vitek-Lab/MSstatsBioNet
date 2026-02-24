@@ -80,7 +80,7 @@ getRelationshipProperties <- function() {
 #' @return Vector of overlap descriptions for each unique edge (after consolidation)
 #' @keywords internal
 #' @noRd
-calculatePTMOverlapAggregated <- function(edges, nodes) {
+.calculatePTMOverlapAggregated <- function(edges, nodes) {
     if (nrow(edges) == 0) return(character(0))
     
     # Group edges by source-target-interaction to match consolidation logic
@@ -154,7 +154,7 @@ consolidateEdges <- function(edges, nodes = NULL) {
     
     # Calculate aggregated PTM overlap information if nodes are provided
     ptm_overlap_map <- if (!is.null(nodes)) {
-        calculatePTMOverlapAggregated(edges, nodes)
+        .calculatePTMOverlapAggregated(edges, nodes)
     } else {
         NULL
     }
