@@ -374,6 +374,16 @@
     return(list(nodes = nodes, edges = edges))
 }
 
+.filterByPtmSite = function(nodes, edges, filter_by_ptm_site) {
+    if (filter_by_ptm_site && nrow(nodes[!is.na(nodes$Site), ]) > 0) {
+        ptm_overlap <- calculatePTMOverlapAggregated(edges, nodes)
+        edges <- edges[ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")] != "", ]
+        edges <- edges[!is.na(edges$site),]
+        nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
+    }
+    return(list(nodes = nodes, edges = edges))
+}
+
 #' Construct correlation matrix from MSstats
 #' @param protein_level_data output of dataProcess
 #' @importFrom tidyr pivot_wider

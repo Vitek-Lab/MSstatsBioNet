@@ -32,6 +32,9 @@
 #' as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".
 #' @param filter_by_curation logical, whether to filter out statements that
 #' have been curated as incorrect in INDRA.  Default is FALSE.
+#' @param filter_by_ptm_site logical, whether to filter edges based on whether the 
+#' site information from INDRA matches with the PTM site in the input.  Default is FALSE.  
+#' Only applicable for differential PTM abundance results.
 #'
 #' @return list of 2 data.frames, nodes and edges
 #'
@@ -56,7 +59,8 @@ getSubnetworkFromIndra <- function(input,
                                    sources_filter = NULL,
                                    logfc_cutoff = NULL,
                                    force_include_other = NULL, 
-                                   filter_by_curation = FALSE) {
+                                   filter_by_curation = FALSE,
+                                   filter_by_ptm_site = FALSE) {
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
     res <- .callIndraCogexApi(input$HgncId, force_include_other)
@@ -64,13 +68,8 @@ getSubnetworkFromIndra <- function(input,
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)
     edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)
     nodes <- .constructNodesDataFrame(input, edges)
-    if (nrow(nodes[!is.na(nodes$Site), ]) > 0) {
-        ptm_overlap <- calculatePTMOverlapAggregated(edges, nodes)
-        edges <- edges[ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")] != "", ]
-        edges <- edges[!is.na(edges$site),]
-        nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
-    }
-    subnetwork = .filterByCuration(nodes, edges, filter_by_curation)
+    subnetwork = .filterByPtmSite(nodes, edges, filter_by_ptm_site)
+    subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, filter_by_curation)
     warning(
         "NOTICE: This function includes third-party software components
         that are licensed under the BSD 2-Clause License. Please ensure to
@@ -78,5 +77,5 @@ getSubnetworkFromIndra <- function(input,
         package or utilizing the results based on this package.
         See the LICENSE file for more details."
     )
-    return(list(nodes = nodes, edges = edges))
+    return(subnetwork)
 }
