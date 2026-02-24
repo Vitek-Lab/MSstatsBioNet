@@ -360,7 +360,7 @@
     return(edges)
 }
 
-.filterByCuration = function(nodes, edges, filter_by_curation) {
+.filterByCuration = function(nodes, edges, evidence_count_cutoff, filter_by_curation) {
     if (filter_by_curation) {
         incorrect_counts <- numeric(nrow(edges))
         for (i in seq_len(nrow(edges))) {
@@ -377,7 +377,8 @@
 .filterByPtmSite = function(nodes, edges, filter_by_ptm_site) {
     if (filter_by_ptm_site && nrow(nodes[!is.na(nodes$Site), ]) > 0) {
         ptm_overlap <- calculatePTMOverlapAggregated(edges, nodes)
-        edges <- edges[ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")] != "", ]
+        keep <- ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")]
+        edges <- edges[!is.na(keep) & keep != "", ]
         edges <- edges[!is.na(edges$site),]
         nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     }

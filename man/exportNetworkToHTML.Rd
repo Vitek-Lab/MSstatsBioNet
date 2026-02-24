@@ -22,6 +22,8 @@ exportNetworkToHTML(
 
 \item{displayLabelType}{Type of label to display ("id" or "hgncName")}
 
+\item{nodeFontSize}{Font size for node labels (default: 12)}
+
 \item{...}{Additional arguments passed to exportCytoscapeToHTML()}
 }
 \value{

@@ -69,7 +69,7 @@ getSubnetworkFromIndra <- function(input,
     edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)
     nodes <- .constructNodesDataFrame(input, edges)
     subnetwork = .filterByPtmSite(nodes, edges, filter_by_ptm_site)
-    subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, filter_by_curation)
+    subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, evidence_count_cutoff, filter_by_curation)
     warning(
         "NOTICE: This function includes third-party software components
         that are licensed under the BSD 2-Clause License. Please ensure to
