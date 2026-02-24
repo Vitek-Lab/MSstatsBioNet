@@ -99,15 +99,12 @@
 #' @param interaction_types interaction types to filter by
 #' @param evidence_count_cutoff number of evidence to filter on for each paper
 #' @param sources_filter list of sources to filter by. Default is NULL, i.e. no filter
-#' @param filter_by_curation logical, whether to filter out statements that
-#' have been curated as incorrect in INDRA.  Default is FALSE.
-#' @param api_key string of INDRA API key for accessing curated statements.
 #' @return filtered list of INDRA statements
 #' @importFrom jsonlite fromJSON
 #' @keywords internal
 #' @noRd
 .filterIndraResponse <- function(res, interaction_types, evidence_count_cutoff, 
-                                 sources_filter = NULL, filter_by_curation = FALSE, api_key = "") {
+                                 sources_filter = NULL) {
     if (!is.null(interaction_types)) {
         res = Filter(
             function(statement) statement$data$stmt_type %in% interaction_types, 
@@ -123,16 +120,6 @@
             res
         )
     }
-    # if (filter_by_curation) {
-    #     for (i in seq_along(res)) {
-    #         stmt_json <- fromJSON(res[[i]]$data$stmt_json)
-    #         stmt_hash <- stmt_json$matches_hash
-    #         incorrect_count <- .get_incorrect_curation_count(stmt_hash, api_key)
-    #         res[[i]]$data$evidence_count <- res[[i]]$data$evidence_count - incorrect_count
-    #         # Todo: Also subtract source_counts accordingly if requested
-    #         Sys.sleep(0.1)
-    #     }
-    # }
     res = Filter(
         function(statement) statement$data$evidence_count >= evidence_count_cutoff, 
         res
@@ -371,6 +358,20 @@
         stop("No edges remain after applying filters. Consider relaxing filters")
     }
     return(edges)
+}
+
+.filterByCuration = function(nodes, edges, filter_by_curation) {
+    if (filter_by_curation) {
+        incorrect_counts <- numeric(nrow(edges))
+        for (i in seq_len(nrow(edges))) {
+            incorrect_counts[i] <- .get_incorrect_curation_count(edges$stmt_hash[i], api_key)
+            Sys.sleep(0.1)
+        }
+        edges$evidenceCount <- edges$evidenceCount - incorrect_counts
+        edges <- edges[edges$evidenceCount >= evidence_count_cutoff, ]
+        nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
+    }
+    return(list(nodes = nodes, edges = edges))
 }
 
 #' Construct correlation matrix from MSstats

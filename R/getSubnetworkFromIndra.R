@@ -72,16 +72,7 @@ getSubnetworkFromIndra <- function(input,
         edges <- edges[!is.na(edges$site),]
         nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     }
-    if (filter_by_curation) {
-        incorrect_counts <- numeric(nrow(edges))
-        for (i in seq_len(nrow(edges))) {
-            incorrect_counts[i] <- .get_incorrect_curation_count(edges$stmt_hash[i], api_key)
-            Sys.sleep(0.1)
-        }
-        edges$evidenceCount <- edges$evidenceCount - incorrect_counts
-        edges <- edges[edges$evidenceCount >= evidence_count_cutoff, ]
-        nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
-    }
+    subnetwork = .filterByCuration(nodes, edges, filter_by_curation)
     warning(
         "NOTICE: This function includes third-party software components
         that are licensed under the BSD 2-Clause License. Please ensure to
