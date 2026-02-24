@@ -13,7 +13,8 @@ generateCytoscapeConfig(
   display_label_type = "id",
   container_id = "network-cy",
   event_handlers = NULL,
-  layout_options = NULL
+  layout_options = NULL,
+  node_font_size = 12
 )
 ```
 

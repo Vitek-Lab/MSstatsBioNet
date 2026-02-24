@@ -5,7 +5,13 @@ Creates a temporary HTML file and opens it in the default web browser
 ## Usage
 
 ``` r
-previewNetworkInBrowser(nodes, edges, displayLabelType = "id", ...)
+previewNetworkInBrowser(
+  nodes,
+  edges,
+  displayLabelType = "id",
+  nodeFontSize = 12,
+  ...
+)
 ```
 
 ## Arguments

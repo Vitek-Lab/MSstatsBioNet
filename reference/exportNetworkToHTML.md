@@ -11,6 +11,7 @@ exportNetworkToHTML(
   edges,
   filename = "network_visualization.html",
   displayLabelType = "id",
+  nodeFontSize = 12,
   ...
 )
 ```
@@ -32,6 +33,10 @@ exportNetworkToHTML(
 - displayLabelType:
 
   Type of label to display ("id" or "hgncName")
+
+- nodeFontSize:
+
+  Font size for node labels (default: 12)
 
 - ...:
 

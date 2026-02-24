@@ -149,7 +149,7 @@ Visualize the subnetwork on your browser
 
 ``` r
 previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "hgncName")
-#> Network visualization exported to: /tmp/RtmpfzKKKk/file241819f18b42.html
+#> Network visualization exported to: /tmp/RtmpW3JRLQ/file254835b34a6c.html
 ```
 
 ## Session info
@@ -177,40 +177,40 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] MSstatsBioNet_1.3.1 MSstats_4.18.0      BiocStyle_2.38.0   
+#> [1] MSstatsBioNet_1.3.1 MSstats_4.18.1      BiocStyle_2.38.0   
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] tidyselect_1.2.1      viridisLite_0.4.2     IRdisplay_1.1        
-#>  [4] dplyr_1.1.4           farver_2.1.2          S7_0.2.1             
+#>  [1] tidyselect_1.2.1      viridisLite_0.4.3     IRdisplay_1.1        
+#>  [4] dplyr_1.2.0           farver_2.1.2          S7_0.2.1             
 #>  [7] bitops_1.0-9          RCurl_1.98-1.17       fastmap_1.2.0        
-#> [10] lazyeval_0.2.2        base64url_1.4         XML_3.99-0.20        
+#> [10] lazyeval_0.2.2        base64url_1.4         XML_3.99-0.22        
 #> [13] digest_0.6.39         lifecycle_1.0.5       survival_3.8-3       
 #> [16] statmod_1.5.1         r2r_0.1.2             magrittr_2.0.4       
 #> [19] compiler_4.5.2        rlang_1.1.7           sass_0.4.10          
-#> [22] tools_4.5.2           yaml_2.3.12           data.table_1.18.0    
+#> [22] tools_4.5.2           yaml_2.3.12           data.table_1.18.2.1  
 #> [25] knitr_1.51            htmlwidgets_1.6.4     curl_7.0.0           
 #> [28] MSstatsConvert_1.20.0 marray_1.88.0         repr_1.1.7           
 #> [31] RColorBrewer_1.1-3    KernSmooth_2.23-26    pbdZMQ_0.3-14        
 #> [34] purrr_1.2.1           BiocGenerics_0.56.0   desc_1.4.3           
 #> [37] stats4_4.5.2          grid_4.5.2            preprocessCore_1.72.0
-#> [40] caTools_1.18.3        log4r_0.4.4           ggplot2_4.0.1        
+#> [40] caTools_1.18.3        log4r_0.4.4           ggplot2_4.0.2        
 #> [43] scales_1.4.0          gtools_3.9.5          MASS_7.3-65          
 #> [46] cli_3.6.5             rmarkdown_2.30        crayon_1.5.3         
-#> [49] ragg_1.5.0            reformulas_0.4.3.1    generics_0.1.4       
-#> [52] otel_0.2.0            httr_1.4.7            minqa_1.2.8          
+#> [49] ragg_1.5.0            reformulas_0.4.4      generics_0.1.4       
+#> [52] otel_0.2.0            httr_1.4.8            minqa_1.2.8          
 #> [55] cachem_1.1.0          splines_4.5.2         parallel_4.5.2       
-#> [58] BiocManager_1.30.27   base64enc_0.1-3       vctrs_0.6.5          
+#> [58] BiocManager_1.30.27   base64enc_0.1-6       vctrs_0.7.1          
 #> [61] boot_1.3-32           Matrix_1.7-4          jsonlite_2.0.0       
 #> [64] bookdown_0.46         ggrepel_0.9.6         systemfonts_1.3.1    
-#> [67] limma_3.66.0          plotly_4.11.0         jquerylib_0.1.4      
+#> [67] limma_3.66.0          plotly_4.12.0         jquerylib_0.1.4      
 #> [70] tidyr_1.3.2           glue_1.8.0            nloptr_2.2.1         
 #> [73] pkgdown_2.2.0         RJSONIO_2.0.0         stringi_1.8.7        
 #> [76] gtable_0.3.6          lme4_1.1-38           tibble_3.3.1         
 #> [79] pillar_1.11.1         htmltools_0.5.9       gplots_3.3.0         
 #> [82] RCy3_2.30.1           graph_1.88.1          IRkernel_1.3.2       
-#> [85] R6_2.6.1              textshaping_1.0.4     Rdpack_2.6.4         
-#> [88] evaluate_1.0.5        lattice_0.22-7        rbibutils_2.4        
-#> [91] backports_1.5.0       bslib_0.9.0           Rcpp_1.1.1           
-#> [94] uuid_1.2-1            nlme_3.1-168          checkmate_2.3.3      
-#> [97] xfun_0.55             fs_1.6.6              pkgconfig_2.0.3
+#> [85] R6_2.6.1              textshaping_1.0.4     Rdpack_2.6.6         
+#> [88] evaluate_1.0.5        lattice_0.22-7        rbibutils_2.4.1      
+#> [91] backports_1.5.0       bslib_0.10.0          Rcpp_1.1.1           
+#> [94] uuid_1.2-2            nlme_3.1-168          checkmate_2.3.4      
+#> [97] xfun_0.56             fs_1.6.6              pkgconfig_2.0.3
 ```
