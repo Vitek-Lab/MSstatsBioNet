@@ -78,8 +78,9 @@ getRelationshipProperties <- function() {
 #' @param edges Data frame with edge information including 'target' and 'site' columns
 #' @param nodes Data frame with node information including 'id' and 'Site' columns
 #' @return Vector of overlap descriptions for each unique edge (after consolidation)
+#' @keywords internal
 #' @noRd
-calculatePTMOverlapAggregated <- function(edges, nodes) {
+.calculatePTMOverlapAggregated <- function(edges, nodes) {
     if (nrow(edges) == 0) return(character(0))
     
     # Group edges by source-target-interaction to match consolidation logic
@@ -153,7 +154,7 @@ consolidateEdges <- function(edges, nodes = NULL) {
     
     # Calculate aggregated PTM overlap information if nodes are provided
     ptm_overlap_map <- if (!is.null(nodes)) {
-        calculatePTMOverlapAggregated(edges, nodes)
+        .calculatePTMOverlapAggregated(edges, nodes)
     } else {
         NULL
     }
@@ -1141,6 +1142,7 @@ createEdgeClickHandler <- function() {
 #' @param edges Data frame with edge information  
 #' @param filename Output HTML filename
 #' @param displayLabelType Type of label to display ("id" or "hgncName")
+#' @param nodeFontSize Font size for node labels (default: 12)
 #' @param ... Additional arguments passed to exportCytoscapeToHTML()
 #' @export
 #' @return Invisibly returns the file path of the created HTML file

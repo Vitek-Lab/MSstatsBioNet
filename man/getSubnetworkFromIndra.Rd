@@ -16,7 +16,7 @@ getSubnetworkFromIndra(
   logfc_cutoff = NULL,
   force_include_other = NULL,
   filter_by_curation = FALSE,
-  api_key = ""
+  filter_by_ptm_site = FALSE
 )
 }
 \arguments{
@@ -60,7 +60,9 @@ as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".}
 \item{filter_by_curation}{logical, whether to filter out statements that
 have been curated as incorrect in INDRA.  Default is FALSE.}
 
-\item{api_key}{string of INDRA API key for accessing curated statements.}
+\item{filter_by_ptm_site}{logical, whether to filter edges based on whether the 
+site information from INDRA matches with the PTM site in the input.  Default is FALSE.  
+Only applicable for differential PTM abundance results.}
 }
 \value{
 list of 2 data.frames, nodes and edges

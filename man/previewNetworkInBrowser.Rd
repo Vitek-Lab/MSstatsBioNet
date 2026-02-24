@@ -4,7 +4,13 @@
 \alias{previewNetworkInBrowser}
 \title{Preview network in browser}
 \usage{
-previewNetworkInBrowser(nodes, edges, displayLabelType = "id", ...)
+previewNetworkInBrowser(
+  nodes,
+  edges,
+  displayLabelType = "id",
+  nodeFontSize = 12,
+  ...
+)
 }
 \arguments{
 \item{nodes}{Data frame with node information}

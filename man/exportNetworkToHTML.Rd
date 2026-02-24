@@ -9,6 +9,7 @@ exportNetworkToHTML(
   edges,
   filename = "network_visualization.html",
   displayLabelType = "id",
+  nodeFontSize = 12,
   ...
 )
 }
@@ -20,6 +21,8 @@ exportNetworkToHTML(
 \item{filename}{Output HTML filename}
 
 \item{displayLabelType}{Type of label to display ("id" or "hgncName")}
+
+\item{nodeFontSize}{Font size for node labels (default: 12)}
 
 \item{...}{Additional arguments passed to exportCytoscapeToHTML()}
 }
