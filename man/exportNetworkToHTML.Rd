@@ -9,6 +9,7 @@ exportNetworkToHTML(
   edges,
   filename = "network_visualization.html",
   displayLabelType = "id",
+  nodeFontSize = 12,
   ...
 )
 }
