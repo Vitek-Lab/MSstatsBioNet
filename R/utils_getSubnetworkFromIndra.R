@@ -96,18 +96,18 @@
 
 #' Call INDRA Cogex API and return response
 #' @param res response from INDRA
-#' @param interaction_types interaction types to filter by
+#' @param statement_types interaction types to filter by
 #' @param evidence_count_cutoff number of evidence to filter on for each paper
 #' @param sources_filter list of sources to filter by. Default is NULL, i.e. no filter
 #' @return filtered list of INDRA statements
 #' @importFrom jsonlite fromJSON
 #' @keywords internal
 #' @noRd
-.filterIndraResponse <- function(res, interaction_types, evidence_count_cutoff, 
+.filterIndraResponse <- function(res, statement_types, evidence_count_cutoff, 
                                  sources_filter = NULL) {
-    if (!is.null(interaction_types)) {
+    if (!is.null(statement_types)) {
         res = Filter(
-            function(statement) statement$data$stmt_type %in% interaction_types, 
+            function(statement) statement$data$stmt_type %in% statement_types, 
             res)
     }
     if (!is.null(sources_filter)) {
