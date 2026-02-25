@@ -311,6 +311,16 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
     node_elements    <- c()
     ptm_elements     <- c()
     emitted_proteins <- c()
+    emitted_compounds <- c()
+    
+    # Pre-compute which protein ids have at least one PTM site row,
+    # so we know upfront whether a compound wrapper is needed
+    has_ptm_sites <- if ("Site" %in% names(nodes)) {
+        ids_with_sites <- unique(nodes$id[!is.na(nodes$Site) & trimws(nodes$Site) != ""])
+        ids_with_sites
+    } else {
+        c()
+    }
     
     for (i in seq_len(nrow(nodes))) {
         row      <- nodes[i, ]
@@ -323,13 +333,32 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
             row$id
         }
         
-        # Always emit the protein node, but only once per unique id
+        needs_compound <- row$id %in% has_ptm_sites
+        compound_id    <- paste0(row$id, "__compound__")
+        
+        # Emit invisible compound container node once per protein that has PTM children
+        if (needs_compound && !(compound_id %in% emitted_compounds)) {
+            node_elements <- c(node_elements,
+                               paste0("{ data: { id: '", escape_js_string(compound_id),
+                                      "', node_type: 'compound' } }")
+            )
+            emitted_compounds <- c(emitted_compounds, compound_id)
+        }
+        
+        # Emit protein node once, assigning it to the compound if one exists
         if (!(row$id %in% emitted_proteins)) {
+            parent_field <- if (needs_compound) {
+                paste0(", parent: '", escape_js_string(compound_id), "'")
+            } else {
+                ""
+            }
             node_elements <- c(node_elements,
                                paste0("{ data: { id: '", escape_js_string(row$id),
                                       "', label: '", escape_js_string(display_label),
                                       "', color: '", color,
-                                      "', node_type: 'protein' } }")
+                                      "', node_type: 'protein'",
+                                      parent_field,
+                                      " } }")
             )
             emitted_proteins <- c(emitted_proteins, row$id)
         }
@@ -345,12 +374,14 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
                 safe_parent <- escape_js_string(row$id)
                 safe_site   <- escape_js_string(site)
                 
+                # PTM node also belongs to the same compound container
                 ptm_elements <- c(ptm_elements,
                                   paste0("{ data: { id: '", safe_ptm_id,
                                          "', label: '", safe_site,
                                          "', color: '", color,
                                          "', parent_protein: '", safe_parent,
-                                         "', node_type: 'ptm' } }")
+                                         "', parent: '", escape_js_string(compound_id), "'",
+                                         ", node_type: 'ptm' } }")
                 )
                 
                 ptm_edge_id <- escape_js_string(paste0(row$id, "__ptm_edge__", site))
@@ -577,6 +608,17 @@ generateCytoscapeConfig <- function(nodes, edges,
                 label = "",             # no label on these connector edges
                 `z-index` = 0          # render behind main edges
             )
+        ),
+        list(
+            selector = "node[node_type = 'compound']",
+            style = list(
+                `background-opacity` = 0,
+                `border-width` = 0,
+                `border-opacity` = 0,
+                `padding` = "10px",
+                label = "",
+                `z-index` = 0
+            )
         )
     )
     
@@ -637,6 +679,43 @@ generateJavaScriptCode <- function(config) {
         elements: [", elements_js, "],
         style: ", style_js, ",
         layout: ", layout_js, "
+    });
+    
+    // After layout completes, reposition PTM nodes directly beside their parent protein
+    cy.on('layoutstop', function() {
+        var ptmNodes = cy.nodes('[node_type = \"ptm\"]');
+        ptmNodes.forEach(function(ptmNode) {
+            var parentId = ptmNode.data('parent_protein');
+            var parentNode = cy.getElementById(parentId);
+            if (parentNode.length === 0) return;
+
+            var parentPos = parentNode.position();
+            var parentW   = parentNode.outerWidth();
+            var parentH   = parentNode.outerHeight();
+            var ptmR      = ptmNode.outerWidth() / 2;  // PTM node is a small circle
+
+            // Collect all PTM siblings so we can fan them around the parent
+            var siblings = cy.nodes('[parent_protein = \"' + parentId + '\"]');
+            var idx      = siblings.indexOf(ptmNode);
+            var total    = siblings.length;
+
+            // Distribute siblings evenly across the bottom arc of the parent
+            // angleStart/End in radians: spread across bottom 180 degrees
+            var angleStart = Math.PI * 0.15;
+            var angleEnd   = Math.PI * 0.85;
+            var angle = total === 1
+                ? Math.PI / 2   // single PTM: directly below center
+                : angleStart + (angleEnd - angleStart) * (idx / (total - 1));
+
+            // Place PTM node just outside the parent border
+            var offsetX = (parentW / 2 + ptmR + 4) * Math.cos(angle);
+            var offsetY = (parentH / 2 + ptmR + 4) * Math.sin(angle);
+
+            ptmNode.position({
+                x: parentPos.x + offsetX,
+                y: parentPos.y + offsetY
+            });
+        });
     });
     
     // Create tooltip element
