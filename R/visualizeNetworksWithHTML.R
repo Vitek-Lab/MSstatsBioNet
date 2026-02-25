@@ -308,62 +308,72 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
         "id"
     }
     
-    node_elements <- apply(cbind(nodes, color = node_colors), 1, function(row) {
-        display_label <- if (label_column == "hgncName" && !is.na(row["hgncName"]) && row["hgncName"] != "") {
-            row["hgncName"]
-        } else {
-            row["id"]
-        }
-        paste0("{ data: { id: '", row["id"], "', label: '", display_label,
-               "', color: '", row["color"], "', node_type: 'protein' } }")
-    })
+    node_elements    <- c()
+    ptm_elements     <- c()
+    emitted_proteins <- c()
     
-    # Generate PTM site child nodes + edges
-    ptm_elements <- c()
-    if ("Site" %in% names(nodes)) {
-        for (i in seq_len(nrow(nodes))) {
-            site_val <- nodes$Site[i]
-            if (!is.na(site_val) && trimws(site_val) != "") {
-                parent_id <- nodes$id[i]
-                # Sites may be delimited by _, comma, semicolon, or pipe
-                sites <- trimws(unlist(strsplit(as.character(site_val), "[_,;|]")))
-                sites <- sites[sites != ""]
-                for (site in sites) {
-                    ptm_node_id <- paste0(parent_id, "__ptm__", site)
-                    # Escape for JS string safety
-                    safe_site  <- escape_js_string(site)
-                    safe_parent <- escape_js_string(parent_id)
-                    safe_ptm_id <- escape_js_string(ptm_node_id)
-                    
-                    # PTM node
-                    ptm_elements <- c(ptm_elements,
-                                      paste0("{ data: { id: '", safe_ptm_id,
-                                             "', label: '", safe_site,
-                                             "', parent_protein: '", safe_parent,
-                                             "', node_type: 'ptm' } }")
-                    )
-                    # Edge connecting PTM node to parent protein
-                    ptm_edge_id <- paste0(parent_id, "__ptm_edge__", site)
-                    ptm_elements <- c(ptm_elements,
-                                      paste0("{ data: { id: '", escape_js_string(ptm_edge_id),
-                                             "', source: '", safe_parent,
-                                             "', target: '", safe_ptm_id,
-                                             "', edge_type: 'ptm_attachment',",
-                                             " category: 'ptm_attachment',",
-                                             " interaction: '',",
-                                             " color: '#9932CC',",
-                                             " line_style: 'dotted',",
-                                             " arrow_shape: 'none',",
-                                             " width: 1.5,",
-                                             " tooltip: '' } }")
-                    )
-                }
+    for (i in seq_len(nrow(nodes))) {
+        row      <- nodes[i, ]
+        color    <- node_colors[i]
+        has_site <- "Site" %in% names(nodes) && !is.na(row$Site) && trimws(row$Site) != ""
+        
+        display_label <- if (label_column == "hgncName" && !is.na(row$hgncName) && row$hgncName != "") {
+            row$hgncName
+        } else {
+            row$id
+        }
+        
+        # Always emit the protein node, but only once per unique id
+        if (!(row$id %in% emitted_proteins)) {
+            node_elements <- c(node_elements,
+                               paste0("{ data: { id: '", escape_js_string(row$id),
+                                      "', label: '", escape_js_string(display_label),
+                                      "', color: '", color,
+                                      "', node_type: 'protein' } }")
+            )
+            emitted_proteins <- c(emitted_proteins, row$id)
+        }
+        
+        # Emit one PTM child node + attachment edge per individual site
+        if (has_site) {
+            sites <- trimws(unlist(strsplit(as.character(row$Site), "[_,;|]")))
+            sites <- sites[sites != ""]
+            
+            for (site in sites) {
+                ptm_node_id <- paste0(row$id, "__ptm__", site)
+                safe_ptm_id <- escape_js_string(ptm_node_id)
+                safe_parent <- escape_js_string(row$id)
+                safe_site   <- escape_js_string(site)
+                
+                ptm_elements <- c(ptm_elements,
+                                  paste0("{ data: { id: '", safe_ptm_id,
+                                         "', label: '", safe_site,
+                                         "', color: '", color,
+                                         "', parent_protein: '", safe_parent,
+                                         "', node_type: 'ptm' } }")
+                )
+                
+                ptm_edge_id <- escape_js_string(paste0(row$id, "__ptm_edge__", site))
+                ptm_elements <- c(ptm_elements,
+                                  paste0("{ data: { id: '", ptm_edge_id,
+                                         "', source: '", safe_parent,
+                                         "', target: '", safe_ptm_id,
+                                         "', edge_type: 'ptm_attachment',",
+                                         " category: 'ptm_attachment',",
+                                         " interaction: '',",
+                                         " color: '", color, "',",
+                                         " line_style: 'dotted',",
+                                         " arrow_shape: 'none',",
+                                         " width: 1.5,",
+                                         " tooltip: '' } }")
+                )
             }
         }
     }
     
     return(c(node_elements, ptm_elements))
 }
+
 createEdgeElements <- function(edges, nodes = NULL) {
     if (nrow(edges) == 0) return(list())
     
@@ -542,13 +552,13 @@ generateCytoscapeConfig <- function(nodes, edges,
                 shape = "ellipse",
                 width = "20px",
                 height = "20px",
-                `background-color` = "#9932CC",
-                `border-color` = "#5B0080",
+                `background-color` = "data(color)",   # <-- was hardcoded "#9932CC"
+                `border-color` = "#333",              # <-- neutral border instead of purple
                 `border-width` = 1.5,
                 label = "data(label)",
                 `font-size` = "8px",
                 `font-weight` = "normal",
-                color = "#ffffff",
+                color = "#000000",                    # <-- dark text works across the logFC palette
                 `text-valign` = "center",
                 `text-halign` = "center",
                 `text-wrap` = "wrap",
