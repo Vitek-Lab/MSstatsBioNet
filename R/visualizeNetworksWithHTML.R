@@ -296,32 +296,74 @@ getEdgeStyle <- function(interaction, category, edge_type) {
 }
 
 createNodeElements <- function(nodes, displayLabelType = "id") {
-    # Map logFC to colors if logFC column exists
     if ("logFC" %in% names(nodes)) {
         node_colors <- mapLogFCToColor(nodes$logFC)
     } else {
-        node_colors <- rep("#D3D3D3", nrow(nodes))  # Default color
+        node_colors <- rep("#D3D3D3", nrow(nodes))
     }
     
-    # Determine which column to use for labels
-    label_column <- if(displayLabelType == "hgncName" && "hgncName" %in% names(nodes)) {
+    label_column <- if (displayLabelType == "hgncName" && "hgncName" %in% names(nodes)) {
         "hgncName"
     } else {
         "id"
     }
     
-    apply(cbind(nodes, color = node_colors), 1, function(row) {
-        # Use the appropriate label, fallback to id if hgncName is missing/empty
-        display_label <- if(label_column == "hgncName" && !is.na(row['hgncName']) && row['hgncName'] != "") {
-            row['hgncName']
+    node_elements <- apply(cbind(nodes, color = node_colors), 1, function(row) {
+        display_label <- if (label_column == "hgncName" && !is.na(row["hgncName"]) && row["hgncName"] != "") {
+            row["hgncName"]
         } else {
-            row['id']
+            row["id"]
         }
-        
-        paste0("{ data: { id: '", row['id'], "', label: '", display_label, "', color: '", row['color'], "' } }")
+        paste0("{ data: { id: '", row["id"], "', label: '", display_label,
+               "', color: '", row["color"], "', node_type: 'protein' } }")
     })
+    
+    # Generate PTM site child nodes + edges
+    ptm_elements <- c()
+    if ("Site" %in% names(nodes)) {
+        for (i in seq_len(nrow(nodes))) {
+            site_val <- nodes$Site[i]
+            if (!is.na(site_val) && trimws(site_val) != "") {
+                parent_id <- nodes$id[i]
+                # Sites may be delimited by _, comma, semicolon, or pipe
+                sites <- trimws(unlist(strsplit(as.character(site_val), "[_,;|]")))
+                sites <- sites[sites != ""]
+                for (site in sites) {
+                    ptm_node_id <- paste0(parent_id, "__ptm__", site)
+                    # Escape for JS string safety
+                    safe_site  <- escape_js_string(site)
+                    safe_parent <- escape_js_string(parent_id)
+                    safe_ptm_id <- escape_js_string(ptm_node_id)
+                    
+                    # PTM node
+                    ptm_elements <- c(ptm_elements,
+                                      paste0("{ data: { id: '", safe_ptm_id,
+                                             "', label: '", safe_site,
+                                             "', parent_protein: '", safe_parent,
+                                             "', node_type: 'ptm' } }")
+                    )
+                    # Edge connecting PTM node to parent protein
+                    ptm_edge_id <- paste0(parent_id, "__ptm_edge__", site)
+                    ptm_elements <- c(ptm_elements,
+                                      paste0("{ data: { id: '", escape_js_string(ptm_edge_id),
+                                             "', source: '", safe_parent,
+                                             "', target: '", safe_ptm_id,
+                                             "', edge_type: 'ptm_attachment',",
+                                             " category: 'ptm_attachment',",
+                                             " interaction: '',",
+                                             " color: '#9932CC',",
+                                             " line_style: 'dotted',",
+                                             " arrow_shape: 'none',",
+                                             " width: 1.5,",
+                                             " tooltip: '' } }")
+                    )
+                }
+            }
+        }
+    }
+    
+    return(c(node_elements, ptm_elements))
 }
-
 createEdgeElements <- function(edges, nodes = NULL) {
     if (nrow(edges) == 0) return(list())
     
@@ -492,6 +534,38 @@ generateCytoscapeConfig <- function(nodes, edges,
             style = list(
                 `source-arrow-shape` = "triangle",
                 `target-arrow-shape` = "triangle"
+            )
+        ),
+        list(
+            selector = "node[node_type = 'ptm']",
+            style = list(
+                shape = "ellipse",
+                width = "20px",
+                height = "20px",
+                `background-color` = "#9932CC",
+                `border-color` = "#5B0080",
+                `border-width` = 1.5,
+                label = "data(label)",
+                `font-size` = "8px",
+                `font-weight` = "normal",
+                color = "#ffffff",
+                `text-valign` = "center",
+                `text-halign` = "center",
+                `text-wrap` = "wrap",
+                `text-max-width` = "18px"
+            )
+        ),
+        # --- PTM attachment edge style (hide label, keep it subtle) ---
+        list(
+            selector = "edge[edge_type = 'ptm_attachment']",
+            style = list(
+                `line-style` = "dotted",
+                `line-color` = "#9932CC",
+                width = 1.5,
+                `target-arrow-shape` = "none",
+                `source-arrow-shape` = "none",
+                label = "",             # no label on these connector edges
+                `z-index` = 0          # render behind main edges
             )
         )
     )
