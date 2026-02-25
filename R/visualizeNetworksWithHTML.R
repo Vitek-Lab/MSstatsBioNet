@@ -296,30 +296,122 @@ getEdgeStyle <- function(interaction, category, edge_type) {
 }
 
 createNodeElements <- function(nodes, displayLabelType = "id") {
-    # Map logFC to colors if logFC column exists
     if ("logFC" %in% names(nodes)) {
         node_colors <- mapLogFCToColor(nodes$logFC)
     } else {
-        node_colors <- rep("#D3D3D3", nrow(nodes))  # Default color
+        node_colors <- rep("#D3D3D3", nrow(nodes))
     }
     
-    # Determine which column to use for labels
-    label_column <- if(displayLabelType == "hgncName" && "hgncName" %in% names(nodes)) {
+    label_column <- if (displayLabelType == "hgncName" && "hgncName" %in% names(nodes)) {
         "hgncName"
     } else {
         "id"
     }
     
-    apply(cbind(nodes, color = node_colors), 1, function(row) {
-        # Use the appropriate label, fallback to id if hgncName is missing/empty
-        display_label <- if(label_column == "hgncName" && !is.na(row['hgncName']) && row['hgncName'] != "") {
-            row['hgncName']
+    node_elements    <- c()
+    ptm_elements     <- c()
+    emitted_proteins <- c()
+    emitted_compounds <- c()
+    emitted_ptm_nodes <- c()
+    emitted_ptm_edges <- c()
+    
+    # Pre-compute which protein ids have at least one PTM site row,
+    # so we know upfront whether a compound wrapper is needed
+    has_ptm_sites <- if ("Site" %in% names(nodes)) {
+        ids_with_sites <- unique(nodes$id[!is.na(nodes$Site) & trimws(nodes$Site) != ""])
+        ids_with_sites
+    } else {
+        c()
+    }
+    
+    for (i in seq_len(nrow(nodes))) {
+        row      <- nodes[i, ]
+        color    <- node_colors[i]
+        has_site <- "Site" %in% names(nodes) && !is.na(row$Site) && trimws(row$Site) != ""
+        
+        display_label <- if (label_column == "hgncName" && !is.na(row$hgncName) && row$hgncName != "") {
+            row$hgncName
         } else {
-            row['id']
+            row$id
         }
         
-        paste0("{ data: { id: '", row['id'], "', label: '", display_label, "', color: '", row['color'], "' } }")
-    })
+        needs_compound <- row$id %in% has_ptm_sites
+        compound_id    <- paste0(row$id, "__compound__")
+        
+        # Emit invisible compound container node once per protein that has PTM children
+        if (needs_compound && !(compound_id %in% emitted_compounds)) {
+            node_elements <- c(node_elements,
+                               paste0("{ data: { id: '", escape_js_string(compound_id),
+                                      "', node_type: 'compound' } }")
+            )
+            emitted_compounds <- c(emitted_compounds, compound_id)
+        }
+        
+        # Emit protein node once, assigning it to the compound if one exists
+        if (!(row$id %in% emitted_proteins)) {
+            parent_field <- if (needs_compound) {
+                paste0(", parent: '", escape_js_string(compound_id), "'")
+            } else {
+                ""
+            }
+            node_elements <- c(node_elements,
+                               paste0("{ data: { id: '", escape_js_string(row$id),
+                                      "', label: '", escape_js_string(display_label),
+                                      "', color: '", color,
+                                      "', node_type: 'protein'",
+                                      parent_field,
+                                      " } }")
+            )
+            emitted_proteins <- c(emitted_proteins, row$id)
+        }
+        
+        # Emit one PTM child node + attachment edge per individual site
+        if (has_site) {
+            sites <- trimws(unlist(strsplit(as.character(row$Site), "[_,;|]")))
+            sites <- unique(sites[sites != ""])
+            
+            for (site in sites) {
+                ptm_node_id <- paste0(row$id, "__ptm__", site)
+                safe_ptm_id <- escape_js_string(ptm_node_id)
+                safe_parent <- escape_js_string(row$id)
+                safe_site   <- escape_js_string(site)
+                
+                # PTM node also belongs to the same compound container
+                if (!(ptm_node_id %in% emitted_ptm_nodes)) {
+                    ptm_elements <- c(ptm_elements,
+                                      paste0("{ data: { id: '", safe_ptm_id,
+                                             "', label: '", safe_site,
+                                             "', color: '", color,
+                                             "', parent_protein: '", safe_parent,
+                                             "', parent: '", escape_js_string(compound_id), "'",
+                                             ", node_type: 'ptm' } }")
+                    )
+                    emitted_ptm_nodes <- c(emitted_ptm_nodes, ptm_node_id)
+                }
+                
+                ptm_edge_id_raw <- paste0(row$id, "__ptm_edge__", site)
+                if (!(ptm_edge_id_raw %in% emitted_ptm_edges)) {
+                    ptm_edge_id <- escape_js_string(ptm_edge_id_raw)
+                    ptm_elements <- c(ptm_elements,
+                                      paste0("{ data: { id: '", ptm_edge_id,
+                                             "', source: '", safe_parent,
+                                             "', target: '", safe_ptm_id,
+                                             "', edge_type: 'ptm_attachment',",
+                                             " category: 'ptm_attachment',",
+                                             " interaction: '',",
+                                             " color: '", color, "',",
+                                             " line_style: 'dotted',",
+                                             " arrow_shape: 'none',",
+                                             " width: 1.5,",
+                                             " tooltip: '' } }")
+                    )
+                    emitted_ptm_edges <- c(emitted_ptm_edges, ptm_edge_id_raw)
+                }
+            }
+        }
+    }
+    
+    return(c(node_elements, ptm_elements))
 }
 
 createEdgeElements <- function(edges, nodes = NULL) {
@@ -493,6 +585,49 @@ generateCytoscapeConfig <- function(nodes, edges,
                 `source-arrow-shape` = "triangle",
                 `target-arrow-shape` = "triangle"
             )
+        ),
+        list(
+            selector = "node[node_type = 'ptm']",
+            style = list(
+                shape = "ellipse",
+                width = "20px",
+                height = "20px",
+                `background-color` = "data(color)",   # <-- was hardcoded "#9932CC"
+                `border-color` = "#333",              # <-- neutral border instead of purple
+                `border-width` = 1.5,
+                label = "data(label)",
+                `font-size` = "8px",
+                `font-weight` = "normal",
+                color = "#000000",                    # <-- dark text works across the logFC palette
+                `text-valign` = "center",
+                `text-halign` = "center",
+                `text-wrap` = "wrap",
+                `text-max-width` = "18px"
+            )
+        ),
+        # --- PTM attachment edge style (hide label, keep it subtle) ---
+        list(
+            selector = "edge[edge_type = 'ptm_attachment']",
+            style = list(
+                `line-style` = "dotted",
+                `line-color` = "#9932CC",
+                width = 1.5,
+                `target-arrow-shape` = "none",
+                `source-arrow-shape` = "none",
+                label = "",             # no label on these connector edges
+                `z-index` = 0          # render behind main edges
+            )
+        ),
+        list(
+            selector = "node[node_type = 'compound']",
+            style = list(
+                `background-opacity` = 0,
+                `border-width` = 0,
+                `border-opacity` = 0,
+                `padding` = "10px",
+                label = "",
+                `z-index` = 0
+            )
         )
     )
     
@@ -553,6 +688,43 @@ generateJavaScriptCode <- function(config) {
         elements: [", elements_js, "],
         style: ", style_js, ",
         layout: ", layout_js, "
+    });
+    
+    // After layout completes, reposition PTM nodes directly beside their parent protein
+    cy.on('layoutstop', function() {
+        var ptmNodes = cy.nodes('[node_type = \"ptm\"]');
+        ptmNodes.forEach(function(ptmNode) {
+            var parentId = ptmNode.data('parent_protein');
+            var parentNode = cy.getElementById(parentId);
+            if (parentNode.length === 0) return;
+
+            var parentPos = parentNode.position();
+            var parentW   = parentNode.outerWidth();
+            var parentH   = parentNode.outerHeight();
+            var ptmR      = ptmNode.outerWidth() / 2;  // PTM node is a small circle
+
+            // Collect all PTM siblings so we can fan them around the parent
+            var siblings = cy.nodes('[parent_protein = \"' + parentId + '\"]');
+            var idx      = siblings.indexOf(ptmNode);
+            var total    = siblings.length;
+
+            // Distribute siblings evenly across the bottom arc of the parent
+            // angleStart/End in radians: spread across bottom 180 degrees
+            var angleStart = Math.PI * 0.15;
+            var angleEnd   = Math.PI * 0.85;
+            var angle = total === 1
+                ? Math.PI / 2   // single PTM: directly below center
+                : angleStart + (angleEnd - angleStart) * (idx / (total - 1));
+
+            // Place PTM node just outside the parent border
+            var offsetX = (parentW / 2 + ptmR + 4) * Math.cos(angle);
+            var offsetY = (parentH / 2 + ptmR + 4) * Math.sin(angle);
+
+            ptmNode.position({
+                x: parentPos.x + offsetX,
+                y: parentPos.y + offsetY
+            });
+        });
     });
     
     // Create tooltip element
