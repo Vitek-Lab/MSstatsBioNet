@@ -312,6 +312,8 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
     ptm_elements     <- c()
     emitted_proteins <- c()
     emitted_compounds <- c()
+    emitted_ptm_nodes <- c()
+    emitted_ptm_edges <- c()
     
     # Pre-compute which protein ids have at least one PTM site row,
     # so we know upfront whether a compound wrapper is needed
@@ -366,7 +368,7 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
         # Emit one PTM child node + attachment edge per individual site
         if (has_site) {
             sites <- trimws(unlist(strsplit(as.character(row$Site), "[_,;|]")))
-            sites <- sites[sites != ""]
+            sites <- unique(sites[sites != ""])
             
             for (site in sites) {
                 ptm_node_id <- paste0(row$id, "__ptm__", site)
@@ -375,29 +377,36 @@ createNodeElements <- function(nodes, displayLabelType = "id") {
                 safe_site   <- escape_js_string(site)
                 
                 # PTM node also belongs to the same compound container
-                ptm_elements <- c(ptm_elements,
-                                  paste0("{ data: { id: '", safe_ptm_id,
-                                         "', label: '", safe_site,
-                                         "', color: '", color,
-                                         "', parent_protein: '", safe_parent,
-                                         "', parent: '", escape_js_string(compound_id), "'",
-                                         ", node_type: 'ptm' } }")
-                )
+                if (!(ptm_node_id %in% emitted_ptm_nodes)) {
+                    ptm_elements <- c(ptm_elements,
+                                      paste0("{ data: { id: '", safe_ptm_id,
+                                             "', label: '", safe_site,
+                                             "', color: '", color,
+                                             "', parent_protein: '", safe_parent,
+                                             "', parent: '", escape_js_string(compound_id), "'",
+                                             ", node_type: 'ptm' } }")
+                    )
+                    emitted_ptm_nodes <- c(emitted_ptm_nodes, ptm_node_id)
+                }
                 
-                ptm_edge_id <- escape_js_string(paste0(row$id, "__ptm_edge__", site))
-                ptm_elements <- c(ptm_elements,
-                                  paste0("{ data: { id: '", ptm_edge_id,
-                                         "', source: '", safe_parent,
-                                         "', target: '", safe_ptm_id,
-                                         "', edge_type: 'ptm_attachment',",
-                                         " category: 'ptm_attachment',",
-                                         " interaction: '',",
-                                         " color: '", color, "',",
-                                         " line_style: 'dotted',",
-                                         " arrow_shape: 'none',",
-                                         " width: 1.5,",
-                                         " tooltip: '' } }")
-                )
+                ptm_edge_id_raw <- paste0(row$id, "__ptm_edge__", site)
+                if (!(ptm_edge_id_raw %in% emitted_ptm_edges)) {
+                    ptm_edge_id <- escape_js_string(ptm_edge_id_raw)
+                    ptm_elements <- c(ptm_elements,
+                                      paste0("{ data: { id: '", ptm_edge_id,
+                                             "', source: '", safe_parent,
+                                             "', target: '", safe_ptm_id,
+                                             "', edge_type: 'ptm_attachment',",
+                                             " category: 'ptm_attachment',",
+                                             " interaction: '',",
+                                             " color: '", color, "',",
+                                             " line_style: 'dotted',",
+                                             " arrow_shape: 'none',",
+                                             " width: 1.5,",
+                                             " tooltip: '' } }")
+                    )
+                    emitted_ptm_edges <- c(emitted_ptm_edges, ptm_edge_id_raw)
+                }
             }
         }
     }
