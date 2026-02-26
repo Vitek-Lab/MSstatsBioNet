@@ -286,6 +286,25 @@ HTMLWidgets.widget({
           style:     buildStyle(x.node_font_size),
           layout:    layout
         });
+        
+        // Inject an export PNG button above the container
+        var btn = document.createElement("button");
+        btn.textContent = "Export PNG";
+        btn.style.cssText = "margin-bottom:6px;padding:5px 12px;cursor:pointer;font-size:12px;";
+        el.parentNode.insertBefore(btn, el);
+        
+        btn.addEventListener("click", function () {
+          var png = cy.png({
+            output:    "base64uri",
+            bg:        "white",
+            full:      true,
+            scale:     8   
+          });
+          var a = document.createElement("a");
+          a.href     = png;
+          a.download = "network.png";
+          a.click();
+        });
 
         /* After layout, fan PTM nodes around their parent protein */
         cy.on("layoutstop", function () {
