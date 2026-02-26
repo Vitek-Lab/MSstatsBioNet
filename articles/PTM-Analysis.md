@@ -149,7 +149,7 @@ Visualize the subnetwork on your browser
 
 ``` r
 previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "hgncName")
-#> Network visualization exported to: /tmp/RtmpB34WQk/file1bc91bd77eae.html
+#> Network visualization exported to: /tmp/Rtmpoubfr2/file1c144d3bad8d.html
 ```
 
 ## Session info
