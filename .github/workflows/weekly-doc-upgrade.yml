@@ -2,7 +2,7 @@
 #
 # SETUP INSTRUCTIONS:
 # 1. Add your OpenAI API key as a GitHub Secret:
-#    Repo Settings → Secrets → Actions → New secret → OPENAI_API_KEY
+#    Repo Settings → Secrets → Actions → New secret → MSSTATS_OPENAI_KEY
 #
 # 2. Give Actions write permissions:
 #    Repo Settings → Actions → General → Workflow permissions → Read and write
@@ -12,7 +12,8 @@
 name: Weekly AI Doc Upgrade
 
 on:
-  pull_request:             # Triggers on any PR opened/updated — for testing
+  schedule:
+    - cron: '0 9 * * 1'   # Every Monday at 9am UTC
   workflow_dispatch:        # Also allows manual trigger from the Actions tab
 
 jobs:
