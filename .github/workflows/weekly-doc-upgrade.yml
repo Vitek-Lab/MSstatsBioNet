@@ -87,4 +87,4 @@ jobs:
           > Merge if it looks good, close if not. Next week the bot will pick a different function." \
             --base main \
             --head "$BRANCH" \
-            --label "documentation,automated"
+            --label "documentation"
