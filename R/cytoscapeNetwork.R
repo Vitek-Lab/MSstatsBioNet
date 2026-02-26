@@ -474,7 +474,7 @@ cytoscapeNetworkOutput <- function(outputId,
     name     = "cytoscapeNetwork",
     width    = width,
     height   = height,
-    package  = "cytoscapeNetwork"
+    package  = "MSstatsBioNet"
   )
 }
 
