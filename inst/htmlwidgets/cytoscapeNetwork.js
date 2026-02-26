@@ -279,36 +279,78 @@ HTMLWidgets.widget({
 
         /* Initialise Cytoscape */
         cytoscape.use(cytoscapeDagre);   // register dagre layout
+        
+        el.innerHTML = "";  // clear on re-render
+        // Outer flex wrapper — fills the widget element
+        var wrapper = document.createElement("div");
+        wrapper.style.cssText = "display:flex;width:100%;height:100%;";
+        
+        // Left: Cytoscape canvas
+        var cyContainer = document.createElement("div");
+        cyContainer.style.cssText = "flex:1;height:100%;min-width:0;";
+        
+        // Right: legend panel
+        var legendPanel = document.createElement("div");
+        legendPanel.className = "cytoscape-network-legend";
+        legendPanel.style.cssText = [
+          "width:180px",
+          "flex-shrink:0",
+          "padding:12px",
+          "background:#f8f9fa",
+          "border-left:1px solid #dee2e6",
+          "overflow-y:auto",
+          "font-family:Arial,sans-serif",
+          "box-sizing:border-box"
+        ].join(";");
+        
+        wrapper.appendChild(cyContainer);
+        wrapper.appendChild(legendPanel);
+        el.appendChild(wrapper);
 
         cy = cytoscape({
-          container: el,
+          container: cyContainer,
           elements:  elements,
           style:     buildStyle(x.node_font_size),
           layout:    layout
         });
         
         // Inject an export PNG button above the container
+        var btnBar = document.createElement("div");
+        btnBar.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:6px;";
+        
         var btn = document.createElement("button");
         btn.textContent = "Export PNG";
-        btn.style.cssText = "margin-bottom:6px;padding:5px 12px;cursor:pointer;font-size:12px;";
-        el.parentNode.insertBefore(btn, el);
+        btn.style.cssText = [
+          "padding:5px 12px",
+          "cursor:pointer",
+          "font-size:12px",
+          "background:#28a745",
+          "color:white",
+          "border:none",
+          "border-radius:4px",
+          "font-family:Arial,sans-serif"
+        ].join(";");
         
         btn.addEventListener("click", function () {
           var png = cy.png({
-            output:    "base64uri",
-            bg:        "white",
-            full:      true,
-            scale:     8   
+            output: "base64uri",
+            bg:     "white",
+            full:   true,
+            scale:  3
           });
           var a = document.createElement("a");
           a.href     = png;
           a.download = "network.png";
           a.click();
         });
+        
+        btnBar.appendChild(btn);
+        el.parentNode.insertBefore(btnBar, el);
 
         /* After layout, fan PTM nodes around their parent protein */
         cy.on("layoutstop", function () {
           repositionPTMNodes(cy);
+          buildLegend(cy, legendPanel);
         });
 
         /* ── Tooltip ─────────────────────────────────────────────────── */
