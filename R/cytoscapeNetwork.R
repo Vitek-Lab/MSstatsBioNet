@@ -254,7 +254,7 @@
   emitted_ptm_e   <- character(0)
 
   for (i in seq_len(nrow(nodes))) {
-    row       <- nodes[i, ]
+    row       <- nodes[i, , drop = FALSE]
     color     <- node_colors[i]
     has_site  <- "Site" %in% names(nodes) &&
                  !is.na(row$Site) && trimws(row$Site) != ""

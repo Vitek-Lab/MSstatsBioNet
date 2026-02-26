@@ -9,6 +9,21 @@
 
 library(cytoscapeNetwork)
 
+nodes_min <- data.frame(
+    id    = c("TP53", "MDM2", "CDKN1A"),
+    stringsAsFactors = FALSE
+)
+
+edges_min <- data.frame(
+    source      = c("TP53", "MDM2"),
+    target      = c("MDM2", "TP53"),
+    interaction = c("Activation", "Inhibition"),
+    stringsAsFactors = FALSE
+)
+
+# Renders in RStudio Viewer / R Markdown / browser
+cytoscapeNetwork(nodes_min, edges_min)
+
 # ── Example 2 · logFC colour gradient ───────────────────────────────────────
 # Nodes coloured on a blue (down) → grey (neutral) → red (up) scale.
 
@@ -25,7 +40,7 @@ edges_fc <- data.frame(
   stringsAsFactors = FALSE
 )
 
-widget = cytoscapeNetwork(nodes_fc, edges_fc)
+cytoscapeNetwork(nodes_fc, edges_fc)
 
 
 # ── Example 3 · PTM satellite nodes ─────────────────────────────────────────
@@ -92,39 +107,35 @@ cytoscapeNetwork(nodes_min, edges_ev)
 
 
 # ── Example 6 · Shiny integration ───────────────────────────────────────────
-
-if (requireNamespace("shiny", quietly = TRUE)) {
-  library(shiny)
-
-  ui <- fluidPage(
-    titlePanel("Protein Interaction Network"),
-    sidebarLayout(
-      sidebarPanel(
-        sliderInput("font_size", "Node font size", min = 8, max = 24, value = 12),
-        selectInput("layout_dir", "Layout direction",
-                    choices = c("Top-Bottom" = "TB", "Left-Right" = "LR"),
-                    selected = "TB")
-      ),
-      mainPanel(
-        # Use the Shiny output binding
-        cytoscapeNetworkOutput("network", height = "600px")
-      )
-    )
+library(shiny)
+ui <- fluidPage(
+titlePanel("Protein Interaction Network"),
+sidebarLayout(
+  sidebarPanel(
+    sliderInput("font_size", "Node font size", min = 8, max = 24, value = 12),
+    selectInput("layout_dir", "Layout direction",
+                choices = c("Top-Bottom" = "TB", "Left-Right" = "LR"),
+                selected = "TB")
+  ),
+  mainPanel(
+    # Use the Shiny output binding
+    cytoscapeNetworkOutput("network", height = "600px")
   )
+)
+)
 
-  server <- function(input, output, session) {
-    output$network <- renderCytoscapeNetwork({
-      cytoscapeNetwork(
-        nodes        = nodes_fc,
-        edges        = edges_fc,
-        nodeFontSize = input$font_size,
-        layoutOptions = list(rankDir = input$layout_dir)
-      )
-    })
-  }
-
-  # shinyApp(ui, server)   # uncomment to launch
+server <- function(input, output, session) {
+output$network <- renderCytoscapeNetwork({
+  cytoscapeNetwork(
+    nodes        = nodes_ptm,
+    edges        = edges_ptm,
+    nodeFontSize = input$font_size,
+    layoutOptions = list(rankDir = input$layout_dir)
+  )
+})
 }
+
+# shinyApp(ui, server)   # uncomment to launch
 
 
 # ── Example 7 · Save to a standalone HTML file ──────────────────────────────
