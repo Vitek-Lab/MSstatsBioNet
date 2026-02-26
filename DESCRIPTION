@@ -23,7 +23,9 @@ Imports:
     httr,
     jsonlite,
     r2r,
-    tidyr
+    tidyr,
+    htmlwidgets,
+    grDevices
 Suggests: 
     data.table,
     BiocStyle,
