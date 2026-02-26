@@ -431,9 +431,39 @@ HTMLWidgets.widget({
 
         /* ── Evidence link on edge click ─────────────────────────────── */
         cy.on("tap", "edge", function (evt) {
-          var link = evt.target.data("evidenceLink");
-          openSafe(link);
+          var edge = evt.target;
+          // skip compound/ptm attachment edges
+          if (edge.data("edge_type") === "ptm_attachment") return;
+          openSafe(edge.data("evidenceLink"));
+          if (window.Shiny) {
+            Shiny.setInputValue(el.id + "_edge_clicked", {
+              source:       edge.data("source"),
+              target:       edge.data("target"),
+              interaction:  edge.data("interaction"),
+              edge_type:    edge.data("edge_type"),
+              category:     edge.data("category"),
+              evidenceLink: edge.data("evidenceLink")
+            });
+          }
         });
+
+        /* ── Node click — report to Shiny ───────────────────────────── */
+        cy.on("tap", "node", function (evt) {
+          var node = evt.target;
+          // skip compound and ptm satellite nodes
+          if (node.data("node_type") === "compound") return;
+          if (window.Shiny) {
+            Shiny.setInputValue(el.id + "_node_clicked", {
+              id:        node.data("id"),
+              label:     node.data("label"),
+              color:     node.data("color"),
+              node_type: node.data("node_type")
+            });
+          }
+        });
+
+        /* ── Expose cy instance for external access (e.g. Shiny) ─────── */
+        el._cytoscapeInstance = cy;
 
         /* ── Build legend in sibling element (if present) ────────────── */
         var legendEl = el.parentNode
