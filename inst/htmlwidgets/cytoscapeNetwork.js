@@ -265,7 +265,7 @@ HTMLWidgets.widget({
         var PANEL_BG = "#f8f9fa";
         var rightPanel = document.createElement("div");
         rightPanel.style.cssText = [
-          "width:190px",
+          "width:160px",
           "flex-shrink:0",
           "display:flex",
           "flex-direction:column",
