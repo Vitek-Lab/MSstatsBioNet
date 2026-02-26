@@ -115,18 +115,17 @@ ui <- fluidPage(
                         selected = "TB")
         ),
         mainPanel(
-            # Use the Shiny output binding
-            cytoscapeNetworkOutput("network", height = "600px")
+            cytoscapeNetworkOutput("network", height = "600px"),
+            style = "height: 650px;"   
         )
     )
 )
-
 server <- function(input, output, session) {
     output$network <- renderCytoscapeNetwork({
         cytoscapeNetwork(
-            nodes        = nodes_ptm,
-            edges        = edges_ptm,
-            nodeFontSize = input$font_size,
+            nodes         = nodes_ptm,
+            edges         = edges_ptm,
+            nodeFontSize  = input$font_size,
             layoutOptions = list(rankDir = input$layout_dir)
         )
     })
