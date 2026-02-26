@@ -254,9 +254,91 @@ HTMLWidgets.widget({
         if (cy) { cy.destroy(); cy = null; }
         if (tooltip) { tooltip.parentNode && tooltip.parentNode.removeChild(tooltip); tooltip = null; }
 
-        /* Ensure the container has explicit pixel dimensions */
-        el.style.width  = el.style.width  || width  + "px";
-        el.style.height = el.style.height || height + "px";
+        el.innerHTML = "";
+        el.style.cssText = "display:flex;width:100%;height:100%;box-sizing:border-box;";
+        
+        /* Left: Cytoscape canvas */
+        var cyContainer = document.createElement("div");
+        cyContainer.style.cssText = "flex:1;min-width:0;height:100%;";
+
+        /* Right panel — shared background for button + legend */
+        var PANEL_BG = "#f8f9fa";
+        var rightPanel = document.createElement("div");
+        rightPanel.style.cssText = [
+          "width:190px",
+          "flex-shrink:0",
+          "display:flex",
+          "flex-direction:column",
+          "background:" + PANEL_BG,
+          "border-left:1px solid #dee2e6",
+          "box-sizing:border-box"
+        ].join(";");
+
+        /* Button bar — right-aligned inside the panel */
+        var btnBar = document.createElement("div");
+        btnBar.style.cssText = [
+          "display:flex",
+          "justify-content:flex-start",
+          "padding:8px 10px 6px 10px",
+          "background:" + PANEL_BG,
+          "border-bottom:1px solid #dee2e6"
+        ].join(";");
+
+        var btn = document.createElement("button");
+        btn.textContent = "Export PNG";
+        btn.style.cssText = [
+          "padding:4px 10px",
+          "cursor:pointer",
+          "font-size:13px",
+          "background:#28a745",
+          "color:white",
+          "border:none",
+          "border-radius:4px",
+          "font-family:Arial,sans-serif",
+          "white-space:nowrap"
+        ].join(";");
+
+        btn.addEventListener("click", function () {
+          /* Network PNG via Cytoscape */
+          var networkPng = cy.png({ output: "base64uri", bg: "white", full: true, scale: 8 });
+          var a1 = document.createElement("a");
+          a1.href     = networkPng;
+          a1.download = "network.png";
+          a1.click();
+
+          /* Legend PNG via html2canvas (if available) */
+          setTimeout(function () {
+            if (typeof html2canvas === "function") {
+              html2canvas(legendPanel, { backgroundColor: PANEL_BG, scale: 8 })
+                .then(function (canvas) {
+                  var a2 = document.createElement("a");
+                  a2.href     = canvas.toDataURL("image/png");
+                  a2.download = "network_legend.png";
+                  a2.click();
+                });
+            }
+          }, 300);
+        });
+
+        btnBar.appendChild(btn);
+
+        /* Legend panel — fills remaining vertical space, scrolls if needed */
+        var legendPanel = document.createElement("div");
+        legendPanel.className = "cytoscape-network-legend";
+        legendPanel.style.cssText = [
+          "flex:1",
+          "overflow-y:auto",
+          "padding:10px",
+          "font-family:Arial,sans-serif",
+          "box-sizing:border-box",
+          "background:" + PANEL_BG
+        ].join(";");
+
+        rightPanel.appendChild(btnBar);
+        rightPanel.appendChild(legendPanel);
+
+        el.appendChild(cyContainer);
+        el.appendChild(rightPanel);
 
         /* Build combined elements array from pre-serialised strings.
            R passes them as an array of JSON-string fragments; we re-parse. */
@@ -279,33 +361,6 @@ HTMLWidgets.widget({
 
         /* Initialise Cytoscape */
         cytoscape.use(cytoscapeDagre);   // register dagre layout
-        
-        el.innerHTML = "";  // clear on re-render
-        // Outer flex wrapper — fills the widget element
-        var wrapper = document.createElement("div");
-        wrapper.style.cssText = "display:flex;width:100%;height:100%;";
-        
-        // Left: Cytoscape canvas
-        var cyContainer = document.createElement("div");
-        cyContainer.style.cssText = "flex:1;height:100%;min-width:0;";
-        
-        // Right: legend panel
-        var legendPanel = document.createElement("div");
-        legendPanel.className = "cytoscape-network-legend";
-        legendPanel.style.cssText = [
-          "width:180px",
-          "flex-shrink:0",
-          "padding:12px",
-          "background:#f8f9fa",
-          "border-left:1px solid #dee2e6",
-          "overflow-y:auto",
-          "font-family:Arial,sans-serif",
-          "box-sizing:border-box"
-        ].join(";");
-        
-        wrapper.appendChild(cyContainer);
-        wrapper.appendChild(legendPanel);
-        el.appendChild(wrapper);
 
         cy = cytoscape({
           container: cyContainer,
@@ -313,53 +368,6 @@ HTMLWidgets.widget({
           style:     buildStyle(x.node_font_size),
           layout:    layout
         });
-        
-        // Inject an export PNG button above the container
-        var btnBar = document.createElement("div");
-        btnBar.style.cssText = "display:flex;justify-content:flex-end;margin-bottom:6px;";
-        
-        var btn = document.createElement("button");
-        btn.textContent = "Export PNG";
-        btn.style.cssText = [
-          "padding:5px 12px",
-          "cursor:pointer",
-          "font-size:12px",
-          "background:#28a745",
-          "color:white",
-          "border:none",
-          "border-radius:4px",
-          "font-family:Arial,sans-serif"
-        ].join(";");
-        
-        btn.addEventListener("click", function () {
-          var networkPng = cy.png({
-            output: "base64uri",
-            bg:     "white",
-            full:   true,
-            scale:  8
-          });
-          var a1 = document.createElement("a");
-          a1.href     = networkPng;
-          a1.download = "network.png";
-          a1.click();
-        
-          // ── 2. Legend PNG via html2canvas ──────────────────────────────────
-          // Small delay so the two download dialogs don't collide in some browsers
-          setTimeout(function () {
-            html2canvas(legendPanel, {
-              backgroundColor: "#ffffff",
-              scale: 8          
-            }).then(function (canvas) {
-              var a2 = document.createElement("a");
-              a2.href     = canvas.toDataURL("image/png");
-              a2.download = "network_legend.png";
-              a2.click();
-            });
-          }, 300);
-        });
-        
-        btnBar.appendChild(btn);
-        el.parentNode.insertBefore(btnBar, el);
 
         /* After layout, fan PTM nodes around their parent protein */
         cy.on("layoutstop", function () {
