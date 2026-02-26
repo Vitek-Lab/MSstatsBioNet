@@ -332,16 +332,30 @@ HTMLWidgets.widget({
         ].join(";");
         
         btn.addEventListener("click", function () {
-          var png = cy.png({
+          var networkPng = cy.png({
             output: "base64uri",
             bg:     "white",
             full:   true,
-            scale:  3
+            scale:  8
           });
-          var a = document.createElement("a");
-          a.href     = png;
-          a.download = "network.png";
-          a.click();
+          var a1 = document.createElement("a");
+          a1.href     = networkPng;
+          a1.download = "network.png";
+          a1.click();
+        
+          // ── 2. Legend PNG via html2canvas ──────────────────────────────────
+          // Small delay so the two download dialogs don't collide in some browsers
+          setTimeout(function () {
+            html2canvas(legendPanel, {
+              backgroundColor: "#ffffff",
+              scale: 8          
+            }).then(function (canvas) {
+              var a2 = document.createElement("a");
+              a2.href     = canvas.toDataURL("image/png");
+              a2.download = "network_legend.png";
+              a2.click();
+            });
+          }, 300);
         });
         
         btnBar.appendChild(btn);
