@@ -85,6 +85,6 @@ jobs:
           - [ ] No logic was accidentally changed
 
           > Merge if it looks good, close if not. Next week the bot will pick a different function." \
-            --base main \
+            --base devel \
             --head "$BRANCH" \
             --label "documentation"
