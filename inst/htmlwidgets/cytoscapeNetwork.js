@@ -255,17 +255,32 @@ HTMLWidgets.widget({
         if (tooltip) { tooltip.parentNode && tooltip.parentNode.removeChild(tooltip); tooltip = null; }
 
         el.innerHTML = "";
-        el.style.cssText = "display:flex;width:100%;height:100%;box-sizing:border-box;";
-        
-        /* Left: Cytoscape canvas */
+        var PANEL_W = 160;
+        var elW     = el.offsetWidth  || width  || 800;
+        var elH     = el.offsetHeight || height || 600;
+
+        el.style.cssText = [
+          "display:flex",
+          "width:"  + elW + "px",
+          "height:" + elH + "px",
+          "box-sizing:border-box"
+        ].join(";");
+
+        /* Left: Cytoscape canvas — explicit px so Cytoscape always gets
+           real dimensions regardless of flex/CSS resolution order */
         var cyContainer = document.createElement("div");
-        cyContainer.style.cssText = "flex:1;min-width:0;height:100%;";
+        cyContainer.style.cssText = [
+          "flex:1",
+          "min-width:0",
+          "width:"  + (elW - PANEL_W) + "px",
+          "height:" + elH + "px"
+        ].join(";");
 
         /* Right panel — shared background for button + legend */
         var PANEL_BG = "#f8f9fa";
         var rightPanel = document.createElement("div");
         rightPanel.style.cssText = [
-          "width:160px",
+          "width:" + PANEL_W + "px",,
           "flex-shrink:0",
           "display:flex",
           "flex-direction:column",
