@@ -1,0 +1,47 @@
+# inst/htmlwidgets/cytoscapeNetwork.yaml
+#
+# Declares the JavaScript (and optional CSS) dependencies for the
+# cytoscapeNetwork htmlwidget.
+#
+# All libraries are loaded from CDN via the `url` field so no local copies
+# are needed.  If you want to vendor them locally, download the files into
+# inst/htmlwidgets/lib/ and replace the `url` entries with `script` entries
+# pointing at the local paths.
+#
+# Load order matters: graphlib → dagre → cytoscape → cytoscape-dagre
+
+dependencies:
+  - name: graphlib
+    version: 2.1.8
+    src: 
+        href: https://cdnjs.cloudflare.com/ajax/libs/graphlib/2.1.8/graphlib.min.js
+    head: >
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/graphlib/2.1.8/graphlib.min.js"></script>
+
+  - name: dagre
+    version: 0.8.5
+    src: 
+        href: https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js
+    head: >
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+
+  - name: cytoscape
+    version: 3.32.0
+    src: 
+        href: https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.32.0/cytoscape.min.js
+    head: >
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.32.0/cytoscape.min.js"></script>
+
+  - name: cytoscape-dagre
+    version: 2.3.0
+    src: 
+        href: https://unpkg.com/cytoscape-dagre@2.3.0/cytoscape-dagre.js
+    head: >
+      <script src="https://unpkg.com/cytoscape-dagre@2.3.0/cytoscape-dagre.js"></script>
+
+  - name: html2canvas
+    version: 1.4.1
+    src: 
+        href: https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js
+    head: >
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
