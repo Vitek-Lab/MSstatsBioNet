@@ -256,12 +256,11 @@ HTMLWidgets.widget({
 
         el.innerHTML = "";
         var PANEL_W = 160;
-        var elW     = el.offsetWidth  || width  || 800;
         var elH     = el.offsetHeight || height || 600;
 
         el.style.cssText = [
           "display:flex",
-          "width:"  + elW + "px",
+          "width:100%",
           "height:" + elH + "px",
           "box-sizing:border-box"
         ].join(";");
@@ -272,7 +271,6 @@ HTMLWidgets.widget({
         cyContainer.style.cssText = [
           "flex:1",
           "min-width:0",
-          "width:"  + (elW - PANEL_W) + "px",
           "height:" + elH + "px"
         ].join(";");
 
