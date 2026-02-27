@@ -4,6 +4,10 @@
 
 - [`annotateProteinInfoFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.md)
   : Annotate Protein Information from Indra
+- [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
+  : Render a Cytoscape network visualisation
+- [`cytoscapeNetworkOutput()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.md)
+  : Shiny output binding for cytoscapeNetwork
 - [`.populateHgncIdsInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncIdsInDataFrame.md)
   : Populate HGNC IDs in Data Frame
 - [`.populateHgncNamesInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncNamesInDataFrame.md)
@@ -28,5 +32,7 @@
   : Get subnetwork from INDRA database
 - [`previewNetworkInBrowser()`](https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.md)
   : Preview network in browser
+- [`renderCytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/renderCytoscapeNetwork.md)
+  : Shiny render binding for cytoscapeNetwork
 - [`visualizeNetworks()`](https://vitek-lab.github.io/MSstatsBioNet/reference/visualizeNetworks.md)
   : Create visualization of network
