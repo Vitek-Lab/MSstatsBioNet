@@ -149,7 +149,7 @@ Visualize the subnetwork on your browser
 
 ``` r
 previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "hgncName")
-#> Network visualization exported to: /tmp/Rtmp6lSTUD/file1c9686d196a.html
+#> Network visualization exported to: /tmp/RtmpW3VblP/file1c78611a9363.html
 ```
 
 ## Session info
@@ -177,7 +177,7 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] MSstatsBioNet_1.3.1 MSstats_4.18.1      BiocStyle_2.38.0   
+#> [1] MSstatsBioNet_1.3.2 MSstats_4.18.1      BiocStyle_2.38.0   
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1      viridisLite_0.4.3     IRdisplay_1.1        
