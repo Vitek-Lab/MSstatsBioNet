@@ -355,8 +355,17 @@ HTMLWidgets.widget({
 
         /* Build combined elements array from pre-serialised strings.
            R passes them as an array of JSON-string fragments; we re-parse. */
-        var elements = (x.elements || []).map(function (frag) {
-          return (typeof frag === "string") ? JSON.parse(frag) : frag;
+        var elements = [];
+        (x.elements || []).forEach(function (frag) {
+          if (typeof frag === "string") {
+            try {
+              elements.push(JSON.parse(frag));
+            } catch (err) {
+              console.warn("Skipping invalid element JSON fragment:", err);
+            }
+          } else if (frag && typeof frag === "object") {
+            elements.push(frag);
+          }
         });
 
         /* Layout – merge defaults with whatever R sends */
@@ -449,7 +458,8 @@ HTMLWidgets.widget({
         cy.on("tap", "node", function (evt) {
           var node = evt.target;
           // skip compound and ptm satellite nodes
-          if (node.data("node_type") === "compound") return;
+          if (node.data("node_type") === "compound" || 
+            node.data("node_type") === "ptm") return;
           if (window.Shiny) {
             Shiny.setInputValue(el.id + "_node_clicked", {
               id:        node.data("id"),

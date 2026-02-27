@@ -89,6 +89,10 @@
 #' @keywords internal
 #' @noRd
 .classify <- function(interaction) {
+  if (is.null(interaction) || is.na(interaction) || !nzchar(trimws(as.character(interaction)))) {
+    return("other")
+  }
+  interaction <- as.character(interaction)
   props <- .relProps()
   for (cat_name in names(props)) {
     if (!is.null(props[[cat_name]]$types) &&
