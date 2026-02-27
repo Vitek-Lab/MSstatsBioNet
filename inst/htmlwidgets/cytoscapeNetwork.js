@@ -62,8 +62,8 @@ HTMLWidgets.widget({
             "border-color":     "#333",
             "padding":          "5px",
             /* dynamic width/height via mappers */
-            "width":  "mapData(label.length, 0, 20, 60, 150)",
-            "height": 40
+            "width":  "data(width)",
+            "height": "data(height)"
           }
         },
         /* ── PTM child nodes ─────────────────────────────────────────── */
@@ -280,7 +280,7 @@ HTMLWidgets.widget({
         var PANEL_BG = "#f8f9fa";
         var rightPanel = document.createElement("div");
         rightPanel.style.cssText = [
-          "width:" + PANEL_W + "px",,
+          "width:" + PANEL_W + "px",
           "flex-shrink:0",
           "display:flex",
           "flex-direction:column",

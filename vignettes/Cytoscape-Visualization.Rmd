@@ -104,44 +104,49 @@ cytoscapeNetwork(nodes_min, edges_ev)
 
 
 # ── Example 6 · Shiny integration ───────────────────────────────────────────
-library(shiny)
-ui <- fluidPage(
-    titlePanel("Protein Interaction Network"),
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("font_size", "Node font size", min = 8, max = 24, value = 12),
-            selectInput("layout_dir", "Layout direction",
-                        choices = c("Top-Bottom" = "TB", "Left-Right" = "LR"),
-                        selected = "TB")
-        ),
-        mainPanel(
-            cytoscapeNetworkOutput("network", height = "600px"),
-            style = "height: 650px;"   
+if (requireNamespace("shiny", quietly = TRUE)) {
+    library(shiny)
+    ui <- fluidPage(
+        titlePanel("Protein Interaction Network"),
+        sidebarLayout(
+            sidebarPanel(
+                sliderInput("font_size", "Node font size", min = 8, max = 24, value = 12),
+                selectInput("layout_dir", "Layout direction",
+                            choices = c("Top-Bottom" = "TB", "Left-Right" = "LR"),
+                            selected = "TB")
+            ),
+            mainPanel(
+                cytoscapeNetworkOutput("network", height = "600px"),
+                style = "height: 650px;"   
+            )
         )
     )
-)
-server <- function(input, output, session) {
-    output$network <- renderCytoscapeNetwork({
-        cytoscapeNetwork(
-            nodes         = nodes_ptm,
-            edges         = edges_ptm,
-            nodeFontSize  = input$font_size,
-            layoutOptions = list(rankDir = input$layout_dir)
-        )
-    })
+    server <- function(input, output, session) {
+        output$network <- renderCytoscapeNetwork({
+            cytoscapeNetwork(
+                nodes         = nodes_ptm,
+                edges         = edges_ptm,
+                nodeFontSize  = input$font_size,
+                layoutOptions = list(rankDir = input$layout_dir)
+            )
+        })
+    }
+    # shinyApp(ui, server)   # uncomment to launch
 }
 
-# shinyApp(ui, server)   # uncomment to launch
 
 
 # ── Example 7 · Save to a standalone HTML file ──────────────────────────────
 
 widget <- cytoscapeNetwork(nodes_ptm, edges_ptm)
 
-htmlwidgets::saveWidget(
-    widget,
-    file       = "network.html",
-    selfcontained = TRUE     # bundles all JS/CSS into one file
-)
+if (requireNamespace("rmarkdown", quietly = TRUE) &&
+    rmarkdown::pandoc_available()) {
+  htmlwidgets::saveWidget(
+      widget,
+      file = tempfile("network-", fileext = ".html"),
+      selfcontained = FALSE
+  )
+}
 # browseURL("network.html")  # open in browser
 ```

@@ -280,7 +280,9 @@
       nd <- list(id        = row$id,
                  label     = display_label,
                  color     = color,
-                 node_type = "protein")
+                 node_type = "protein",
+                 width     = max(60, min(nchar(display_label) * 8 + 20, 150)),
+                 height    = max(40, min(nchar(display_label) * 2 + 30, 60)))
       if (needs_compound) nd$parent <- compound_id
       elements <- c(elements, list(list(data = nd)))
       emitted_prots <- c(emitted_prots, row$id)
@@ -421,7 +423,13 @@ cytoscapeNetwork <- function(nodes,
   if (!is.data.frame(nodes) || !("id" %in% names(nodes))) {
     stop("`nodes` must be a data frame with at least an `id` column.")
   }
-  if (!is.data.frame(edges)) edges <- data.frame()
+  if (!is.data.frame(edges)) {
+    stop("`edges` must be a data frame.")
+  }
+  required_edge_cols <- c("source", "target", "interaction")
+  if (nrow(edges) > 0 && !all(required_edge_cols %in% names(edges))) {
+    stop("`edges` must contain columns: source, target, interaction.")
+  }
 
   # Build layout config
   default_layout <- list(
