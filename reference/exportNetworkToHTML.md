@@ -20,11 +20,14 @@ exportNetworkToHTML(
 
 - nodes:
 
-  Data frame with node information
+  Data frame with at minimum an `id` column. Optional columns: `logFC`
+  (numeric), `hgncName` (character), `Site` (character,
+  underscore-separated PTM site list).
 
 - edges:
 
-  Data frame with edge information
+  Data frame with columns `source`, `target`, `interaction`. Optional:
+  `site`, `evidenceLink`.
 
 - filename:
 
@@ -32,11 +35,12 @@ exportNetworkToHTML(
 
 - displayLabelType:
 
-  Type of label to display ("id" or "hgncName")
+  `"id"` (default) or `"hgncName"` – controls which column is used as
+  the visible node label.
 
 - nodeFontSize:
 
-  Font size for node labels (default: 12)
+  Font size (px) for node labels. Default `12`.
 
 - ...:
 

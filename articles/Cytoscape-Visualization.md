@@ -1,4 +1,4 @@
-# Cytoscape-Visualization
+# Visualization Engine with CytoscapeJS
 
 ``` r
 library(MSstatsBioNet)
@@ -147,9 +147,16 @@ if (requireNamespace("shiny", quietly = TRUE)) {
     }
     # shinyApp(ui, server)   # uncomment to launch
 }
+```
 
+    ## 
+    ## Attaching package: 'shiny'
 
+    ## The following object is masked from 'package:BiocStyle':
+    ## 
+    ##     markdown
 
+``` r
 # ── Example 7 · Save to a standalone HTML file ──────────────────────────────
 
 widget <- cytoscapeNetwork(nodes_ptm, edges_ptm)

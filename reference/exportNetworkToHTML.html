@@ -21,7 +21,7 @@ both the configuration and HTML export in one step."></head><body>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/Cytoscape-Visualization.html">Cytoscape-Visualization</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/Cytoscape-Visualization.html">Visualization Engine with CytoscapeJS</a></li>
     <li><a class="dropdown-item" href="../articles/PTM-Analysis.html">PTM Analysis</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -62,11 +62,16 @@ both the configuration and HTML export in one step.</p>
 
 
 <dl><dt id="arg-nodes">nodes<a class="anchor" aria-label="anchor" href="#arg-nodes"></a></dt>
-<dd><p>Data frame with node information</p></dd>
+<dd><p>Data frame with at minimum an <code>id</code> column.  Optional
+columns: <code>logFC</code> (numeric), <code>hgncName</code>
+(character), <code>Site</code> (character, underscore-separated
+PTM site list).</p></dd>
 
 
 <dt id="arg-edges">edges<a class="anchor" aria-label="anchor" href="#arg-edges"></a></dt>
-<dd><p>Data frame with edge information</p></dd>
+<dd><p>Data frame with columns <code>source</code>, <code>target</code>,
+<code>interaction</code>.  Optional: <code>site</code>,
+<code>evidenceLink</code>.</p></dd>
 
 
 <dt id="arg-filename">filename<a class="anchor" aria-label="anchor" href="#arg-filename"></a></dt>
@@ -74,11 +79,12 @@ both the configuration and HTML export in one step.</p>
 
 
 <dt id="arg-displaylabeltype">displayLabelType<a class="anchor" aria-label="anchor" href="#arg-displaylabeltype"></a></dt>
-<dd><p>Type of label to display ("id" or "hgncName")</p></dd>
+<dd><p><code>"id"</code> (default) or <code>"hgncName"</code> –
+controls which column is used as the visible node label.</p></dd>
 
 
 <dt id="arg-nodefontsize">nodeFontSize<a class="anchor" aria-label="anchor" href="#arg-nodefontsize"></a></dt>
-<dd><p>Font size for node labels (default: 12)</p></dd>
+<dd><p>Font size (px) for node labels.  Default <code>12</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

@@ -24,10 +24,6 @@
   : Validate Annotate Protein Info Input
 - [`exportNetworkToHTML()`](https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.md)
   : Export network data with Cytoscape visualization
-- [`generateCytoscapeConfig()`](https://vitek-lab.github.io/MSstatsBioNet/reference/generateCytoscapeConfig.md)
-  : Generate Cytoscape visualization configuration
-- [`generateJavaScriptCode()`](https://vitek-lab.github.io/MSstatsBioNet/reference/generateJavaScriptCode.md)
-  : Generate JavaScript code from Cytoscape configuration
 - [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
   : Get subnetwork from INDRA database
 - [`previewNetworkInBrowser()`](https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.md)
