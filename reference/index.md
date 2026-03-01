@@ -34,5 +34,3 @@
   : Preview network in browser
 - [`renderCytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/renderCytoscapeNetwork.md)
   : Shiny render binding for cytoscapeNetwork
-- [`visualizeNetworks()`](https://vitek-lab.github.io/MSstatsBioNet/reference/visualizeNetworks.md)
-  : Create visualization of network
