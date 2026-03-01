@@ -1,6 +1,12 @@
 ---
-title: "Cytoscape-Visualization"
-output: html_document
+title: "Visualization Engine with CytoscapeJS"
+author: "Anthony Wu"
+package: MSstatsBioNet
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{MSstatsBioNet: Visualization Engine with CytoscapeJS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r}

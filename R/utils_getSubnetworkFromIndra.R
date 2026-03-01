@@ -376,7 +376,7 @@
 
 .filterByPtmSite = function(nodes, edges, filter_by_ptm_site) {
     if (filter_by_ptm_site && nrow(nodes[!is.na(nodes$Site), ]) > 0) {
-        ptm_overlap <- .calculatePTMOverlapAggregated(edges, nodes)
+        ptm_overlap <- .ptmOverlap(edges, nodes)
         keep <- ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")]
         edges <- edges[!is.na(keep) & keep != "", ]
         edges <- edges[!is.na(edges$site),]
