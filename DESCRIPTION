@@ -25,7 +25,8 @@ Imports:
     r2r,
     tidyr,
     htmlwidgets,
-    grDevices
+    grDevices,
+    stats
 Suggests: 
     data.table,
     BiocStyle,

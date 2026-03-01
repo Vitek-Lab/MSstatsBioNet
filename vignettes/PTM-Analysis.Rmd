@@ -16,7 +16,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-
 # Installation
 
 Run this code below to install MSstatsBioNet from bioconductor
@@ -31,7 +30,7 @@ BiocManager::install("MSstatsBioNet")
 
 ## Dataset
 
-We will be taking a subset of the dataset found in this [paper](https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1).  The table is the output of the MSstatsPTM function `groupComparisonPTM` (filtered down to the columns that are actually needed)
+We will be taking a subset of the dataset found in this [paper](https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1). The table is the output of the MSstatsPTM function `groupComparisonPTM` (filtered down to the columns that are actually needed)
 
 ```{r}
 input = data.table::fread(system.file(
@@ -43,12 +42,9 @@ head(input)
 
 ## ID Conversion
 
-First, we need to convert the group comparison results to a format that can be
-processed by INDRA.  We can use the `annotateProteinInfoFromIndra` function
-to obtain these mappings.
+First, we need to convert the group comparison results to a format that can be processed by INDRA. We can use the `annotateProteinInfoFromIndra` function to obtain these mappings.
 
-In the below example, we convert uniprot IDs to their corresponding Hgnc IDs. We
-can also extract other information, such as hgnc gene name and protein function.
+In the below example, we convert uniprot IDs to their corresponding Hgnc IDs. We can also extract other information, such as hgnc gene name and protein function.
 
 ```{r}
 library(MSstatsBioNet)
@@ -58,9 +54,7 @@ head(annotated_df)
 
 ## Subnetwork Query
 
-The package provides a function `getSubnetworkFromIndra` that retrieves a
-subnetwork of proteins from the INDRA database based on differential abundance
-analysis results.  This function may help finding off target subnetworks.  
+The package provides a function `getSubnetworkFromIndra` that retrieves a subnetwork of proteins from the INDRA database based on differential abundance analysis results. This function may help finding off target subnetworks.
 
 ```{r}
 subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), logfc_cutoff = 1, force_include_other = c("HGNC:3236"))

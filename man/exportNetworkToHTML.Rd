@@ -14,15 +14,21 @@ exportNetworkToHTML(
 )
 }
 \arguments{
-\item{nodes}{Data frame with node information}
+\item{nodes}{Data frame with at minimum an \code{id} column.  Optional
+columns: \code{logFC} (numeric), \code{hgncName}
+(character), \code{Site} (character, underscore-separated
+PTM site list).}
 
-\item{edges}{Data frame with edge information}
+\item{edges}{Data frame with columns \code{source}, \code{target},
+\code{interaction}.  Optional: \code{site},
+\code{evidenceLink}.}
 
 \item{filename}{Output HTML filename}
 
-\item{displayLabelType}{Type of label to display ("id" or "hgncName")}
+\item{displayLabelType}{\code{"id"} (default) or \code{"hgncName"} –
+controls which column is used as the visible node label.}
 
-\item{nodeFontSize}{Font size for node labels (default: 12)}
+\item{nodeFontSize}{Font size (px) for node labels.  Default \code{12}.}
 
 \item{...}{Additional arguments passed to exportCytoscapeToHTML()}
 }

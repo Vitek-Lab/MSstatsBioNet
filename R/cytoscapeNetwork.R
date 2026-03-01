@@ -128,6 +128,7 @@
 
 #' Aggregate PTM overlap between edge targets and node Site columns
 #' @keywords internal
+#' @importFrom stats setNames
 #' @noRd
 .ptmOverlap <- function(edges, nodes) {
   if (nrow(edges) == 0 || is.null(nodes)) return(setNames(character(0), character(0)))
