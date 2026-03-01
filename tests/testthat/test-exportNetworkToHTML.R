@@ -79,7 +79,8 @@ test_that("exportNetworkToHTML passes displayLabelType through to the widget", {
                                 el$data$node_type == "protein",
                             widget_arg$x$elements)
     labels <- sapply(protein_nodes, function(el) el$data$label)
-    expect_true(all(labels %in% c("TP53", "MDM2")))
+    expect_length(labels, 2)
+    expect_setequal(labels, c("TP53", "MDM2"))
 })
 
 # =============================================================================
