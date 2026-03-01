@@ -1,327 +1,324 @@
 # =============================================================================
-# UNIT TESTS FOR NETWORK VISUALIZATION MODULE
+# MOCK DATA
 # =============================================================================
 
-# Load required libraries
-
-# =============================================================================
-# MOCK DATA SETUP
-# =============================================================================
-
-# Mock data for testing
-create_mock_input_data <- function() {
+create_mock_nodes <- function() {
     data.frame(
-        Protein = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "BRCA1_HUMAN"),
-        log2FC = c(2.5, -1.8, 1.2, -2.1),
-        adj.pvalue = c(0.001, 0.02, 0.03, 0.005),
-        Label = rep("Treatment_vs_Control", 4),
-        stringsAsFactors = FALSE
-    )
-}
-
-create_mock_annotated_data <- function() {
-    data.frame(
-        Protein = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "BRCA1_HUMAN"),
-        log2FC = c(2.5, -1.8, 1.2, -2.1),
-        adj.pvalue = c(0.001, 0.02, 0.03, 0.005),
-        Label = rep("Treatment_vs_Control", 4),
-        HgncId = c("101", "102", "103", "104"),
-        HgncName = c("TP53", "MDM2", "ATM", "BRCA1"),
-        stringsAsFactors = FALSE
-    )
-}
-
-create_mock_subnetwork_nodes <- function() {
-    data.frame(
-        id = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "BRCA1_HUMAN"),
-        logFC = c(2.5, -1.8, 1.2, -2.1),
-        pvalue = c(0.001, 0.02, 0.03, 0.005),
+        id       = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "BRCA1_HUMAN"),
+        logFC    = c(2.5, -1.8, 1.2, -2.1),
+        pvalue   = c(0.001, 0.02, 0.03, 0.005),
         hgncName = c("TP53", "MDM2", "ATM", "BRCA1"),
         stringsAsFactors = FALSE
     )
 }
 
-create_mock_subnetwork_edges <- function() {
+create_mock_nodes_ptm <- function() {
     data.frame(
-        source = c("TP53", "MDM2", "ATM", "TP53"),
-        target = c("MDM2", "TP53", "TP53", "BRCA1"),
-        interaction = c("Inhibition", "Activation", "Phosphorylation", "Complex"),
-        evidenceCount = c(15, 8, 12, 5),
-        evidenceLink = c("link1", "link2", "link3", "link4"),
-        source_counts = c("{reach:10, signor:5}", "{reach:5,biopax:3}", "{reach:8,phosphoelm:4}", "{biopax:5}"),
+        id       = c("P53_HUMAN", "MDM2_HUMAN"),
+        logFC    = c(2.5, -1.8),
+        hgncName = c("TP53", "MDM2"),
+        Site     = c(NA, "S15_S20"),
         stringsAsFactors = FALSE
     )
 }
 
-create_mock_subnetwork <- function() {
-    list(
-        nodes = create_mock_subnetwork_nodes(),
-        edges = create_mock_subnetwork_edges()
+create_mock_edges <- function() {
+    data.frame(
+        source      = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "P53_HUMAN", "BRCA1_HUMAN"),
+        target      = c("MDM2_HUMAN", "P53_HUMAN",  "P53_HUMAN", "BRCA1_HUMAN", "P53_HUMAN"),
+        interaction = c("Inhibition", "Inhibition", "Phosphorylation", "Complex", "Complex"),
+        evidenceLink = c("link1", "link2", "link3", "link4", "link5"),
+        stringsAsFactors = FALSE
+    )
+}
+
+create_mock_edges_ptm <- function() {
+    data.frame(
+        source      = c("P53_HUMAN"),
+        target      = c("MDM2_HUMAN"),
+        interaction = c("Phosphorylation"),
+        site        = c("S15"),
+        stringsAsFactors = FALSE
     )
 }
 
 # =============================================================================
-# TESTS FOR COLOR MAPPING FUNCTION
+# .mapLogFCToColor
 # =============================================================================
 
-test_that("mapLogFCToColor handles various input scenarios", {
-    
-    # Test normal case with varied logFC values
-    logFC_values <- c(-2, -1, 0, 1, 2)
-    colors <- mapLogFCToColor(logFC_values)
-    expect_equal(length(colors), 5)
-    expect_true(all(grepl("^#[0-9A-Fa-f]{6}$", colors))) # Valid hex colors
-    
-    # Test case with all NA values
-    na_values <- c(NA, NA, NA)
-    na_colors <- mapLogFCToColor(na_values)
-    expect_equal(length(na_colors), 3)
-    expect_true(all(na_colors == "#D3D3D3"))
-    
-    # Test case with all same values
-    same_values <- c(1, 1, 1)
-    same_colors <- mapLogFCToColor(same_values)
-    expect_equal(length(same_colors), 3)
-    expect_true(all(same_colors == "#D3D3D3"))
-    
-    # Test empty input
-    empty_colors <- mapLogFCToColor(numeric(0))
-    expect_equal(length(empty_colors), 0)
+test_that(".mapLogFCToColor returns valid hex colours", {
+    colors <- MSstatsBioNet:::.mapLogFCToColor(c(-2, -1, 0, 1, 2))
+    expect_length(colors, 5)
+    expect_true(all(grepl("^#[0-9A-Fa-f]{6}$", colors)))
+})
+
+test_that(".mapLogFCToColor returns grey for all-NA input", {
+    colors <- MSstatsBioNet:::.mapLogFCToColor(c(NA, NA, NA))
+    expect_length(colors, 3)
+    expect_true(all(colors == "#D3D3D3"))
+})
+
+test_that(".mapLogFCToColor returns grey for all-identical values", {
+    colors <- MSstatsBioNet:::.mapLogFCToColor(c(1, 1, 1))
+    expect_length(colors, 3)
+    expect_true(all(colors == "#D3D3D3"))
+})
+
+test_that(".mapLogFCToColor handles empty input", {
+    colors <- MSstatsBioNet:::.mapLogFCToColor(numeric(0))
+    expect_length(colors, 0)
 })
 
 # =============================================================================
-# TESTS FOR RELATIONSHIP PROPERTIES
+# .relProps
 # =============================================================================
 
-test_that("getRelationshipProperties returns correct structure", {
-    props <- getRelationshipProperties()
+test_that(".relProps returns correct structure", {
+    props <- MSstatsBioNet:::.relProps()
     
     expect_type(props, "list")
-    expect_true("complex" %in% names(props))
-    expect_true("regulatory" %in% names(props))
-    expect_true("phosphorylation" %in% names(props))
-    expect_true("other" %in% names(props))
+    expect_true(all(c("complex", "regulatory", "phosphorylation", "other") %in% names(props)))
     
-    # Test complex properties
-    complex_props <- props$complex
-    expect_true("types" %in% names(complex_props))
-    expect_true("Complex" %in% complex_props$types)
-    expect_equal(complex_props$consolidate, "undirected")
+    expect_equal(props$complex$consolidate, "undirected")
+    expect_equal(props$regulatory$consolidate, "bidirectional")
+    expect_equal(props$phosphorylation$consolidate, "directed")
     
-    # Test regulatory properties
-    reg_props <- props$regulatory
-    expect_true("colors" %in% names(reg_props))
-    expect_true("Inhibition" %in% names(reg_props$colors))
-    expect_equal(reg_props$consolidate, "bidirectional")
+    expect_true("Inhibition" %in% names(props$regulatory$colors))
+    expect_true("Activation" %in% names(props$regulatory$colors))
 })
 
 # =============================================================================
-# TESTS FOR EDGE CONSOLIDATION
+# .classify
 # =============================================================================
 
-test_that("consolidateEdges properly consolidates bidirectional relationships", {
-    
-    # Create test edges with bidirectional regulatory relationships
-    test_edges <- data.frame(
-        source = c("TP53", "MDM2", "ATM", "BRCA1"),
-        target = c("MDM2", "TP53", "TP53", "ATM"),
-        interaction = c("Inhibition", "Inhibition", "Phosphorylation", "Complex"),
-        stringsAsFactors = FALSE
-    )
-    
-    consolidated <- consolidateEdges(test_edges)
-    
-    expect_s3_class(consolidated, "data.frame")
-    expect_true("edge_type" %in% names(consolidated))
-    expect_true("category" %in% names(consolidated))
-    
-    # Should have fewer edges than original due to consolidation
-    expect_lt(nrow(consolidated), nrow(test_edges))
-    
-    # Check that bidirectional inhibition was consolidated
-    inhibition_edges <- consolidated[grepl("Inhibition", consolidated$interaction), ]
-    expect_equal(nrow(inhibition_edges), 1)
-    expect_equal(inhibition_edges$edge_type, "bidirectional")
+test_that(".classify maps interaction types to correct categories", {
+    expect_equal(MSstatsBioNet:::.classify("Inhibition"),      "regulatory")
+    expect_equal(MSstatsBioNet:::.classify("Activation"),      "regulatory")
+    expect_equal(MSstatsBioNet:::.classify("Phosphorylation"), "phosphorylation")
+    expect_equal(MSstatsBioNet:::.classify("Complex"),         "complex")
+    expect_equal(MSstatsBioNet:::.classify("Unknown"),         "other")
 })
 
-test_that("consolidateEdges handles empty input", {
-    empty_edges <- data.frame(
-        source = character(0),
-        target = character(0),
-        interaction = character(0),
-        stringsAsFactors = FALSE
-    )
+# =============================================================================
+# .edgeStyle
+# =============================================================================
+
+test_that(".edgeStyle returns correct colour for regulatory interactions", {
+    style <- MSstatsBioNet:::.edgeStyle("Inhibition", "regulatory", "directed")
+    expect_type(style, "list")
+    expect_equal(style$color, "#FF4444")
     
-    result <- consolidateEdges(empty_edges)
+    style_act <- MSstatsBioNet:::.edgeStyle("Activation", "regulatory", "directed")
+    expect_equal(style_act$color, "#44AA44")
+})
+
+test_that(".edgeStyle returns no arrow for undirected complex edges", {
+    style <- MSstatsBioNet:::.edgeStyle("Complex", "complex", "undirected")
+    expect_equal(style$arrow, "none")
+    expect_equal(style$color, "#8B4513")
+})
+
+test_that(".edgeStyle returns triangle arrows for bidirectional edges", {
+    style <- MSstatsBioNet:::.edgeStyle("Inhibition (bidirectional)", "regulatory", "bidirectional")
+    expect_equal(style$arrow, "triangle")
+})
+
+test_that(".edgeStyle falls back to grey for unknown category", {
+    style <- MSstatsBioNet:::.edgeStyle("Unknown", "other", "directed")
+    expect_equal(style$color, "#666666")
+})
+
+# =============================================================================
+# .consolidateEdges
+# =============================================================================
+
+test_that(".consolidateEdges consolidates bidirectional inhibition into one edge", {
+    edges <- create_mock_edges()
+    result <- MSstatsBioNet:::.consolidateEdges(edges)
+    
+    expect_s3_class(result, "data.frame")
+    expect_true(all(c("edge_type", "category", "ptm_overlap") %in% names(result)))
+    
+    # Two Inhibition edges in opposite directions → one bidirectional edge
+    inhibition <- result[grepl("Inhibition", result$interaction), ]
+    expect_equal(nrow(inhibition), 1)
+    expect_equal(inhibition$edge_type, "bidirectional")
+})
+
+test_that(".consolidateEdges marks phosphorylation as directed", {
+    edges <- create_mock_edges()
+    result <- MSstatsBioNet:::.consolidateEdges(edges)
+    
+    phospho <- result[result$interaction == "Phosphorylation", ]
+    expect_equal(nrow(phospho), 1)
+    expect_equal(phospho$edge_type, "directed")
+    expect_equal(phospho$category, "phosphorylation")
+})
+
+test_that(".consolidateEdges marks complex as undirected", {
+    edges <- create_mock_edges()
+    result <- MSstatsBioNet:::.consolidateEdges(edges)
+    
+    complex <- result[result$interaction == "Complex", ]
+    expect_equal(nrow(complex), 1)
+    expect_equal(complex$edge_type, "undirected")
+})
+
+test_that(".consolidateEdges handles empty input", {
+    empty <- data.frame(source = character(0), target = character(0),
+                        interaction = character(0), stringsAsFactors = FALSE)
+    result <- MSstatsBioNet:::.consolidateEdges(empty)
     expect_equal(nrow(result), 0)
 })
 
 # =============================================================================
-# TESTS FOR EDGE STYLING
+# .ptmOverlap
 # =============================================================================
 
-test_that("getEdgeStyle returns appropriate styling", {
+test_that(".ptmOverlap detects overlapping PTM sites", {
+    nodes <- create_mock_nodes_ptm()
+    edges <- create_mock_edges_ptm()
     
-    # Test regulatory relationship styling
-    style <- getEdgeStyle("Inhibition", "regulatory", "directed")
-    expect_type(style, "list")
-    expect_true("color" %in% names(style))
-    expect_equal(style$color, "#FF4444") # Red for inhibition
-    
-    # Test complex relationship styling
-    complex_style <- getEdgeStyle("Complex", "complex", "undirected")
-    expect_equal(complex_style$arrow, "none")
-    expect_equal(complex_style$color, "#8B4513")
-    
-    # Test unknown relationship
-    unknown_style <- getEdgeStyle("Unknown", "other", "directed")
-    expect_equal(unknown_style$color, "#666666")
+    result <- MSstatsBioNet:::.ptmOverlap(edges, nodes)
+    expect_type(result, "character")
+    expect_length(result, 1)
+    expect_true(grepl("S15", result[[1]]))
+})
+
+test_that(".ptmOverlap returns empty string when no overlap", {
+    nodes <- create_mock_nodes_ptm()
+    edges <- data.frame(source = "P53_HUMAN", target = "MDM2_HUMAN",
+                        interaction = "Phosphorylation", site = "T999",
+                        stringsAsFactors = FALSE)
+    result <- MSstatsBioNet:::.ptmOverlap(edges, nodes)
+    expect_equal(result[[1]], "")
+})
+
+test_that(".ptmOverlap handles empty edges gracefully", {
+    nodes  <- create_mock_nodes_ptm()
+    empty  <- data.frame(source = character(0), target = character(0),
+                         interaction = character(0), stringsAsFactors = FALSE)
+    result <- MSstatsBioNet:::.ptmOverlap(empty, nodes)
+    expect_length(result, 0)
 })
 
 # =============================================================================
-# TESTS FOR NODE ELEMENT CREATION
+# .buildElements
 # =============================================================================
 
-test_that("createNodeElements creates proper node structures", {
-    nodes <- create_mock_subnetwork_nodes()
+test_that(".buildElements returns a list of elements", {
+    nodes  <- create_mock_nodes()
+    edges  <- create_mock_edges()
+    result <- MSstatsBioNet:::.buildElements(nodes, edges)
     
-    # Test with default label type (id)
-    node_elements <- createNodeElements(nodes, "id")
-    expect_equal(length(node_elements), nrow(nodes))
-    expect_true(all(grepl("data:", node_elements)))
-    expect_true(all(grepl("id:", node_elements)))
-    expect_true(all(grepl("label:", node_elements)))
+    expect_type(result, "list")
+    expect_gt(length(result), nrow(nodes))  # nodes + edges
+})
+
+test_that(".buildElements assigns correct node_type to proteins", {
+    nodes  <- create_mock_nodes()
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame())
     
-    # Test with hgncName label type
-    node_elements_hgnc <- createNodeElements(nodes, "hgncName")
-    expect_equal(length(node_elements_hgnc), nrow(nodes))
+    node_types <- sapply(result, function(el) el$data$node_type)
+    expect_true(all(node_types == "protein"))
+})
+
+test_that(".buildElements creates PTM child nodes and attachment edges", {
+    nodes  <- create_mock_nodes_ptm()
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame())
     
-    # Test nodes without logFC column
-    nodes_no_logfc <- nodes[, !names(nodes) %in% "logFC"]
-    node_elements_no_logfc <- createNodeElements(nodes_no_logfc, "id")
-    expect_equal(length(node_elements_no_logfc), nrow(nodes_no_logfc))
+    node_types <- sapply(result, function(el) el$data$node_type)
+    expect_true("ptm" %in% node_types)
+    expect_true("compound" %in% node_types)
+    
+    edge_types <- sapply(result, function(el) el$data$edge_type)
+    expect_true("ptm_attachment" %in% edge_types)
+})
+
+test_that(".buildElements uses hgncName label when requested", {
+    nodes  <- create_mock_nodes()
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "hgncName")
+    
+    protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
+                                el$data$node_type == "protein", result)
+    labels <- sapply(protein_nodes, function(el) el$data$label)
+    expect_true(all(labels %in% c("TP53", "MDM2", "ATM", "BRCA1")))
+})
+
+test_that(".buildElements falls back to id when hgncName is NA", {
+    nodes <- create_mock_nodes()
+    nodes$hgncName <- NA
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "hgncName")
+    
+    protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
+                                el$data$node_type == "protein", result)
+    labels <- sapply(protein_nodes, function(el) el$data$label)
+    expect_true(all(labels %in% nodes$id))
+})
+
+test_that(".buildElements computes width and height from label length", {
+    nodes  <- create_mock_nodes()
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame())
+    
+    protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
+                                el$data$node_type == "protein", result)
+    widths  <- sapply(protein_nodes, function(el) el$data$width)
+    heights <- sapply(protein_nodes, function(el) el$data$height)
+    
+    expect_true(all(widths  >= 60  & widths  <= 150))
+    expect_true(all(heights >= 40  & heights <= 60))
+})
+
+test_that(".buildElements uses grey when logFC column is absent", {
+    nodes <- create_mock_nodes()[, !names(create_mock_nodes()) %in% "logFC"]
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame())
+    
+    protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
+                                el$data$node_type == "protein", result)
+    colors <- sapply(protein_nodes, function(el) el$data$color)
+    expect_true(all(colors == "#D3D3D3"))
 })
 
 # =============================================================================
-# TESTS FOR EDGE ELEMENT CREATION
+# cytoscapeNetwork() — public API
 # =============================================================================
 
-test_that("createEdgeElements creates proper edge structures", {
-    edges <- create_mock_subnetwork_edges()
-    
-    edge_elements <- createEdgeElements(edges)
-    expect_type(edge_elements, "list")
-    expect_gt(length(edge_elements), 0)
-    
-    # Check that all elements contain required fields
-    expect_true(all(sapply(edge_elements, function(x) grepl("source:", x))))
-    expect_true(all(sapply(edge_elements, function(x) grepl("target:", x))))
-    
-    # Test empty edges
-    empty_edges <- data.frame(
-        source = character(0),
-        target = character(0),
-        interaction = character(0),
-        stringsAsFactors = FALSE
-    )
-    empty_elements <- createEdgeElements(empty_edges)
-    expect_equal(length(empty_elements), 0)
+test_that("cytoscapeNetwork() returns an htmlwidget", {
+    w <- cytoscapeNetwork(create_mock_nodes(), create_mock_edges())
+    expect_s3_class(w, "htmlwidget")
+    expect_s3_class(w, "cytoscapeNetwork")
 })
 
-# =============================================================================
-# TESTS FOR CYTOSCAPE CONFIG GENERATION
-# =============================================================================
-
-test_that("generateCytoscapeConfig creates complete configuration", {
-    nodes <- create_mock_subnetwork_nodes()
-    edges <- create_mock_subnetwork_edges()
-    
-    config <- generateCytoscapeConfig(nodes, edges)
-    
-    expect_type(config, "list")
-    expect_true("elements" %in% names(config))
-    expect_true("style" %in% names(config))
-    expect_true("layout" %in% names(config))
-    expect_true("container_id" %in% names(config))
-    expect_true("js_code" %in% names(config))
-    
-    expect_equal(config$container_id, "network-cy")
-    expect_type(config$js_code, "character")
-    expect_gt(nchar(config$js_code), 100)
+test_that("cytoscapeNetwork() x list contains elements and layout", {
+    w <- cytoscapeNetwork(create_mock_nodes(), create_mock_edges())
+    expect_true("elements" %in% names(w$x))
+    expect_true("layout"   %in% names(w$x))
+    expect_gt(length(w$x$elements), 0)
 })
 
-test_that("generateCytoscapeConfig accepts custom parameters", {
-    nodes <- create_mock_subnetwork_nodes()
-    edges <- create_mock_subnetwork_edges()
-    
-    custom_layout <- list(name = "grid", fit = FALSE)
-    custom_handlers <- list(edge_click = "function() { console.log('test'); }")
-    
-    config <- generateCytoscapeConfig(
-        nodes, 
-        edges,
-        container_id = "custom-container",
-        event_handlers = custom_handlers,
-        layout_options = custom_layout
-    )
-    
-    expect_equal(config$container_id, "custom-container")
-    expect_equal(config$layout$name, "grid")
-    expect_false(config$layout$fit)
-    expect_true(grepl("console.log", config$js_code))
+test_that("cytoscapeNetwork() passes custom layout options through", {
+    w <- cytoscapeNetwork(create_mock_nodes(), create_mock_edges(),
+                          layoutOptions = list(rankDir = "LR", rankSep = 120))
+    expect_equal(w$x$layout$rankDir, "LR")
+    expect_equal(w$x$layout$rankSep, 120)
 })
 
-
-# =============================================================================
-# TESTS FOR STYLE CONVERSION FUNCTIONS
-# =============================================================================
-
-test_that("convertStyleToJS creates valid JavaScript", {
-    style_list <- list(
-        list(
-            selector = "node",
-            style = list(
-                `background-color` = "data(color)",
-                width = "60px"
-            )
-        )
-    )
-    
-    js_style <- convertStyleToJS(style_list)
-    expect_type(js_style, "character")
-    expect_true(grepl("selector", js_style))
-    expect_true(grepl("background-color", js_style))
-    expect_true(grepl("data\\(color\\)", js_style))
+test_that("cytoscapeNetwork() passes nodeFontSize through", {
+    w <- cytoscapeNetwork(create_mock_nodes(), create_mock_edges(), nodeFontSize = 18)
+    expect_equal(w$x$node_font_size, 18)
 })
 
-test_that("convertLayoutToJS creates valid JavaScript", {
-    layout_list <- list(
-        name = "dagre",
-        fit = TRUE,
-        padding = 30
-    )
-    
-    js_layout <- convertLayoutToJS(layout_list)
-    expect_type(js_layout, "character")
-    expect_true(grepl("\"name\": \"dagre\"", js_layout))
-    expect_true(grepl("\"fit\": true", js_layout))
-    expect_true(grepl("\"padding\": 30", js_layout))
+test_that("cytoscapeNetwork() accepts empty edges", {
+    empty_edges <- data.frame(source = character(0), target = character(0),
+                              interaction = character(0), stringsAsFactors = FALSE)
+    expect_no_error(cytoscapeNetwork(create_mock_nodes(), empty_edges))
 })
 
-test_that("createNodeElements handles different label types", {
-    nodes <- create_mock_subnetwork_nodes()
-    
-    # Test with id labels
-    elements_id <- createNodeElements(nodes, "id")
-    expect_true(all(grepl("P53_HUMAN|MDM2_HUMAN|ATM_HUMAN|BRCA1_HUMAN", elements_id)))
-    
-    # Test with hgncName labels
-    elements_hgnc <- createNodeElements(nodes, "hgncName")
-    expect_true(all(grepl("TP53|MDM2|ATM|BRCA1", elements_hgnc)))
-    
-    # Test with nodes missing hgncName
-    nodes_no_hgnc <- nodes
-    nodes_no_hgnc$hgncName <- NA
-    elements_fallback <- createNodeElements(nodes_no_hgnc, "hgncName")
-    expect_true(all(grepl("P53_HUMAN|MDM2_HUMAN|ATM_HUMAN|BRCA1_HUMAN", elements_fallback)))
+test_that("cytoscapeNetwork() errors when nodes has no id column", {
+    bad_nodes <- data.frame(name = c("A", "B"), stringsAsFactors = FALSE)
+    expect_error(cytoscapeNetwork(bad_nodes), "`id` column")
+})
+
+test_that("cytoscapeNetwork() errors when nodes is not a data frame", {
+    expect_error(cytoscapeNetwork(list(id = "A")), "id column|data frame")
 })
