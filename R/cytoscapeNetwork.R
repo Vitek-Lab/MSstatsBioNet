@@ -106,6 +106,7 @@ cytoscapeNetwork <- function(nodes,
 # ── Shiny helpers ───────────────────────────────────────────────────────────
 
 #' Shiny output binding for cytoscapeNetwork
+#' @importFrom htmlwidgets shinyWidgetOutput
 #' @inheritParams htmlwidgets::shinyWidgetOutput
 #' @export
 cytoscapeNetworkOutput <- function(outputId,
@@ -121,6 +122,7 @@ cytoscapeNetworkOutput <- function(outputId,
 }
 
 #' Shiny render binding for cytoscapeNetwork
+#' @importFrom htmlwidgets shinyRenderWidget createWidget
 #' @inheritParams htmlwidgets::shinyRenderWidget
 #' @export
 renderCytoscapeNetwork <- function(expr, env = parent.frame(), quoted = FALSE) {

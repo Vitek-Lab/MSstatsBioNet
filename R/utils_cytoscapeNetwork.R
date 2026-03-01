@@ -1,4 +1,5 @@
 #' Map logFC values to a blue-grey-red colour palette
+#' @importFrom grDevices colorRamp rgb
 #' @keywords internal
 #' @noRd
 .mapLogFCToColor <- function(logFC_values) {

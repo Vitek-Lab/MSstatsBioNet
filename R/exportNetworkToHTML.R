@@ -23,6 +23,8 @@ exportNetworkToHTML <- function(nodes, edges,
         file = filename,
         selfcontained = TRUE
     )
+    
+    invisible(filename)
 }
 
 #' Preview network in browser
