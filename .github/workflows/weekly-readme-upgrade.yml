@@ -53,12 +53,6 @@ jobs:
           git commit -m "docs: Weekly AI README upgrade ($(date +%Y-%m-%d))"
           git push origin "$BRANCH"
 
-      - name: Ensure labels exist
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh label create "documentation" --color "0075ca" --description "Improvements or additions to documentation" 2>/dev/null || true
-
       - name: Open Pull Request
         env:
           GH_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
