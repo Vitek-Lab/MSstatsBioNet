@@ -70,6 +70,70 @@
 <pre><code><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"Vitek-Lab/MSstatsBioNet"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre>
 </div>
 <div class="section level2">
+<h2 id="usage-examples">Usage Examples<a class="anchor" aria-label="anchor" href="#usage-examples"></a>
+</h2>
+<p>Here are some examples to help you get started with MSstatsBioNet:</p>
+<div class="section level3">
+<h3 id="annotate-protein-information">Annotate Protein Information<a class="anchor" aria-label="anchor" href="#annotate-protein-information"></a>
+</h3>
+<p>Use the <code>annotateProteinInfoFromIndra</code> function to annotate a data frame with protein information from Indra.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://msstats.org" class="external-link">MSstatsBioNet</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Example data frame</span></span>
+<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Protein <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CLH1_HUMAN"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Annotate protein information</span></span>
+<span><span class="va">annotated_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/annotateProteinInfoFromIndra.html">annotateProteinInfoFromIndra</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"Uniprot_Mnemonic"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">annotated_df</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="visualize-networks-with-cytoscape">Visualize Networks with Cytoscape<a class="anchor" aria-label="anchor" href="#visualize-networks-with-cytoscape"></a>
+</h3>
+<p>Create an interactive network diagram using <code>cytoscapeNetwork</code>.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Define nodes and edges</span></span>
+<span><span class="va">nodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  id    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TP53"</span>, <span class="st">"MDM2"</span>, <span class="st">"CDKN1A"</span><span class="op">)</span>,</span>
+<span>  logFC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="op">-</span><span class="fl">0.8</span>, <span class="fl">2.1</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  source      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TP53"</span>,  <span class="st">"MDM2"</span><span class="op">)</span>,</span>
+<span>  target      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MDM2"</span>,  <span class="st">"TP53"</span><span class="op">)</span>,</span>
+<span>  interaction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Activation"</span>, <span class="st">"Inhibition"</span><span class="op">)</span>,</span>
+<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Render the network</span></span>
+<span><span class="fu"><a href="reference/cytoscapeNetwork.html">cytoscapeNetwork</a></span><span class="op">(</span><span class="va">nodes</span>, <span class="va">edges</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="export-network-to-html">Export Network to HTML<a class="anchor" aria-label="anchor" href="#export-network-to-html"></a>
+</h3>
+<p>Export your network visualization to an HTML file using <code>exportNetworkToHTML</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Export the network to an HTML file</span></span>
+<span><span class="fu"><a href="reference/exportNetworkToHTML.html">exportNetworkToHTML</a></span><span class="op">(</span><span class="va">nodes</span>, <span class="va">edges</span>, filename <span class="op">=</span> <span class="st">"network.html"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="retrieve-subnetwork-from-indra">Retrieve Subnetwork from INDRA<a class="anchor" aria-label="anchor" href="#retrieve-subnetwork-from-indra"></a>
+</h3>
+<p>Use <code>getSubnetworkFromIndra</code> to retrieve a subnetwork of protein interactions from the INDRA database.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Load example input data</span></span>
+<span><span class="va">input</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>    <span class="st">"extdata/groupComparisonModel.csv"</span>,</span>
+<span>    package <span class="op">=</span> <span class="st">"MSstatsBioNet"</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Get subnetwork</span></span>
+<span><span class="va">subnetwork</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra</a></span><span class="op">(</span><span class="va">input</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
 <p>This package is distributed under the <a href="https://opensource.org/licenses/Artistic-2.0" class="external-link">Artistic-2.0</a> license. However, its dependencies may have different licenses.</p>

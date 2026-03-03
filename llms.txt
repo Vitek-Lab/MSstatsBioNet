@@ -19,6 +19,76 @@ You can install the development version of this package through Github:
 
     devtools::install_github("Vitek-Lab/MSstatsBioNet", build_vignettes = TRUE)
 
+## Usage Examples
+
+Here are some examples to help you get started with MSstatsBioNet:
+
+### Annotate Protein Information
+
+Use the `annotateProteinInfoFromIndra` function to annotate a data frame
+with protein information from Indra.
+
+``` r
+library(MSstatsBioNet)
+
+# Example data frame
+df <- data.frame(Protein = c("CLH1_HUMAN"))
+
+# Annotate protein information
+annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot_Mnemonic")
+print(head(annotated_df))
+```
+
+### Visualize Networks with Cytoscape
+
+Create an interactive network diagram using `cytoscapeNetwork`.
+
+``` r
+# Define nodes and edges
+nodes <- data.frame(
+  id    = c("TP53", "MDM2", "CDKN1A"),
+  logFC = c(1.5, -0.8, 2.1),
+  stringsAsFactors = FALSE
+)
+edges <- data.frame(
+  source      = c("TP53",  "MDM2"),
+  target      = c("MDM2",  "TP53"),
+  interaction = c("Activation", "Inhibition"),
+  stringsAsFactors = FALSE
+)
+
+# Render the network
+cytoscapeNetwork(nodes, edges)
+```
+
+### Export Network to HTML
+
+Export your network visualization to an HTML file using
+`exportNetworkToHTML`.
+
+``` r
+# Export the network to an HTML file
+exportNetworkToHTML(nodes, edges, filename = "network.html")
+```
+
+### Retrieve Subnetwork from INDRA
+
+Use `getSubnetworkFromIndra` to retrieve a subnetwork of protein
+interactions from the INDRA database.
+
+``` r
+# Load example input data
+input <- data.table::fread(system.file(
+    "extdata/groupComparisonModel.csv",
+    package = "MSstatsBioNet"
+))
+
+# Get subnetwork
+subnetwork <- getSubnetworkFromIndra(input)
+print(head(subnetwork$nodes))
+print(head(subnetwork$edges))
+```
+
 ## License
 
 This package is distributed under the
