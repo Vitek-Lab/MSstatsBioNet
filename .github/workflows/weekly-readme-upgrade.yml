@@ -82,6 +82,6 @@ jobs:
           - [ ] No existing content was accidentally removed
 
           > Merge if it looks good. Each week the bot will focus on a different section." \
-            --base main \
+            --base devel \
             --head "$BRANCH" \
             --label "documentation"
