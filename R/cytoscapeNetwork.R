@@ -106,6 +106,40 @@ cytoscapeNetwork <- function(nodes,
 # ── Shiny helpers ───────────────────────────────────────────────────────────
 
 #' Shiny output binding for cytoscapeNetwork
+#'
+#' Creates a Shiny output binding for a Cytoscape network visualization, allowing
+#' the network to be rendered within Shiny applications.
+#'
+#' @return A Shiny output binding for a Cytoscape network visualization.
+#'
+#' @examples
+#' \dontrun{
+#' library(shiny)
+#' 
+#' ui <- fluidPage(
+#'   cytoscapeNetworkOutput("cytoNetwork")
+#' )
+#' 
+#' server <- function(input, output, session) {
+#'   output$cytoNetwork <- renderCytoscapeNetwork({
+#'     nodes <- data.frame(
+#'       id = c("TP53", "MDM2", "CDKN1A"),
+#'       logFC = c(1.5, -0.8, 2.1),
+#'       stringsAsFactors = FALSE
+#'     )
+#'     edges <- data.frame(
+#'       source = c("TP53", "MDM2"),
+#'       target = c("MDM2", "TP53"),
+#'       interaction = c("Activation", "Inhibition"),
+#'       stringsAsFactors = FALSE
+#'     )
+#'     cytoscapeNetwork(nodes, edges)
+#'   })
+#' }
+#' 
+#' shinyApp(ui, server)
+#' }
+#'
 #' @importFrom htmlwidgets shinyWidgetOutput
 #' @inheritParams htmlwidgets::shinyWidgetOutput
 #' @export
