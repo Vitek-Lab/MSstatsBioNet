@@ -1,4 +1,3 @@
-```r
 #' Render a Cytoscape network visualisation
 #'
 #' Creates an interactive network diagram powered by Cytoscape.js and the dagre
@@ -173,4 +172,3 @@ renderCytoscapeNetwork <- function(expr, env = parent.frame(), quoted = FALSE) {
         quoted  = TRUE
     )
 }
-```
