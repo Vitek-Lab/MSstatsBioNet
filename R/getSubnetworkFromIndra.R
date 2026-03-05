@@ -35,6 +35,12 @@
 #' @param filter_by_ptm_site logical, whether to filter edges based on whether the 
 #' site information from INDRA matches with the PTM site in the input.  Default is FALSE.  
 #' Only applicable for differential PTM abundance results.
+#' @param include_infinite_fc logical, whether to include proteins with 
+#' infinite log fold change (i.e. proteins that are only detected in one condition).  
+#' Default is FALSE.
+#' @param direction Character string specifying the direction of regulation to
+#' include. One of \code{"both"} (default), \code{"up"} (upregulated only),
+#' or \code{"down"} (downregulated only).
 #'
 #' @return list of 2 data.frames, nodes and edges
 #'
@@ -60,8 +66,11 @@ getSubnetworkFromIndra <- function(input,
                                    logfc_cutoff = NULL,
                                    force_include_other = NULL, 
                                    filter_by_curation = FALSE,
-                                   filter_by_ptm_site = FALSE) {
-    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other)
+                                   filter_by_ptm_site = FALSE,
+                                   include_infinite_fc = FALSE,
+                                   direction = c("both", "up", "down")) {
+    direction = match.arg(direction)
+    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other, include_infinite_fc, direction)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
     res <- .callIndraCogexApi(input$HgncId, force_include_other)
     res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)
