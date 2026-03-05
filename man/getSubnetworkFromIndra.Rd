@@ -17,7 +17,8 @@ getSubnetworkFromIndra(
   force_include_other = NULL,
   filter_by_curation = FALSE,
   filter_by_ptm_site = FALSE,
-  include_infinite_fc = FALSE
+  include_infinite_fc = FALSE,
+  direction = c("both", "up", "down")
 )
 }
 \arguments{
@@ -68,6 +69,10 @@ Only applicable for differential PTM abundance results.}
 \item{include_infinite_fc}{logical, whether to include proteins with 
 infinite log fold change (i.e. proteins that are only detected in one condition).  
 Default is FALSE.}
+
+\item{direction}{Character string specifying the direction of regulation to
+include. One of \code{"both"} (default), \code{"up"} (upregulated only),
+or \code{"down"} (downregulated only).}
 }
 \value{
 list of 2 data.frames, nodes and edges

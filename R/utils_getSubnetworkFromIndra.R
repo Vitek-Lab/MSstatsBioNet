@@ -135,10 +135,18 @@
 #' @param include_infinite_fc logical, whether to include proteins with 
 #' infinite log fold change (i.e. proteins that are only detected in one condition).  
 #' Default is FALSE. 
+#' @param direction Character string specifying the direction of regulation to
+#' include. One of \code{"both"} (default), \code{"up"} (upregulated only),
+#' or \code{"down"} (downregulated only).
 #' @return filtered groupComparison result
 #' @keywords internal
 #' @noRd
-.filterGetSubnetworkFromIndraInput <- function(input, pvalueCutoff, logfc_cutoff, force_include_other, include_infinite_fc) {
+.filterGetSubnetworkFromIndraInput <- function(input, 
+                                               pvalueCutoff, 
+                                               logfc_cutoff, 
+                                               force_include_other, 
+                                               include_infinite_fc, 
+                                               direction) {
     input$Protein <- as.character(input$Protein)
     
     # Extract exempt proteins before any filtering
@@ -171,15 +179,21 @@
         input <- input[!is.na(input$log2FC) & abs(input$log2FC) > logfc_cutoff, ]
     }
     
+    if (!is.null(infinite_fc_proteins) && nrow(infinite_fc_proteins) > 0) {
+        combined_input <- rbind(infinite_fc_proteins, input)
+        input <- combined_input[!duplicated(combined_input$Protein), ]
+    }
+    
+    if (direction == "up") {
+        input <- input[!is.na(input$log2FC) & input$log2FC > 0, ]
+    } else if (direction == "down") {
+        input <- input[!is.na(input$log2FC) & input$log2FC < 0, ]
+    }
+    
     # Combine filtered data with exempt proteins and remove duplicates
     if (!is.null(exempt_proteins) && nrow(exempt_proteins) > 0) {
         combined_input <- rbind(exempt_proteins, input)
         # Remove duplicates based on Protein column, keeping first occurrence
-        input <- combined_input[!duplicated(combined_input$Protein), ]
-    }
-    
-    if (!is.null(infinite_fc_proteins) && nrow(infinite_fc_proteins) > 0) {
-        combined_input <- rbind(infinite_fc_proteins, input)
         input <- combined_input[!duplicated(combined_input$Protein), ]
     }
     
