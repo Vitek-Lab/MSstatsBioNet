@@ -8,6 +8,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Setup R for linting
+        uses: r-lib/actions/setup-r@v2
+      - name: Check style
+        run: |
+          Rscript -e "
+            install.packages('styler')
+            files <- styler::style_pkg(
+              transformers = styler::tidyverse_style(indent_by = 4),
+              dry = 'on'
+            )
+            if (any(files\$changed)) {
+              message('The following files need styling. Please run:')
+              message('  styler::style_pkg(transformers = styler::tidyverse_style(indent_by = 4))')
+              quit(status = 1)
+            }
+          "
       - name: Setup R and Bioconductor
         uses: grimbough/bioc-actions/setup-bioc@v1
         with:
