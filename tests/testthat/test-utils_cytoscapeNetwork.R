@@ -69,6 +69,12 @@ test_that(".mapLogFCToColor handles empty input", {
     expect_length(colors, 0)
 })
 
+test_that(".mapLogFCToColor handles Inf and -Inf values", {
+    colors <- MSstatsBioNet:::.mapLogFCToColor(c(-Inf, 0, Inf))
+    expect_length(colors, 3)
+    expect_true(all(grepl("^#[0-9A-Fa-f]{6}$", colors)))
+})
+
 # =============================================================================
 # .relProps
 # =============================================================================
