@@ -176,7 +176,7 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] MSstatsBioNet_1.3.3 MSstats_4.18.1      BiocStyle_2.38.0   
+#> [1] MSstatsBioNet_1.3.4 MSstats_4.18.1      BiocStyle_2.38.0   
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] gtable_0.3.6          r2r_0.1.2             xfun_0.56            
