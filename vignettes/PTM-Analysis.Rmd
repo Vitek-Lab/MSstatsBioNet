@@ -33,7 +33,7 @@ BiocManager::install("MSstatsBioNet")
 We will be taking a subset of the dataset found in this [paper](https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1). The table is the output of the MSstatsPTM function `groupComparisonPTM` (filtered down to the columns that are actually needed)
 
 ```{r}
-input = data.table::fread(system.file(
+input <- data.table::fread(system.file(
     "extdata/garrido-2024.csv",
     package = "MSstatsBioNet"
 ))
@@ -48,7 +48,7 @@ In the below example, we convert uniprot IDs to their corresponding Hgnc IDs. We
 
 ```{r}
 library(MSstatsBioNet)
-annotated_df = annotateProteinInfoFromIndra(input, "Uniprot")
+annotated_df <- annotateProteinInfoFromIndra(input, "Uniprot")
 head(annotated_df)
 ```
 

@@ -42,7 +42,7 @@ networks. The package is designed to be used in conjunction with the
 We will be taking a subset of the dataset found in this [paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC7331093/).  
 
 ```{r}
-input = data.table::fread(system.file(
+input <- data.table::fread(system.file(
     "extdata/msstats.csv",
     package = "MSstatsBioNet"
 ))
@@ -52,7 +52,7 @@ input = data.table::fread(system.file(
 
 ```{r}
 library(MSstatsConvert)
-msstats_imported = FragPipetoMSstatsFormat(input, use_log_file = FALSE)
+msstats_imported <- FragPipetoMSstatsFormat(input, use_log_file = FALSE)
 head(msstats_imported)
 ```
 
@@ -95,7 +95,7 @@ can also extract other information, such as hgnc gene name and protein function.
 
 ```{r}
 library(MSstatsBioNet)
-annotated_df = annotateProteinInfoFromIndra(model$ComparisonResult, "Uniprot")
+annotated_df <- annotateProteinInfoFromIndra(model$ComparisonResult, "Uniprot")
 head(annotated_df)
 ```
 
@@ -107,8 +107,8 @@ analysis results.
 
 ```{r}
 subnetwork <- getSubnetworkFromIndra(
-    annotated_df, 
-    pvalueCutoff = 0.05, 
+    annotated_df,
+    pvalueCutoff = 0.05,
     statement_types = c("Complex", "IncreaseAmount", "DecreaseAmount", "Inhibition", "Activation", "Phosphorylation")
 )
 head(subnetwork$nodes)

@@ -8,6 +8,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Setup R for linting
+        uses: r-lib/actions/setup-r@v2
+      - name: Check style
+        run: |
+          Rscript -e "install.packages('styler')"
+          Rscript -e "install.packages('roxygen2')"
+          Rscript .github/scripts/check_style.R
       - name: Setup R and Bioconductor
         uses: grimbough/bioc-actions/setup-bioc@v1
         with:
