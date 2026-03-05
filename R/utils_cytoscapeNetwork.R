@@ -10,9 +10,17 @@
         return(rep("#D3D3D3", length(logFC_values)))
     }
     
+    is_pos_inf <- is.infinite(logFC_values) & logFC_values > 0
+    is_neg_inf <- is.infinite(logFC_values) & logFC_values < 0
+    
+    finite_values   <- logFC_values[is.finite(logFC_values)]
     default_max     <- 2
-    max_logFC       <- max(c(abs(logFC_values), default_max), na.rm = TRUE)
+    max_logFC       <- max(c(abs(finite_values), default_max), na.rm = TRUE)
     min_logFC       <- -max_logFC
+    
+    logFC_values[is_pos_inf] <-  max_logFC
+    logFC_values[is_neg_inf] <-  min_logFC
+    
     color_map       <- grDevices::colorRamp(colors)
     normalized      <- (logFC_values - min_logFC) / (max_logFC - min_logFC)
     normalized[is.na(normalized)] <- 0.5
