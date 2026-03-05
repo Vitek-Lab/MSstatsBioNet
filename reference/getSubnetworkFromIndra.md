@@ -18,7 +18,9 @@ getSubnetworkFromIndra(
   logfc_cutoff = NULL,
   force_include_other = NULL,
   filter_by_curation = FALSE,
-  filter_by_ptm_site = FALSE
+  filter_by_ptm_site = FALSE,
+  include_infinite_fc = FALSE,
+  direction = c("both", "up", "down")
 )
 ```
 
@@ -91,6 +93,18 @@ getSubnetworkFromIndra(
   logical, whether to filter edges based on whether the site information
   from INDRA matches with the PTM site in the input. Default is FALSE.
   Only applicable for differential PTM abundance results.
+
+- include_infinite_fc:
+
+  logical, whether to include proteins with infinite log fold change
+  (i.e. proteins that are only detected in one condition). Default is
+  FALSE.
+
+- direction:
+
+  Character string specifying the direction of regulation to include.
+  One of `"both"` (default), `"up"` (upregulated only), or `"down"`
+  (downregulated only).
 
 ## Value
 

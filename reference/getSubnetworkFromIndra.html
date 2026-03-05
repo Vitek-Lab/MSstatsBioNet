@@ -59,7 +59,9 @@ a subnetwork of protein interactions from INDRA database.</p>
 <span>  logfc_cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  force_include_other <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  filter_by_curation <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  filter_by_ptm_site <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  filter_by_ptm_site <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  include_infinite_fc <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  direction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"both"</span>, <span class="st">"up"</span>, <span class="st">"down"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -133,6 +135,18 @@ have been curated as incorrect in INDRA.  Default is FALSE.</p></dd>
 <dd><p>logical, whether to filter edges based on whether the
 site information from INDRA matches with the PTM site in the input.  Default is FALSE.
 Only applicable for differential PTM abundance results.</p></dd>
+
+
+<dt id="arg-include-infinite-fc">include_infinite_fc<a class="anchor" aria-label="anchor" href="#arg-include-infinite-fc"></a></dt>
+<dd><p>logical, whether to include proteins with
+infinite log fold change (i.e. proteins that are only detected in one condition).
+Default is FALSE.</p></dd>
+
+
+<dt id="arg-direction">direction<a class="anchor" aria-label="anchor" href="#arg-direction"></a></dt>
+<dd><p>Character string specifying the direction of regulation to
+include. One of <code>"both"</code> (default), <code>"up"</code> (upregulated only),
+or <code>"down"</code> (downregulated only).</p></dd>
 
 </dl></div>
     <div class="section level2">
