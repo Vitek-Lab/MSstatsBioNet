@@ -84,4 +84,3 @@ test_that(".callGetHgncIdsFromGildaApi works correctly", {
     expected_value <- c("EGFR" = "3236", "CHEK1" = "1925")
     expect_equal(result, expected_value)
 })
-

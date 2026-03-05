@@ -10,7 +10,7 @@
     if (!"HgncId" %in% colnames(input)) {
         stop("Invalid Input Error: Input must contain a column named 'HgncId'.")
     }
-    num_proteins = length(unique(input$HgncId)) + 
+    num_proteins <- length(unique(input$HgncId)) +
         ifelse(!is.null(force_include_other), length(force_include_other), 0)
     if (num_proteins >= 400) {
         stop("Invalid Input Error: INDRA query must contain less than 400 proteins.  Consider lowering your p-value cutoff")
@@ -19,7 +19,7 @@
         stop("Invalid Input Error: Input must contain at least one protein after filtering.")
     }
     if (!is.null(protein_level_data)) {
-        if(!all(c("Protein", "LogIntensities", "originalRUN") %in% colnames(protein_level_data))) {
+        if (!all(c("Protein", "LogIntensities", "originalRUN") %in% colnames(protein_level_data))) {
             stop("protein_level_data must contain 'Protein', 'LogIntensities', and 'originalRUN' columns.")
         }
     }
@@ -42,7 +42,7 @@
     indraCogexUrl <-
         "https://discovery.indra.bio/api/indra_subnetwork_relations"
 
-    hgncIds = unique(hgncIds)
+    hgncIds <- unique(hgncIds)
     groundings <- lapply(hgncIds, function(x) list("HGNC", x))
     if (!is.null(force_include_other)) {
         groundings <- c(groundings, lapply(force_include_other, function(x) {
@@ -72,26 +72,31 @@
     stmt_hash_char <- as.character(stmt_hash)
     url <- paste0("https://db.indra.bio/curation/list/", stmt_hash_char)
 
-    tryCatch({
-        response <- GET(url)
-        if (status_code(response) == 200) {
-            curations <- fromJSON(content(response, "text", encoding = "UTF-8"))
-            if (length(curations) == 0) {
+    tryCatch(
+        {
+            response <- GET(url)
+            if (status_code(response) == 200) {
+                curations <- fromJSON(content(response, "text", encoding = "UTF-8"))
+                if (length(curations) == 0) {
+                    return(0)
+                }
+                incorrect_curations <- curations[curations$tag != "correct", ]
+                unique_incorrect <- length(unique(incorrect_curations$source_hash))
+
+                return(unique_incorrect)
+            } else {
+                warning(paste(
+                    "API request failed for hash", stmt_hash_char,
+                    "with status code", status_code(response)
+                ))
                 return(0)
             }
-            incorrect_curations <- curations[curations$tag != "correct", ]
-            unique_incorrect <- length(unique(incorrect_curations$source_hash))
-            
-            return(unique_incorrect)
-        } else {
-            warning(paste("API request failed for hash", stmt_hash_char, 
-                          "with status code", status_code(response)))
+        },
+        error = function(e) {
+            warning(paste("Error processing hash", stmt_hash_char, ":", e$message))
             return(0)
         }
-    }, error = function(e) {
-        warning(paste("Error processing hash", stmt_hash_char, ":", e$message))
-        return(0)
-    })
+    )
 }
 
 #' Call INDRA Cogex API and return response
@@ -103,25 +108,28 @@
 #' @importFrom jsonlite fromJSON
 #' @keywords internal
 #' @noRd
-.filterIndraResponse <- function(res, statement_types, evidence_count_cutoff, 
+.filterIndraResponse <- function(res, statement_types, evidence_count_cutoff,
                                  sources_filter = NULL) {
     if (!is.null(statement_types)) {
-        res = Filter(
-            function(statement) statement$data$stmt_type %in% statement_types, 
-            res)
-    }
-    if (!is.null(sources_filter)) {
-        res = Filter(
-            function(statement) {
-                parsed <- tryCatch(fromJSON(statement$data$source_counts), error = function(e) NULL)
-                if (is.null(parsed)) return(FALSE)
-                return(any(names(parsed) %in% sources_filter))
-            }, 
+        res <- Filter(
+            function(statement) statement$data$stmt_type %in% statement_types,
             res
         )
     }
-    res = Filter(
-        function(statement) statement$data$evidence_count >= evidence_count_cutoff, 
+    if (!is.null(sources_filter)) {
+        res <- Filter(
+            function(statement) {
+                parsed <- tryCatch(fromJSON(statement$data$source_counts), error = function(e) NULL)
+                if (is.null(parsed)) {
+                    return(FALSE)
+                }
+                return(any(names(parsed) %in% sources_filter))
+            },
+            res
+        )
+    }
+    res <- Filter(
+        function(statement) statement$data$evidence_count >= evidence_count_cutoff,
         res
     )
     return(res)
@@ -132,23 +140,23 @@
 #' @param pvalueCutoff p-value cutoff
 #' @param logfc_cutoff logFC cutoff
 #' @param force_include_other list of identifiers to exempt from filtering
-#' @param include_infinite_fc logical, whether to include proteins with 
-#' infinite log fold change (i.e. proteins that are only detected in one condition).  
-#' Default is FALSE. 
+#' @param include_infinite_fc logical, whether to include proteins with
+#' infinite log fold change (i.e. proteins that are only detected in one condition).
+#' Default is FALSE.
 #' @param direction Character string specifying the direction of regulation to
 #' include. One of \code{"both"} (default), \code{"up"} (upregulated only),
 #' or \code{"down"} (downregulated only).
 #' @return filtered groupComparison result
 #' @keywords internal
 #' @noRd
-.filterGetSubnetworkFromIndraInput <- function(input, 
-                                               pvalueCutoff, 
-                                               logfc_cutoff, 
-                                               force_include_other, 
-                                               include_infinite_fc, 
+.filterGetSubnetworkFromIndraInput <- function(input,
+                                               pvalueCutoff,
+                                               logfc_cutoff,
+                                               force_include_other,
+                                               include_infinite_fc,
                                                direction) {
     input$Protein <- as.character(input$Protein)
-    
+
     # Extract exempt proteins before any filtering
     exempt_proteins <- NULL
     if (!is.null(force_include_other)) {
@@ -162,13 +170,13 @@
             exempt_proteins <- data.frame()
         }
     }
-    
+
     infinite_fc_proteins <- NULL
     if (include_infinite_fc) {
         infinite_fc_proteins <- input[is.infinite(input$log2FC), ]
     }
 
-    input <- input[!is.na(input$adj.pvalue),]
+    input <- input[!is.na(input$adj.pvalue), ]
     if (!is.null(pvalueCutoff)) {
         input <- input[input$adj.pvalue < pvalueCutoff, ]
     }
@@ -178,34 +186,35 @@
         }
         input <- input[!is.na(input$log2FC) & abs(input$log2FC) > logfc_cutoff, ]
     }
-    
+
     if (!is.null(infinite_fc_proteins) && nrow(infinite_fc_proteins) > 0) {
         combined_input <- rbind(infinite_fc_proteins, input)
         input <- combined_input[!duplicated(combined_input$Protein), ]
     }
-    
+
     if (direction == "up") {
         input <- input[!is.na(input$log2FC) & input$log2FC > 0, ]
     } else if (direction == "down") {
         input <- input[!is.na(input$log2FC) & input$log2FC < 0, ]
     }
-    
+
     # Combine filtered data with exempt proteins and remove duplicates
     if (!is.null(exempt_proteins) && nrow(exempt_proteins) > 0) {
         combined_input <- rbind(exempt_proteins, input)
         # Remove duplicates based on Protein column, keeping first occurrence
         input <- combined_input[!duplicated(combined_input$Protein), ]
     }
-    
+
     # Handle PTMs in Protein column
-    input$Site = ifelse(grepl("_[A-Z][0-9]", input$Protein),
-                        gsub("^_", "", 
-                             gsub("^[^_]*_|_(?![A-Z][0-9])[^_]*", "", input$Protein, perl = TRUE)
-                         ),
-                        NA_character_
-                )
+    input$Site <- ifelse(grepl("_[A-Z][0-9]", input$Protein),
+        gsub(
+            "^_", "",
+            gsub("^[^_]*_|_(?![A-Z][0-9])[^_]*", "", input$Protein, perl = TRUE)
+        ),
+        NA_character_
+    )
     if ("GlobalProtein" %in% colnames(input)) {
-        input$Protein = input$GlobalProtein
+        input$Protein <- input$GlobalProtein
     }
     return(input)
 }
@@ -223,7 +232,7 @@
         edge$target_id, "@", edge$target_ns, "&format=html",
         sep = ""
     )
-    
+
     # Convert back to uniprot IDs
     matched_rows_source <- input[which(input$HgncId == edge$source_id), ]
     uniprot_ids_source <- unique(matched_rows_source$Protein)
@@ -232,15 +241,15 @@
     } else {
         edge$source_uniprot_id <- uniprot_ids_source
     }
-    
+
     matched_rows_target <- input[which(input$HgncId == edge$target_id), ]
-    uniprot_ids_target = unique(matched_rows_target$Protein)
+    uniprot_ids_target <- unique(matched_rows_target$Protein)
     if (length(uniprot_ids_target) != 1) {
         edge$target_uniprot_id <- edge$target_name
     } else {
         edge$target_uniprot_id <- uniprot_ids_target
     }
-    
+
     return(edge)
 }
 
@@ -260,12 +269,12 @@
         key <- paste(edge$source_id, edge$target_id, edge$data$stmt_type, sep = "_")
         json_object <- fromJSON(edge$data$stmt_json)
         if (!is.null(json_object$residue) && !is.null(json_object$position)) {
-            edge$site = paste0(json_object$residue, json_object$position)
+            edge$site <- paste0(json_object$residue, json_object$position)
             key <- paste(key, edge$site, sep = "_")
         } else {
-            edge$site = NA_character_
+            edge$site <- NA_character_
         }
-        if (!key %in% keys(edgeToMetadataMapping) || 
+        if (!key %in% keys(edgeToMetadataMapping) ||
             edge$data$evidence_count > edgeToMetadataMapping[[key]]$data$evidence_count) {
             edge <- .addAdditionalMetadataToIndraEdge(edge, input)
             edge$data$paper_count <- 1 # TODO: fix paper count
@@ -321,8 +330,9 @@
     # add correlation - maybe create a separate function
     if (!is.null(protein_level_data)) {
         protein_level_data <- protein_level_data[
-            protein_level_data$Protein %in% edges$source | 
-                protein_level_data$Protein %in% edges$target, ]
+            protein_level_data$Protein %in% edges$source |
+                protein_level_data$Protein %in% edges$target,
+        ]
         correlations <- .getCorrelationMatrixFromProteinLevelData(protein_level_data)
         edges$correlation <- apply(edges, 1, function(edge) {
             if (edge["source"] %in% rownames(correlations) && edge["target"] %in% colnames(correlations)) {
@@ -342,10 +352,10 @@
 #' @keywords internal
 #' @noRd
 .constructNodesDataFrame <- function(input, edges) {
-    nodes = input[, c("Protein", "HgncName", "Site", "log2FC", "adj.pvalue")]
-    colnames(nodes) = c("id", "hgncName", "Site", "logFC", "adj.pvalue")
-    
-    nodes = nodes[nodes$id %in% c(edges$source, edges$target), ]
+    nodes <- input[, c("Protein", "HgncName", "Site", "log2FC", "adj.pvalue")]
+    colnames(nodes) <- c("id", "hgncName", "Site", "logFC", "adj.pvalue")
+
+    nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     extra_force_include_other <- setdiff(unique(c(edges$source, edges$target)), nodes$id)
     if (length(extra_force_include_other) > 0) {
         extra_nodes <- data.frame(
@@ -358,20 +368,20 @@
         )
         nodes <- rbind(nodes, extra_nodes)
     }
-    nodes$hgncName = ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
-    
+    nodes$hgncName <- ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
+
     return(nodes)
 }
 
 #' Filter Edges Data Frame
 #' @param edges response from INDRA
 #' @param paper_count_cutoff cutoff for number of papers
-#' @param correlation_cutoff if protein_level_abundance is not NULL, apply a 
+#' @param correlation_cutoff if protein_level_abundance is not NULL, apply a
 #' cutoff for edges with correlation less than a specified cutoff.
 #' @return filtered edges data frame
 #' @keywords internal
 #' @noRd
-.filterEdgesDataFrame <- function(edges, 
+.filterEdgesDataFrame <- function(edges,
                                   paper_count_cutoff,
                                   correlation_cutoff) {
     edges <- edges[which(edges$paperCount >= paper_count_cutoff), ]
@@ -384,7 +394,7 @@
     return(edges)
 }
 
-.filterByCuration = function(nodes, edges, evidence_count_cutoff, filter_by_curation) {
+.filterByCuration <- function(nodes, edges, evidence_count_cutoff, filter_by_curation) {
     if (filter_by_curation) {
         incorrect_counts <- numeric(nrow(edges))
         for (i in seq_len(nrow(edges))) {
@@ -398,12 +408,12 @@
     return(list(nodes = nodes, edges = edges))
 }
 
-.filterByPtmSite = function(nodes, edges, filter_by_ptm_site) {
+.filterByPtmSite <- function(nodes, edges, filter_by_ptm_site) {
     if (filter_by_ptm_site && nrow(nodes[!is.na(nodes$Site), ]) > 0) {
         ptm_overlap <- .ptmOverlap(edges, nodes)
         keep <- ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")]
         edges <- edges[!is.na(keep) & keep != "", ]
-        edges <- edges[!is.na(edges$site),]
+        edges <- edges[!is.na(edges$site), ]
         nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     }
     return(list(nodes = nodes, edges = edges))
@@ -417,8 +427,8 @@
 #' @keywords internal
 #' @noRd
 .getCorrelationMatrixFromProteinLevelData <- function(protein_level_data) {
-    Protein = LogIntensities = NULL
-    wide_data <- pivot_wider(protein_level_data[,c("Protein", "LogIntensities", "originalRUN")], names_from = Protein, values_from = LogIntensities)
+    Protein <- LogIntensities <- NULL
+    wide_data <- pivot_wider(protein_level_data[, c("Protein", "LogIntensities", "originalRUN")], names_from = Protein, values_from = LogIntensities)
     wide_data <- wide_data[, -which(names(wide_data) == "originalRUN")]
     if (any(colSums(!is.na(wide_data)) == 0)) {
         warning("protein_level_data contains proteins with all missing values, unable to calculate correlations for those proteins.")

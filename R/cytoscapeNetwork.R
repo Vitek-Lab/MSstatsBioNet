@@ -28,15 +28,15 @@
 #' @examples
 #' \dontrun{
 #' nodes <- data.frame(
-#'   id    = c("TP53", "MDM2", "CDKN1A"),
-#'   logFC = c(1.5, -0.8, 2.1),
-#'   stringsAsFactors = FALSE
+#'     id = c("TP53", "MDM2", "CDKN1A"),
+#'     logFC = c(1.5, -0.8, 2.1),
+#'     stringsAsFactors = FALSE
 #' )
 #' edges <- data.frame(
-#'   source      = c("TP53",  "MDM2"),
-#'   target      = c("MDM2",  "TP53"),
-#'   interaction = c("Activation", "Inhibition"),
-#'   stringsAsFactors = FALSE
+#'     source = c("TP53", "MDM2"),
+#'     target = c("MDM2", "TP53"),
+#'     interaction = c("Activation", "Inhibition"),
+#'     stringsAsFactors = FALSE
 #' )
 #' cytoscapeNetwork(nodes, edges)
 #' }
@@ -45,14 +45,13 @@
 #' @importFrom grDevices colorRamp rgb
 #' @export
 cytoscapeNetwork <- function(nodes,
-                             edges         = data.frame(),
+                             edges = data.frame(),
                              displayLabelType = "id",
-                             nodeFontSize  = 12,
+                             nodeFontSize = 12,
                              layoutOptions = NULL,
-                             width         = NULL,
-                             height        = NULL,
-                             elementId     = NULL) {
-    
+                             width = NULL,
+                             height = NULL,
+                             elementId = NULL) {
     # Validate inputs
     if (!is.data.frame(nodes) || !("id" %in% names(nodes))) {
         stop("`nodes` must be a data frame with at least an `id` column.")
@@ -64,7 +63,7 @@ cytoscapeNetwork <- function(nodes,
     if (nrow(edges) > 0 && !all(required_edge_cols %in% names(edges))) {
         stop("`edges` must contain columns: source, target, interaction.")
     }
-    
+
     # Build layout config
     default_layout <- list(
         name          = "dagre",
@@ -81,17 +80,17 @@ cytoscapeNetwork <- function(nodes,
     if (!is.null(layoutOptions)) {
         for (nm in names(layoutOptions)) layout[[nm]] <- layoutOptions[[nm]]
     }
-    
+
     # Build element list
     elements <- .buildElements(nodes, edges, displayLabelType)
-    
+
     # Package everything for the JS side
     x <- list(
         elements       = elements,
         layout         = layout,
         node_font_size = nodeFontSize
     )
-    
+
     htmlwidgets::createWidget(
         name      = "cytoscapeNetwork",
         x         = x,
@@ -115,28 +114,28 @@ cytoscapeNetwork <- function(nodes,
 #' @examples
 #' \dontrun{
 #' library(shiny)
-#' 
+#'
 #' ui <- fluidPage(
-#'   cytoscapeNetworkOutput("cytoNetwork")
+#'     cytoscapeNetworkOutput("cytoNetwork")
 #' )
-#' 
+#'
 #' server <- function(input, output, session) {
-#'   output$cytoNetwork <- renderCytoscapeNetwork({
-#'     nodes <- data.frame(
-#'       id = c("TP53", "MDM2", "CDKN1A"),
-#'       logFC = c(1.5, -0.8, 2.1),
-#'       stringsAsFactors = FALSE
-#'     )
-#'     edges <- data.frame(
-#'       source = c("TP53", "MDM2"),
-#'       target = c("MDM2", "TP53"),
-#'       interaction = c("Activation", "Inhibition"),
-#'       stringsAsFactors = FALSE
-#'     )
-#'     cytoscapeNetwork(nodes, edges)
-#'   })
+#'     output$cytoNetwork <- renderCytoscapeNetwork({
+#'         nodes <- data.frame(
+#'             id = c("TP53", "MDM2", "CDKN1A"),
+#'             logFC = c(1.5, -0.8, 2.1),
+#'             stringsAsFactors = FALSE
+#'         )
+#'         edges <- data.frame(
+#'             source = c("TP53", "MDM2"),
+#'             target = c("MDM2", "TP53"),
+#'             interaction = c("Activation", "Inhibition"),
+#'             stringsAsFactors = FALSE
+#'         )
+#'         cytoscapeNetwork(nodes, edges)
+#'     })
 #' }
-#' 
+#'
 #' shinyApp(ui, server)
 #' }
 #'
@@ -144,7 +143,7 @@ cytoscapeNetwork <- function(nodes,
 #' @inheritParams htmlwidgets::shinyWidgetOutput
 #' @export
 cytoscapeNetworkOutput <- function(outputId,
-                                   width  = "100%",
+                                   width = "100%",
                                    height = "500px") {
     htmlwidgets::shinyWidgetOutput(
         outputId = outputId,
@@ -162,9 +161,9 @@ cytoscapeNetworkOutput <- function(outputId,
 renderCytoscapeNetwork <- function(expr, env = parent.frame(), quoted = FALSE) {
     if (!quoted) expr <- substitute(expr)
     htmlwidgets::shinyRenderWidget(
-        expr    = expr,
+        expr = expr,
         outputFunction = cytoscapeNetworkOutput,
-        env     = env,
-        quoted  = TRUE
+        env = env,
+        quoted = TRUE
     )
 }

@@ -3,13 +3,13 @@
 #' Using differential abundance results from MSstats, this function retrieves
 #' a subnetwork of protein interactions from INDRA database.
 #'
-#' @param input output of \code{\link[MSstats]{groupComparison}} function's 
-#' comparisionResult table, which contains a list of proteins and their 
-#' corresponding p-values, logFCs, along with additional HGNC ID and HGNC 
+#' @param input output of \code{\link[MSstats]{groupComparison}} function's
+#' comparisionResult table, which contains a list of proteins and their
+#' corresponding p-values, logFCs, along with additional HGNC ID and HGNC
 #' name columns
-#' @param protein_level_data output of the \code{\link[MSstats]{dataProcess}} 
-#' function's ProteinLevelData table, which contains a list of proteins and 
-#' their corresponding abundances.  Used for annotating correlation information 
+#' @param protein_level_data output of the \code{\link[MSstats]{dataProcess}}
+#' function's ProteinLevelData table, which contains a list of proteins and
+#' their corresponding abundances.  Used for annotating correlation information
 #' and applying correlation cutoffs.
 #' @param pvalueCutoff p-value cutoff for filtering. Default is NULL, i.e. no
 #' filtering
@@ -19,24 +19,24 @@
 #' @param evidence_count_cutoff number of evidence to filter on for each
 #' paper. E.g. A paper may have 5 sentences describing the same interaction vs 1
 #' sentence.  Default is 1.
-#' @param correlation_cutoff if protein_level_abundance is not NULL, apply a 
+#' @param correlation_cutoff if protein_level_abundance is not NULL, apply a
 #' cutoff for edges with correlation less than a specified cutoff.  Default is
 #' 0.3
 #' @param sources_filter filtering only on specific sources.  Default is no filter, i.e. NULL.
 #' Otherwise, should be a list, e.g. c('reach', 'medscan').
-#' @param logfc_cutoff absolute log fold change cutoff for filtering proteins. 
-#' Only proteins with |logFC| greater than this value will be retained. Default 
+#' @param logfc_cutoff absolute log fold change cutoff for filtering proteins.
+#' Only proteins with |logFC| greater than this value will be retained. Default
 #' is NULL, i.e. no logFC filtering.
 #' @param force_include_other character vector of identifiers to include in the
 #' network, regardless if those ids are in the input data. Should be formatted
 #' as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".
 #' @param filter_by_curation logical, whether to filter out statements that
 #' have been curated as incorrect in INDRA.  Default is FALSE.
-#' @param filter_by_ptm_site logical, whether to filter edges based on whether the 
-#' site information from INDRA matches with the PTM site in the input.  Default is FALSE.  
+#' @param filter_by_ptm_site logical, whether to filter edges based on whether the
+#' site information from INDRA matches with the PTM site in the input.  Default is FALSE.
 #' Only applicable for differential PTM abundance results.
-#' @param include_infinite_fc logical, whether to include proteins with 
-#' infinite log fold change (i.e. proteins that are only detected in one condition).  
+#' @param include_infinite_fc logical, whether to include proteins with
+#' infinite log fold change (i.e. proteins that are only detected in one condition).
 #' Default is FALSE.
 #' @param direction Character string specifying the direction of regulation to
 #' include. One of \code{"both"} (default), \code{"up"} (upregulated only),
@@ -55,21 +55,21 @@
 #' head(subnetwork$nodes)
 #' head(subnetwork$edges)
 #'
-getSubnetworkFromIndra <- function(input, 
+getSubnetworkFromIndra <- function(input,
                                    protein_level_data = NULL,
-                                   pvalueCutoff = NULL, 
+                                   pvalueCutoff = NULL,
                                    statement_types = NULL,
                                    paper_count_cutoff = 1,
                                    evidence_count_cutoff = 1,
                                    correlation_cutoff = 0.3,
                                    sources_filter = NULL,
                                    logfc_cutoff = NULL,
-                                   force_include_other = NULL, 
+                                   force_include_other = NULL,
                                    filter_by_curation = FALSE,
                                    filter_by_ptm_site = FALSE,
                                    include_infinite_fc = FALSE,
                                    direction = c("both", "up", "down")) {
-    direction = match.arg(direction)
+    direction <- match.arg(direction)
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other, include_infinite_fc, direction)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
     res <- .callIndraCogexApi(input$HgncId, force_include_other)
@@ -77,8 +77,8 @@ getSubnetworkFromIndra <- function(input,
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)
     edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)
     nodes <- .constructNodesDataFrame(input, edges)
-    subnetwork = .filterByPtmSite(nodes, edges, filter_by_ptm_site)
-    subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, evidence_count_cutoff, filter_by_curation)
+    subnetwork <- .filterByPtmSite(nodes, edges, filter_by_ptm_site)
+    subnetwork <- .filterByCuration(subnetwork$nodes, subnetwork$edges, evidence_count_cutoff, filter_by_curation)
     warning(
         "NOTICE: This function includes third-party software components
         that are licensed under the BSD 2-Clause License. Please ensure to
