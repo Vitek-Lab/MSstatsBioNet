@@ -1,3 +1,4 @@
+```r
 #' Export network data with Cytoscape visualization
 #' 
 #' Convenience function that takes nodes and edges data directly and creates
@@ -29,7 +30,24 @@ exportNetworkToHTML <- function(nodes, edges,
 
 #' Preview network in browser
 #' 
-#' Creates a temporary HTML file and opens it in the default web browser
+#' @description
+#' Generates a temporary HTML file for the network visualization and opens it 
+#' in the default web browser for quick preview.
+#' 
+#' @param nodes \code{data.frame} containing node information.
+#' @param edges \code{data.frame} containing edge information.
+#' @param displayLabelType \code{character} specifying the type of label to display on nodes. Default is \code{"id"}.
+#' @param nodeFontSize \code{numeric} specifying the font size of node labels. Default is \code{12}.
+#' 
+#' @return Invisibly returns the file path of the temporary HTML file.
+#' 
+#' @examples
+#' \dontrun{
+#' nodes <- data.frame(id = c("A", "B", "C"))
+#' edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
+#' previewNetworkInBrowser(nodes, edges)
+#' }
+#' 
 #' @export
 #' @importFrom utils browseURL
 #' @inheritParams exportNetworkToHTML
@@ -54,3 +72,4 @@ previewNetworkInBrowser <- function(nodes, edges,
     
     invisible(temp_file)
 }
+```
