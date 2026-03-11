@@ -26,6 +26,18 @@ controls which column is used as the visible node label.}
 
 \item{nodeFontSize}{Font size (px) for node labels.  Default \code{12}.}
 }
+\value{
+Invisibly returns the file path of the temporary HTML file.
+}
 \description{
-Creates a temporary HTML file and opens it in the default web browser
+Generates a temporary HTML file for the network visualization and opens it 
+in the default web browser for quick preview.
+}
+\examples{
+\dontrun{
+nodes <- data.frame(id = c("A", "B", "C"))
+edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
+previewNetworkInBrowser(nodes, edges)
+}
+
 }

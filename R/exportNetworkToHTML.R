@@ -29,7 +29,19 @@ exportNetworkToHTML <- function(nodes, edges,
 
 #' Preview network in browser
 #' 
-#' Creates a temporary HTML file and opens it in the default web browser
+#' @description
+#' Generates a temporary HTML file for the network visualization and opens it 
+#' in the default web browser for quick preview.
+#' 
+#' @return Invisibly returns the file path of the temporary HTML file.
+#' 
+#' @examples
+#' \dontrun{
+#' nodes <- data.frame(id = c("A", "B", "C"))
+#' edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
+#' previewNetworkInBrowser(nodes, edges)
+#' }
+#' 
 #' @export
 #' @importFrom utils browseURL
 #' @inheritParams exportNetworkToHTML
