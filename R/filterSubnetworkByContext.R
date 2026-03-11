@@ -61,19 +61,29 @@ filterSubnetworkByContext <- function(nodes,
     method <- match.arg(method)
 
     if (method == "tag_count") {
-        if (!is.character(query) || length(query) < 1) {
+        if (!is.character(query) || length(query) < 1 || 
+            any(is.na(query)) || any(!nzchar(query))) {
             stop("`query` must be a character vector of tags when method = 'tag_count'.")
         }
-        if (is.null(cutoff)) cutoff <- 1
+        if (is.null(cutoff)) cutoff <- 1L
+        if (!is.numeric(cutoff) || length(cutoff) != 1L || is.na(cutoff) ||
+            cutoff < 0 || cutoff > length(query) || cutoff != as.integer(cutoff)) {
+            stop("`cutoff` must be a single integer in [0, length(query)] when method = 'tag_count'.")
+        }
         cat(sprintf(
             "Method: tag_count | Tags: %d | Cutoff: >= %d tag(s)\n",
             length(query), cutoff
         ))
     } else {
-        if (!is.character(query) || length(query) != 1) {
+        if (!is.character(query) || length(query) != 1L ||
+            is.na(query) || !nzchar(query)) {
             stop("`query` must be a single character string when method = 'cosine'.")
         }
         if (is.null(cutoff)) cutoff <- 0.10
+        if (!is.numeric(cutoff) || length(cutoff) != 1L || is.na(cutoff) ||
+            !is.finite(cutoff) || cutoff < 0 || cutoff > 1) {
+            stop("`cutoff` must be a single numeric value in [0, 1] when method = 'cosine'.")
+        }
         cat(sprintf(
             "Method: cosine | Cutoff: >= %.2f\n", cutoff
         ))
@@ -82,12 +92,18 @@ filterSubnetworkByContext <- function(nodes,
     evidence <- .extract_evidence_text(edges)
     
     if (nrow(evidence) == 0) {
+        evidence$score <- if (method == "tag_count") integer(0) else numeric(0)
         warning("No evidence text found - returning unfiltered inputs.")
         return(list(nodes = nodes, edges = edges, evidence = evidence))
     }
     pmids <- unique(evidence$pmid[!is.na(evidence$pmid) & nchar(evidence$pmid) > 0])
     
     if (length(pmids) == 0) {
+        evidence$score <- if (method == "tag_count") {
+            rep(NA_integer_, nrow(evidence))
+        } else {
+            rep(NA_real_, nrow(evidence))
+        }
         warning("No PMIDs found in evidence - returning unfiltered inputs.")
         return(list(nodes = nodes, edges = edges, evidence = evidence))
     }
