@@ -25,7 +25,11 @@ Imports:
     tidyr,
     htmlwidgets,
     grDevices,
-    stats
+    stats,
+    text2vec,
+    stopwords,
+    xml2,
+    rentrez
 Suggests: 
     data.table,
     BiocStyle,
