@@ -2,13 +2,14 @@
 % Please edit documentation in R/filterSubnetworkByContext.R
 \name{filterSubnetworkByContext}
 \alias{filterSubnetworkByContext}
-\title{Filter a subnetwork by contextual relevance using TF-IDF cosine similarity}
+\title{Filter a subnetwork by contextual relevance}
 \usage{
 filterSubnetworkByContext(
   nodes,
   edges,
-  similarity_cutoff = 0.1,
-  query = "DNA damage repair cancer oncology"
+  query,
+  cutoff = NULL,
+  method = c("tag_count", "cosine")
 )
 }
 \arguments{
@@ -17,21 +18,53 @@ filterSubnetworkByContext(
 \item{edges}{A dataframe of network edges with columns: source, target,
 interaction, site, evidenceLink, stmt_hash.}
 
-\item{similarity_cutoff}{Numeric in [-1, 1]. Only evidence whose abstract
-scores >= this value is retained. Default 0.10.}
+\item{query}{For \code{method = "tag_count"}: a character vector of tags,
+e.g. \code{c("CHEK1", "DNA damage", "DNA damage repair")}.
+For \code{method = "cosine"}: a single character string.}
 
-\item{query}{Character string. The text query to compare against abstracts.
-Expand with synonyms / related terms for better recall.}
+\item{cutoff}{Numeric threshold applied to the chosen scoring method.
+\itemize{
+  \item \code{"tag_count"}: integer >= 0; abstracts must
+    contain at least this many tags. Max possible value is
+    \code{length(query)}. Default \code{1}.
+  \item \code{"cosine"}: numeric in \code{[-1, 1]}; abstracts
+    must score >= this value. Default \code{0.10}.
+}}
+
+\item{method}{One of \code{"tag_count"} (default) or \code{"cosine"}.}
 }
 \value{
 A named list with three elements:
   \item{nodes}{Filtered nodes dataframe (only nodes present in kept edges)}
   \item{edges}{Filtered edges dataframe}
   \item{evidence}{Dataframe with columns: source, target, interaction, site,
-        evidenceLink, stmt_hash, text, pmid, similarity}
+    evidenceLink, stmt_hash, text, pmid, score. The \code{score} column
+    contains tag counts (integer) or cosine similarities (numeric) depending
+    on the method used.}
 }
 \description{
 Fetches PubMed abstracts for evidence PMIDs, scores each abstract against a
-user-supplied text query, and returns only the nodes, edges, and evidence
-rows whose abstracts meet the similarity cutoff.
+user-supplied query, and returns only the nodes, edges, and evidence rows
+whose abstracts meet the scoring cutoff.
+}
+\details{
+Two scoring methods are available, controlled by the \code{method} argument:
+
+\describe{
+  \item{\code{"tag_count"} (default)}{
+    Counts how many tags from \code{query} appear as substrings in the
+    abstract (case-insensitive). The score for each abstract is an integer
+    in \code{[0, length(query)]}. Set \code{cutoff} to the minimum number of
+    tags that must appear — e.g. \code{cutoff = 2} keeps abstracts that
+    mention at least 2 of your tags. \code{query} must be a character
+    \emph{vector} of tags when using this method.
+  }
+  \item{\code{"cosine"}}{
+    Scores abstracts using TF-IDF cosine similarity against \code{query}.
+    Scores are in \code{[-1, 1]} (in practice \code{[0, 1]} for text).
+    Set \code{cutoff} to a decimal threshold — e.g. \code{cutoff = 0.10}.
+    \code{query} should be a single character string; expand it with
+    synonyms and related terms for better recall under exact token matching.
+  }
+}
 }

@@ -129,7 +129,7 @@ than semantic understanding.
 The expanded query below was produced with the help of a chatbot and
 covers the major vocabulary used in the DNA damage repair and cancer literature.
 
-```{r query}
+```{r tags}
 tags <- c(
   "dna_damage_repair",
   "cancer",
@@ -300,7 +300,7 @@ my_query <- "DNA damage repair cancer oncology DNA repair genome integrity
 `cutoff` parameter controls stringency — only edges whose supporting
 abstracts score at or above this value are retained.
 
-```{r filter}
+```{r}
 filtered_network <- filterSubnetworkByContext(
   nodes             = subnetwork$nodes,
   edges             = subnetwork$edges,
@@ -325,7 +325,7 @@ Retained: A edges (of B), C nodes (of D), E evidence rows (of F)
 
 ### Filtered nodes
 
-```{r nodes}
+```{r}
 filtered_network$nodes
 ```
 
@@ -333,7 +333,7 @@ Only proteins connected by at least one contextually relevant edge are retained.
 
 ### Filtered edges
 
-```{r edges}
+```{r}
 filtered_network$edges
 ```
 
@@ -342,7 +342,7 @@ supported by literature that passed the similarity threshold.
 
 ### Evidence with similarity scores
 
-```{r evidence}
+```{r}
 filtered_network$evidence
 ```
 
@@ -362,7 +362,7 @@ The evidence dataframe contains the following columns:
 
 You can sort by similarity to identify the most on-topic supporting evidence:
 
-```{r sort-evidence}
+```{r}
 filtered_network$evidence[
   order(filtered_network$evidence$score, decreasing = TRUE), 
 ]
@@ -383,7 +383,7 @@ in your network. As a rough guide:
 To explore the score distribution before committing to a cutoff, run the
 function at a low threshold and inspect the scores:
 
-```{r explore-cutoff}
+```{r}
 # Run with permissive cutoff to see full score distribution
 exploratory <- filterSubnetworkByContext(
   nodes             = subnetwork$nodes,

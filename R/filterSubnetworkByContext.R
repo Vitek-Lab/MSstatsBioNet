@@ -11,14 +11,14 @@
 #'     Counts how many tags from \code{query} appear as substrings in the
 #'     abstract (case-insensitive). The score for each abstract is an integer
 #'     in \code{[0, length(query)]}. Set \code{cutoff} to the minimum number of
-#'     tags that must appear — e.g. \code{cutoff = 2} keeps abstracts that
+#'     tags that must appear - e.g. \code{cutoff = 2} keeps abstracts that
 #'     mention at least 2 of your tags. \code{query} must be a character
 #'     \emph{vector} of tags when using this method.
 #'   }
 #'   \item{\code{"cosine"}}{
 #'     Scores abstracts using TF-IDF cosine similarity against \code{query}.
 #'     Scores are in \code{[-1, 1]} (in practice \code{[0, 1]} for text).
-#'     Set \code{cutoff} to a decimal threshold — e.g. \code{cutoff = 0.10}.
+#'     Set \code{cutoff} to a decimal threshold - e.g. \code{cutoff = 0.10}.
 #'     \code{query} should be a single character string; expand it with
 #'     synonyms and related terms for better recall under exact token matching.
 #'   }
@@ -59,8 +59,7 @@ filterSubnetworkByContext <- function(nodes,
                                       method = c("tag_count", "cosine")) {
     
     method <- match.arg(method)
-    
-    # ── Validate inputs and set default cutoff ────────────────────────────────
+
     if (method == "tag_count") {
         if (!is.character(query) || length(query) < 1) {
             stop("`query` must be a character vector of tags when method = 'tag_count'.")
@@ -80,19 +79,16 @@ filterSubnetworkByContext <- function(nodes,
         ))
     }
     
-    # ── 1. Extract evidence text from edges ───────────────────────────────────
     evidence <- .extract_evidence_text(edges)
     
     if (nrow(evidence) == 0) {
-        warning("No evidence text found — returning unfiltered inputs.")
+        warning("No evidence text found - returning unfiltered inputs.")
         return(list(nodes = nodes, edges = edges, evidence = evidence))
     }
-    
-    # ── 2. Fetch PubMed abstracts for unique PMIDs ────────────────────────────
     pmids <- unique(evidence$pmid[nchar(evidence$pmid) > 0])
     
     if (length(pmids) == 0) {
-        warning("No PMIDs found in evidence — returning unfiltered inputs.")
+        warning("No PMIDs found in evidence - returning unfiltered inputs.")
         return(list(nodes = nodes, edges = edges, evidence = evidence))
     }
     
@@ -103,14 +99,12 @@ filterSubnetworkByContext <- function(nodes,
         stringsAsFactors = FALSE
     )
     
-    # ── 3. Score abstracts ────────────────────────────────────────────────────
     if (method == "tag_count") {
         abstracts_df$score <- .score_by_tag_count(abstracts_df$abstract, query)
     } else {
         abstracts_df$score <- .score_by_cosine(query, abstracts_df$abstract)
     }
     
-    # ── 4. Filter abstracts by cutoff ─────────────────────────────────────────
     passing_pmids <- abstracts_df$pmid[abstracts_df$score >= cutoff]
     
     cat(sprintf(
@@ -118,7 +112,6 @@ filterSubnetworkByContext <- function(nodes,
         length(passing_pmids), nrow(abstracts_df), cutoff
     ))
     
-    # ── 5. Filter evidence, edges, nodes ─────────────────────────────────────
     evidence_scored <- merge(
         evidence,
         abstracts_df[, c("pmid", "score")],
@@ -153,8 +146,6 @@ filterSubnetworkByContext <- function(nodes,
     ))
 }
 
-
-# ── Scoring helpers ───────────────────────────────────────────────────────────
 
 #' Score abstracts by tag count
 #'
@@ -221,7 +212,6 @@ filterSubnetworkByContext <- function(nodes,
 }
 
 
-# ── Internal helpers ──────────────────────────────────────────────────────────
 
 #' Extract evidence text from edges dataframe via INDRA API
 #' @param df Edges dataframe with columns: source, target, interaction, site,
