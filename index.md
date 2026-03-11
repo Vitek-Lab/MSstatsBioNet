@@ -89,6 +89,48 @@ print(head(subnetwork$nodes))
 print(head(subnetwork$edges))
 ```
 
+### Preview Network in Browser
+
+Quickly preview your network in a web browser using
+`previewNetworkInBrowser`.
+
+``` r
+# Preview the network in a browser
+previewNetworkInBrowser(nodes, edges)
+```
+
+### Integrate with Shiny
+
+Use `cytoscapeNetworkOutput` and `renderCytoscapeNetwork` to integrate
+network visualization into a Shiny app.
+
+``` r
+library(shiny)
+
+ui <- fluidPage(
+  cytoscapeNetworkOutput("cytoNetwork")
+)
+
+server <- function(input, output, session) {
+  output$cytoNetwork <- renderCytoscapeNetwork({
+    nodes <- data.frame(
+      id = c("TP53", "MDM2", "CDKN1A"),
+      logFC = c(1.5, -0.8, 2.1),
+      stringsAsFactors = FALSE
+    )
+    edges <- data.frame(
+      source = c("TP53", "MDM2"),
+      target = c("MDM2", "TP53"),
+      interaction = c("Activation", "Inhibition"),
+      stringsAsFactors = FALSE
+    )
+    cytoscapeNetwork(nodes, edges)
+  })
+}
+
+shinyApp(ui, server)
+```
+
 ## License
 
 This package is distributed under the
