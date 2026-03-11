@@ -29,4 +29,6 @@
 - [`previewNetworkInBrowser()`](https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.md)
   : Preview network in browser
 - [`renderCytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/renderCytoscapeNetwork.md)
-  : Shiny render binding for cytoscapeNetwork
+  : Render a Cytoscape network in a Shiny application. This function is
+  used to render a Cytoscape network visualization within a Shiny
+  application.

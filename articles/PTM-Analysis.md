@@ -188,7 +188,7 @@ sessionInfo()
 #> [19] Matrix_1.7-4          KernSmooth_2.23-26    checkmate_2.3.4      
 #> [22] data.table_1.18.2.1   RColorBrewer_1.1-3    S7_0.2.1             
 #> [25] desc_1.4.3            lifecycle_1.0.5       compiler_4.5.2       
-#> [28] farver_2.1.2          textshaping_1.0.4     gplots_3.3.0         
+#> [28] farver_2.1.2          textshaping_1.0.5     gplots_3.3.0         
 #> [31] statmod_1.5.1         htmltools_0.5.9       sass_0.4.10          
 #> [34] yaml_2.3.12           lazyeval_0.2.2        preprocessCore_1.72.0
 #> [37] marray_1.88.0         plotly_4.12.0         tidyr_1.3.2          
@@ -201,10 +201,10 @@ sessionInfo()
 #> [58] grid_4.5.2            cli_3.6.5             magrittr_2.0.4       
 #> [61] survival_3.8-3        backports_1.5.0       scales_1.4.0         
 #> [64] rmarkdown_2.30        httr_1.4.8            otel_0.2.0           
-#> [67] lme4_1.1-38           ragg_1.5.0            evaluate_1.0.5       
+#> [67] lme4_2.0-1            ragg_1.5.1            evaluate_1.0.5       
 #> [70] knitr_1.51            log4r_0.4.4           rbibutils_2.4.1      
 #> [73] MSstatsConvert_1.20.0 viridisLite_0.4.3     rlang_1.1.7          
 #> [76] Rcpp_1.1.1            glue_1.8.0            BiocManager_1.30.27  
 #> [79] minqa_1.2.8           jsonlite_2.0.0        R6_2.6.1             
-#> [82] systemfonts_1.3.1     fs_1.6.6
+#> [82] systemfonts_1.3.2     fs_1.6.7
 ```
