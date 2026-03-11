@@ -24,6 +24,8 @@
   : Validate Annotate Protein Info Input
 - [`exportNetworkToHTML()`](https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.md)
   : Export network data with Cytoscape visualization
+- [`filterSubnetworkByContext()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.md)
+  : Filter a subnetwork by contextual relevance
 - [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
   : Get subnetwork from INDRA database
 - [`previewNetworkInBrowser()`](https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.md)

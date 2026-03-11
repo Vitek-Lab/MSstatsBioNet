@@ -2,6 +2,7 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/404.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/LICENSE-text.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/articles/Cytoscape-Visualization.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/articles/Filter-By-Context.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/articles/MSstatsBioNet.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/articles/PTM-Analysis.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/articles/index.html</loc></url>
@@ -19,6 +20,7 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateUniprotIdsInDataFrame.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-validateAnnotateProteinInfoFromIndraInput.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/index.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.html</loc></url>
