@@ -297,24 +297,34 @@ filterSubnetworkByContext <- function(nodes,
     
     for (i in seq_along(pmids)) {
         pmid <- pmids[i]
-        tryCatch({
-            record        <- entrez_fetch(db = "pubmed", id = pmid, rettype = "xml")
-            doc           <- read_xml(record)
-            abstract_nodes <- xml_find_all(doc, ".//AbstractText")
-            
-            if (length(abstract_nodes) > 0) {
-                results[[pmid]] <- paste(trimws(xml_text(abstract_nodes)), collapse = " ")
+        
+        record <- tryCatch(
+            entrez_fetch(db = "pubmed", id = pmid, rettype = "xml"),
+            error = function(e) {
+                cat(sprintf("Error fetching PMID %s at %d/%d: %s\n", pmid, i, total, e$message))
+                NULL
             }
-            
-            if (i %% 10 == 0 || i == total) {
-                cat(sprintf("Progress: %d/%d (%.1f%%)\n", i, total, (i / total) * 100))
-            }
-            
-            Sys.sleep(0.34)   # respect NCBI rate limit
-        }, error = function(e) {
+        )
+        
+        if (is.null(record)) {
             results[[pmid]] <- ""
-            cat(sprintf("Error fetching PMID %s at %d/%d: %s\n", pmid, i, total, e$message))
-        })
+            next
+        }
+        
+        doc <- read_xml(record)
+        abstract_nodes <- xml_find_all(doc, ".//AbstractText")
+        
+        if (length(abstract_nodes) > 0) {
+            results[[pmid]] <- paste(trimws(xml_text(abstract_nodes)), collapse = " ")
+        } else {
+            results[[pmid]] <- ""
+        }
+        
+        if (i %% 10 == 0 || i == total) {
+            cat(sprintf("Progress: %d/%d (%.1f%%)\n", i, total, (i / total) * 100))
+        }
+        
+        Sys.sleep(0.34)
     }
     
     cat("Done fetching abstracts!\n")
