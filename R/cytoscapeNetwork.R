@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-=======
-```r
 # R/cytoscapeNetwork.R
 #
 # htmlwidgets binding for the Cytoscape network visualisation.
@@ -368,10 +365,6 @@
   elements
 }
 
-
-# ── Public API ──────────────────────────────────────────────────────────────
-
->>>>>>> cde2604 (docs: AI-generated doc upgrade for `renderCytoscapeNetwork`)
 #' Render a Cytoscape network visualisation
 #'
 #' Creates an interactive network diagram powered by Cytoscape.js and the dagre
@@ -529,18 +522,11 @@ cytoscapeNetworkOutput <- function(outputId,
     )
 }
 
-<<<<<<< HEAD
-#' Shiny render binding for cytoscapeNetwork
+#' Render a Cytoscape network in a Shiny application.
+#' This function is used to render a Cytoscape network visualization within a Shiny application.
+#' 
 #' @importFrom htmlwidgets shinyRenderWidget createWidget
 #' @inheritParams htmlwidgets::shinyRenderWidget
-=======
-#' Render a Cytoscape network in a Shiny application
-#'
-#' This function is used to render a Cytoscape network visualization within a Shiny application.
-#'
-#' @param expr \code{expression} that generates a Cytoscape network widget.
-#' @param env \code{environment} in which to evaluate \code{expr}. Defaults to \code{parent.frame()}.
-#' @param quoted \code{logical}, is \code{expr} a quoted expression (with \code{quote()})? Default is \code{FALSE}.
 #'
 #' @return A rendered Cytoscape network widget for use in Shiny applications.
 #'
@@ -572,9 +558,8 @@ cytoscapeNetworkOutput <- function(outputId,
 #'
 #' shinyApp(ui, server)
 #' }
->>>>>>> cde2604 (docs: AI-generated doc upgrade for `renderCytoscapeNetwork`)
 #' @export
-renderCytoscapeNetwork <- function(expr, env = parent.frame(), quoted = FALSE) {
+renderCytoscapeNetwork <- function(expr, env = parent.frame()) {
     if (!quoted) expr <- substitute(expr)
     htmlwidgets::shinyRenderWidget(
         expr    = expr,
@@ -583,4 +568,3 @@ renderCytoscapeNetwork <- function(expr, env = parent.frame(), quoted = FALSE) {
         quoted  = TRUE
     )
 }
-```

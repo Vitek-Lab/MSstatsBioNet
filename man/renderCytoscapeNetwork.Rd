@@ -2,19 +2,50 @@
 % Please edit documentation in R/cytoscapeNetwork.R
 \name{renderCytoscapeNetwork}
 \alias{renderCytoscapeNetwork}
-\title{Shiny render binding for cytoscapeNetwork}
+\title{Render a Cytoscape network in a Shiny application.
+This function is used to render a Cytoscape network visualization within a Shiny application.}
 \usage{
-renderCytoscapeNetwork(expr, env = parent.frame(), quoted = FALSE)
+renderCytoscapeNetwork(expr, env = parent.frame())
 }
 \arguments{
 \item{expr}{An expression that generates an HTML widget (or a
 \href{https://rstudio.github.io/promises/}{promise} of an HTML widget).}
 
 \item{env}{The environment in which to evaluate \code{expr}.}
-
-\item{quoted}{Is \code{expr} a quoted expression (with \code{quote()})? This
-is useful if you want to save an expression in a variable.}
+}
+\value{
+A rendered Cytoscape network widget for use in Shiny applications.
 }
 \description{
-Shiny render binding for cytoscapeNetwork
+Render a Cytoscape network in a Shiny application.
+This function is used to render a Cytoscape network visualization within a Shiny application.
+}
+\examples{
+\dontrun{
+library(shiny)
+library(MSstatsBioNet)
+
+ui <- fluidPage(
+  cytoscapeNetworkOutput("cytoNetwork")
+)
+
+server <- function(input, output, session) {
+  output$cytoNetwork <- renderCytoscapeNetwork({
+    nodes <- data.frame(
+      id    = c("TP53", "MDM2", "CDKN1A"),
+      logFC = c(1.5, -0.8, 2.1),
+      stringsAsFactors = FALSE
+    )
+    edges <- data.frame(
+      source      = c("TP53",  "MDM2"),
+      target      = c("MDM2",  "TP53"),
+      interaction = c("Activation", "Inhibition"),
+      stringsAsFactors = FALSE
+    )
+    cytoscapeNetwork(nodes, edges)
+  })
+}
+
+shinyApp(ui, server)
+}
 }
