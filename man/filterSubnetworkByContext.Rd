@@ -55,14 +55,14 @@ Two scoring methods are available, controlled by the \code{method} argument:
     Counts how many tags from \code{query} appear as substrings in the
     abstract (case-insensitive). The score for each abstract is an integer
     in \code{[0, length(query)]}. Set \code{cutoff} to the minimum number of
-    tags that must appear — e.g. \code{cutoff = 2} keeps abstracts that
+    tags that must appear - e.g. \code{cutoff = 2} keeps abstracts that
     mention at least 2 of your tags. \code{query} must be a character
     \emph{vector} of tags when using this method.
   }
   \item{\code{"cosine"}}{
     Scores abstracts using TF-IDF cosine similarity against \code{query}.
     Scores are in \code{[-1, 1]} (in practice \code{[0, 1]} for text).
-    Set \code{cutoff} to a decimal threshold — e.g. \code{cutoff = 0.10}.
+    Set \code{cutoff} to a decimal threshold - e.g. \code{cutoff = 0.10}.
     \code{query} should be a single character string; expand it with
     synonyms and related terms for better recall under exact token matching.
   }

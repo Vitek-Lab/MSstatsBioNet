@@ -1,5 +1,5 @@
 ---
-title: "Filtering Subnetworks by Biological Context Using TF-IDF Similarity"
+title: "Filtering Subnetworks by Biological Context"
 author: ""
 date: "`r Sys.Date()`"
 output:
@@ -28,8 +28,8 @@ literature. The function:
 
 1. Retrieves evidence sentences from the INDRA database for each edge in the network
 2. Fetches the corresponding PubMed abstracts
-3. Scores each abstract against a user-supplied text query using TF-IDF cosine similarity
-4. Returns only the nodes, edges, and evidence whose abstracts exceed a similarity cutoff
+3. Scores each abstract against a user-supplied text query using TF-IDF cosine score
+4. Returns only the nodes, edges, and evidence whose abstracts exceed a score cutoff
 
 This is useful when a subnetwork contains many edges supported by literature from
 unrelated biological contexts, and you want to focus on edges relevant to a
@@ -173,7 +173,7 @@ tags <- c(
 )
 ```
 
-> **Tip:** You can iteratively refine `my_query` by inspecting the similarity
+> **Tip:** You can iteratively refine `my_query` by inspecting the score
 > scores in `filtered_network$evidence` and adding terms that appear frequently
 > in high-scoring abstracts but are absent from your query.
 
@@ -199,7 +199,7 @@ Fetching M abstracts...
 Progress: M/M (100.0%)
 Done fetching abstracts!
 
-X / M abstracts passed similarity cutoff (>= 0.10)
+X / M abstracts passed score cutoff (>= 0.10)
 Retained: A edges (of B), C nodes (of D), E evidence rows (of F)
 ```
 
@@ -219,9 +219,9 @@ filtered_network$edges
 ```
 
 Each row represents a causal interaction (e.g. phosphorylation, activation)
-supported by literature that passed the similarity threshold.
+supported by literature that passed the score threshold.
 
-### Evidence with similarity scores
+### Evidence with scores
 
 ```{r evidence}
 filtered_network$evidence
@@ -239,9 +239,9 @@ The evidence dataframe contains the following columns:
 | `stmt_hash` | Unique INDRA statement identifier |
 | `text` | Sentence extracted from the supporting paper |
 | `pmid` | PubMed ID of the source article |
-| `similarity` | Cosine similarity score of the abstract vs. query |
+| `score` | Cosine score of the abstract vs. query |
 
-You can sort by similarity to identify the most on-topic supporting evidence:
+You can sort by score to identify the most on-topic supporting evidence:
 
 ```{r sort-evidence}
 filtered_network$evidence[
@@ -263,14 +263,14 @@ exploratory <- filterSubnetworkByContext(
 summary(exploratory$evidence$score)
 hist(exploratory$evidence$score,
      breaks = 30,
-     main   = "Distribution of abstract similarity scores",
-     xlab   = "Cosine similarity to query",
+     main   = "Distribution of abstract scores",
+     xlab   = "Cosine score to query",
      col    = "steelblue")
 ```
 
 ---
 
-## Filtering by Context: Cosine Similarity
+## Filtering by Context: Cosine score
 
 ### Defining the Query
 
@@ -292,7 +292,7 @@ my_query <- "DNA damage repair cancer oncology DNA repair genome integrity
   oxidative DNA damage somatic mutation tumor mutational burden TMB"
 ```
 
-> **Tip:** You can iteratively refine `my_query` by inspecting the similarity
+> **Tip:** You can iteratively refine `my_query` by inspecting the
 > scores in `filtered_network$evidence` and adding terms that appear frequently
 > in high-scoring abstracts but are absent from your query.
 
@@ -318,7 +318,7 @@ Fetching M abstracts...
 Progress: M/M (100.0%)
 Done fetching abstracts!
 
-X / M abstracts passed similarity cutoff (>= 0.10)
+X / M abstracts passed score cutoff (>= 0.10)
 Retained: A edges (of B), C nodes (of D), E evidence rows (of F)
 ```
 
@@ -338,9 +338,9 @@ filtered_network$edges
 ```
 
 Each row represents a causal interaction (e.g. phosphorylation, activation)
-supported by literature that passed the similarity threshold.
+supported by literature that passed the score threshold.
 
-### Evidence with similarity scores
+### Evidence with scores
 
 ```{r}
 filtered_network$evidence
@@ -358,9 +358,9 @@ The evidence dataframe contains the following columns:
 | `stmt_hash` | Unique INDRA statement identifier |
 | `text` | Sentence extracted from the supporting paper |
 | `pmid` | PubMed ID of the source article |
-| `similarity` | Cosine similarity score of the abstract vs. query |
+| `score` | Relevance score (tag count or cosine similarity) |
 
-You can sort by similarity to identify the most on-topic supporting evidence:
+You can sort by score to identify the most on-topic supporting evidence:
 
 ```{r}
 filtered_network$evidence[
@@ -368,7 +368,7 @@ filtered_network$evidence[
 ]
 ```
 
-### Choosing a Similarity Cutoff
+### Choosing a score Cutoff
 
 The right cutoff depends on how broadly the query overlaps with the literature
 in your network. As a rough guide:
@@ -396,8 +396,8 @@ exploratory <- filterSubnetworkByContext(
 summary(exploratory$evidence$score)
 hist(exploratory$evidence$score,
      breaks = 30,
-     main   = "Distribution of abstract similarity scores",
-     xlab   = "Cosine similarity to query",
+     main   = "Distribution of abstract scores",
+     xlab   = "Cosine score to query",
      col    = "steelblue")
 ```
 

@@ -85,7 +85,7 @@ filterSubnetworkByContext <- function(nodes,
         warning("No evidence text found - returning unfiltered inputs.")
         return(list(nodes = nodes, edges = edges, evidence = evidence))
     }
-    pmids <- unique(evidence$pmid[nchar(evidence$pmid) > 0])
+    pmids <- unique(evidence$pmid[!is.na(evidence$pmid) & nchar(evidence$pmid) > 0])
     
     if (length(pmids) == 0) {
         warning("No PMIDs found in evidence - returning unfiltered inputs.")
@@ -130,7 +130,10 @@ filterSubnetworkByContext <- function(nodes,
     edges_filtered   <- edges[edges$stmt_hash %in% surviving_hashes, ]
     
     surviving_nodes  <- union(edges_filtered$source, edges_filtered$target)
-    nodes_filtered   <- nodes[nodes[[1]] %in% surviving_nodes, ]
+    if (!"id" %in% names(nodes)) {
+        stop("`nodes` must contain an `id` column.")
+    }
+    nodes_filtered   <- nodes[nodes$id %in% surviving_nodes, ]
     
     cat(sprintf(
         "Retained: %d edges (of %d), %d nodes (of %d), %d evidence rows (of %d)\n",
@@ -285,7 +288,7 @@ filterSubnetworkByContext <- function(nodes,
 #' @keywords internal
 #' @noRd
 #' @importFrom rentrez entrez_fetch
-#' @importFrom xml2 read_xml xml_find_first xml_text
+#' @importFrom xml2 read_xml xml_find_all xml_text
 .fetch_clean_abstracts_xml <- function(pmids) {
     results <- list()
     total   <- length(pmids)
@@ -297,10 +300,10 @@ filterSubnetworkByContext <- function(nodes,
         tryCatch({
             record        <- entrez_fetch(db = "pubmed", id = pmid, rettype = "xml")
             doc           <- read_xml(record)
-            abstract_node <- xml_find_first(doc, ".//AbstractText")
+            abstract_nodes <- xml_find_all(doc, ".//AbstractText")
             
-            if (!is.na(abstract_node)) {
-                results[[pmid]] <- xml_text(abstract_node)
+            if (length(abstract_nodes) > 0) {
+                results[[pmid]] <- paste(trimws(xml_text(abstract_nodes)), collapse = " ")
             }
             
             if (i %% 10 == 0 || i == total) {
