@@ -131,25 +131,25 @@ covers the major vocabulary used in the DNA damage repair and cancer literature.
 
 ```{r tags}
 tags <- c(
-  "dna_damage_repair",
+  "dna damage repair",
   "cancer",
   "oncology",
-  "dna_repair",
-  "genome_integrity",
-  "genomic_instability",
-  "double_strand_break",
+  "dna repair",
+  "genome integrity",
+  "genomic instability",
+  "double strand_break",
   "dsb",
-  "single_strand_break",
+  "single strand_break",
   "ssb",
-  "base_excision_repair",
+  "base excision repair",
   "ber",
-  "nucleotide_excision_repair",
+  "nucleotide excision repair",
   "ner",
-  "mismatch_repair",
+  "mismatch repair",
   "mmr",
-  "homologous_recombination",
+  "homologous recombination",
   "hr",
-  "non_homologous_end_joining",
+  "non homologous end joining",
   "nhej",
   "brca1",
   "brca2",
@@ -158,22 +158,22 @@ tags <- c(
   "p53",
   "tp53",
   "parp",
-  "tumor_suppressor",
+  "tumor suppressor",
   "oncogene",
   "carcinogenesis",
   "tumorigenesis",
-  "chemotherapy_resistance",
-  "radiation_resistance",
-  "genotoxic_stress",
-  "replication_stress",
-  "oxidative_dna_damage",
-  "somatic_mutation",
-  "tumor_mutational_burden",
+  "chemotherapy resistance",
+  "radiation resistance",
+  "genotoxic stress",
+  "replication stress",
+  "oxidative dna_damage",
+  "somatic mutation",
+  "tumor mutational burden",
   "tmb"
 )
 ```
 
-> **Tip:** You can iteratively refine `my_query` by inspecting the score
+> **Tip:** You can iteratively refine `tags` by inspecting the
 > scores in `filtered_network$evidence` and adding terms that appear frequently
 > in high-scoring abstracts but are absent from your query.
 
@@ -264,7 +264,7 @@ summary(exploratory$evidence$score)
 hist(exploratory$evidence$score,
      breaks = 30,
      main   = "Distribution of abstract scores",
-     xlab   = "Cosine score to query",
+     xlab   = "Number of tags matched",
      col    = "steelblue")
 ```
 
