@@ -1,3 +1,4 @@
+```r
 # R/cytoscapeNetwork.R
 #
 # htmlwidgets binding for the Cytoscape network visualisation.
@@ -368,29 +369,29 @@
 #' Render a Cytoscape network visualisation
 #'
 #' Creates an interactive network diagram powered by Cytoscape.js and the dagre
-#' layout algorithm.  Nodes can carry log fold-change (logFC) values which are
-#' mapped to a blue-grey-red colour gradient.  PTM (post-translational
+#' layout algorithm. Nodes can carry log fold-change (logFC) values which are
+#' mapped to a blue-grey-red colour gradient. PTM (post-translational
 #' modification) site information is shown as small satellite nodes and edge
 #' overlaps are surfaced as hover tooltips.
 #'
-#' @param nodes       Data frame with at minimum an \code{id} column.  Optional
-#'                    columns: \code{logFC} (numeric), \code{hgncName}
-#'                    (character), \code{Site} (character, underscore-separated
-#'                    PTM site list).
-#' @param edges       Data frame with columns \code{source}, \code{target},
-#'                    \code{interaction}.  Optional: \code{site},
-#'                    \code{evidenceLink}.
+#' @param nodes \code{data.frame} with at minimum an \code{id} column. Optional
+#' columns: \code{logFC} (\code{numeric}), \code{hgncName} (\code{character}),
+#' \code{Site} (\code{character}, underscore-separated PTM site list).
+#' @param edges \code{data.frame} with columns \code{source}, \code{target},
+#' \code{interaction}. Optional: \code{site}, \code{evidenceLink}.
 #' @param displayLabelType \code{"id"} (default) or \code{"hgncName"} –
-#'                    controls which column is used as the visible node label.
-#' @param nodeFontSize Font size (px) for node labels.  Default \code{12}.
-#' @param layoutOptions Named list of dagre layout options to override the
-#'                    defaults (e.g. \code{list(rankDir = "LR")}).
-#' @param width,height Widget dimensions passed to
-#'                    \code{\link[htmlwidgets]{createWidget}}.
-#' @param elementId   Optional explicit HTML element id.
+#' controls which column is used as the visible node label.
+#' @param nodeFontSize \code{numeric} Font size (px) for node labels. Default \code{12}.
+#' @param layoutOptions \code{list} Named list of dagre layout options to override the
+#' defaults (e.g. \code{list(rankDir = "LR")}).
+#' @param width \code{numeric} or \code{character} Widget width passed to
+#' \code{\link[htmlwidgets]{createWidget}}.
+#' @param height \code{numeric} or \code{character} Widget height passed to
+#' \code{\link[htmlwidgets]{createWidget}}.
+#' @param elementId \code{character} Optional explicit HTML element id.
 #'
 #' @return An \code{htmlwidget} object that renders in R Markdown, Shiny, or
-#'   the RStudio Viewer pane.
+#' the RStudio Viewer pane.
 #'
 #' @examples
 #' \dontrun{
@@ -568,3 +569,4 @@ renderCytoscapeNetwork <- function(expr, env = parent.frame()) {
         quoted  = TRUE
     )
 }
+```
