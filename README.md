@@ -127,6 +127,28 @@ server <- function(input, output, session) {
 shinyApp(ui, server)
 ```
 
+### Filter Subnetwork by Context
+
+Filter a subnetwork based on contextual relevance using `filterSubnetworkByContext`.
+
+```r
+# Example nodes and edges
+nodes <- data.frame(id = c("A", "B", "C"))
+edges <- data.frame(
+  source = c("A", "B"),
+  target = c("B", "C"),
+  interaction = c("Activation", "Inhibition"),
+  stringsAsFactors = FALSE
+)
+
+# Define a query and filter the subnetwork
+query <- c("DNA damage", "repair")
+filtered_network <- filterSubnetworkByContext(nodes, edges, query, method = "tag_count", cutoff = 1)
+
+print(filtered_network$nodes)
+print(filtered_network$edges)
+```
+
 ## License
 This package is distributed under the [Artistic-2.0](https://opensource.org/licenses/Artistic-2.0) license. However, its dependencies may have different licenses.  
 
