@@ -523,10 +523,11 @@ cytoscapeNetworkOutput <- function(outputId,
 }
 
 #' Render a Cytoscape network in a Shiny application.
+#'
 #' This function is used to render a Cytoscape network visualization within a Shiny application.
-#' 
-#' @importFrom htmlwidgets shinyRenderWidget createWidget
-#' @inheritParams htmlwidgets::shinyRenderWidget
+#'
+#' @param expr \code{expression} The expression that generates a Cytoscape network.
+#' @param env \code{environment} The environment in which to evaluate \code{expr}. Defaults to \code{parent.frame()}.
 #'
 #' @return A rendered Cytoscape network widget for use in Shiny applications.
 #'
