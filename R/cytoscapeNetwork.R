@@ -560,7 +560,7 @@ cytoscapeNetworkOutput <- function(outputId,
 #' }
 #' @export
 renderCytoscapeNetwork <- function(expr, env = parent.frame()) {
-    if (!quoted) expr <- substitute(expr)
+    expr <- substitute(expr)
     htmlwidgets::shinyRenderWidget(
         expr    = expr,
         outputFunction = cytoscapeNetworkOutput,
