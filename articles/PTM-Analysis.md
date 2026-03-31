@@ -155,9 +155,9 @@ previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "
 
 ``` r
 sessionInfo()
-#> R version 4.5.2 (2025-10-31)
+#> R version 4.5.3 (2026-03-11)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.3 LTS
+#> Running under: Ubuntu 24.04.4 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
@@ -181,24 +181,24 @@ sessionInfo()
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1      viridisLite_0.4.3     dplyr_1.2.0          
 #>  [4] farver_2.1.2          S7_0.2.1              bitops_1.0-9         
-#>  [7] fastmap_1.2.0         lazyeval_0.2.2        XML_3.99-0.22        
-#> [10] digest_0.6.39         lifecycle_1.0.5       survival_3.8-3       
-#> [13] statmod_1.5.1         magrittr_2.0.4        compiler_4.5.2       
+#>  [7] fastmap_1.2.0         lazyeval_0.2.2        XML_3.99-0.23        
+#> [10] digest_0.6.39         lifecycle_1.0.5       survival_3.8-6       
+#> [13] statmod_1.5.1         magrittr_2.0.4        compiler_4.5.3       
 #> [16] r2r_0.1.2             rlang_1.1.7           sass_0.4.10          
-#> [19] tools_4.5.2           yaml_2.3.12           data.table_1.18.2.1  
+#> [19] tools_4.5.3           yaml_2.3.12           data.table_1.18.2.1  
 #> [22] knitr_1.51            stopwords_2.3         htmlwidgets_1.6.4    
 #> [25] curl_7.0.0            MSstatsConvert_1.20.0 marray_1.88.0        
 #> [28] xml2_1.5.2            RColorBrewer_1.1-3    KernSmooth_2.23-26   
-#> [31] purrr_1.2.1           desc_1.4.3            grid_4.5.2           
+#> [31] purrr_1.2.1           desc_1.4.3            grid_4.5.3           
 #> [34] preprocessCore_1.72.0 caTools_1.18.3        log4r_0.4.4          
 #> [37] ggplot2_4.0.2         scales_1.4.0          gtools_3.9.5         
 #> [40] MASS_7.3-65           cli_3.6.5             crayon_1.5.3         
-#> [43] rmarkdown_2.30        ragg_1.5.1            reformulas_0.4.4     
+#> [43] rmarkdown_2.31        ragg_1.5.2            reformulas_0.4.4     
 #> [46] generics_0.1.4        otel_0.2.0            httr_1.4.8           
-#> [49] minqa_1.2.8           cachem_1.1.0          splines_4.5.2        
-#> [52] parallel_4.5.2        BiocManager_1.30.27   vctrs_0.7.1          
+#> [49] minqa_1.2.8           cachem_1.1.0          splines_4.5.3        
+#> [52] parallel_4.5.3        BiocManager_1.30.27   vctrs_0.7.2          
 #> [55] boot_1.3-32           Matrix_1.7-4          jsonlite_2.0.0       
-#> [58] bookdown_0.46         ggrepel_0.9.7         systemfonts_1.3.2    
+#> [58] bookdown_0.46         ggrepel_0.9.8         systemfonts_1.3.2    
 #> [61] limma_3.66.0          plotly_4.12.0         lgr_0.5.2            
 #> [64] jquerylib_0.1.4       tidyr_1.3.2           glue_1.8.0           
 #> [67] nloptr_2.2.1          pkgdown_2.2.0         gtable_0.3.6         
@@ -206,9 +206,9 @@ sessionInfo()
 #> [73] pillar_1.11.1         htmltools_0.5.9       gplots_3.3.0         
 #> [76] float_0.3-3           rsparse_0.5.3         R6_2.6.1             
 #> [79] textshaping_1.0.5     Rdpack_2.6.6          evaluate_1.0.5       
-#> [82] lattice_0.22-7        rentrez_1.2.4         rbibutils_2.4.1      
+#> [82] lattice_0.22-9        rentrez_1.2.4         rbibutils_2.4.1      
 #> [85] backports_1.5.0       RhpcBLASctl_0.23-42   bslib_0.10.0         
 #> [88] text2vec_0.6.6        Rcpp_1.1.1            nlme_3.1-168         
-#> [91] checkmate_2.3.4       xfun_0.56             fs_1.6.7             
+#> [91] checkmate_2.3.4       xfun_0.57             fs_2.0.1             
 #> [94] pkgconfig_2.0.3
 ```
