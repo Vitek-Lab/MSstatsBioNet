@@ -87,6 +87,29 @@ print(head(subnetwork$nodes))
 print(head(subnetwork$edges))
 ```
 
+### Filter Subnetwork by Context
+
+Filter a subnetwork by contextual relevance using `filterSubnetworkByContext`.
+
+```r
+# Example nodes and edges
+nodes <- data.frame(id = c("TP53", "MDM2", "CDKN1A"))
+edges <- data.frame(
+  source = c("TP53", "MDM2"),
+  target = c("MDM2", "TP53"),
+  interaction = c("Activation", "Inhibition"),
+  evidenceLink = c("link1", "link2"),
+  stmt_hash = c("hash1", "hash2")
+)
+
+# Define query for filtering
+query <- c("TP53", "MDM2")
+
+# Filter subnetwork
+filtered_subnetwork <- filterSubnetworkByContext(nodes, edges, query, cutoff = 1, method = "tag_count")
+print(filtered_subnetwork)
+```
+
 ### Preview Network in Browser
 
 Quickly preview your network in a web browser using `previewNetworkInBrowser`.
