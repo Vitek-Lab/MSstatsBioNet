@@ -436,11 +436,50 @@ HTMLWidgets.widget({
           tooltip.style.display = "none";
         });
 
-        /* ── Evidence link on edge click ─────────────────────────────── */
+        /* ── Right-click on edge → delete it ────────────────────────── */
+
+        /* Record which mouse button started the current click so the tap
+           handler can tell left from right without relying on Cytoscape's
+           originalEvent (which is unreliable for button detection). */
+        var lastMouseButton = 0;
+        cyContainer.addEventListener("mousedown", function (evt) {
+          lastMouseButton = evt.button;
+        });
+
+        /* Track whichever non-PTM edge the cursor is currently over */
+        var hoveredEdge = null;
+        cy.on("mouseover", "edge", function (evt) {
+          var e = evt.target;
+          if (e.data("edge_type") !== "ptm_attachment") hoveredEdge = e;
+        });
+        cy.on("mouseout", "edge", function () {
+          hoveredEdge = null;
+        });
+
+        /* contextmenu fires reliably on right-click before the browser
+           can show its native menu; preventDefault stops the native menu */
+        cyContainer.addEventListener("contextmenu", function (evt) {
+          evt.preventDefault();
+          if (!hoveredEdge || !hoveredEdge.inside()) return;
+          var deleted = {
+            source:      hoveredEdge.data("source"),
+            target:      hoveredEdge.data("target"),
+            interaction: hoveredEdge.data("interaction")
+          };
+          hoveredEdge.remove();
+          hoveredEdge = null;
+          if (window.Shiny) {
+            Shiny.setInputValue(el.id + "_edge_deleted", deleted, { priority: "event" });
+          }
+        });
+
+        /* ── Evidence link on left-click ────────────────────────────── */
         cy.on("tap", "edge", function (evt) {
           var edge = evt.target;
           // skip compound/ptm attachment edges
           if (edge.data("edge_type") === "ptm_attachment") return;
+          // skip right-click — handled by the contextmenu listener above
+          if (lastMouseButton === 2) return;
           openSafe(edge.data("evidenceLink"));
           if (window.Shiny) {
             Shiny.setInputValue(el.id + "_edge_clicked", {
