@@ -1,3 +1,4 @@
+```r
 # R/cytoscapeNetwork.R
 #
 # htmlwidgets binding for the Cytoscape network visualisation.
@@ -477,6 +478,10 @@ cytoscapeNetwork <- function(nodes,
 #' Creates a Shiny output binding for a Cytoscape network visualization, allowing
 #' the network to be rendered within Shiny applications.
 #'
+#' @param outputId \code{character} The output variable to read from.
+#' @param width \code{character} or \code{numeric}, the width of the rendered widget. Default is \code{"100%"}.
+#' @param height \code{character} or \code{numeric}, the height of the rendered widget. Default is \code{"500px"}.
+#'
 #' @return A Shiny output binding for a Cytoscape network visualization.
 #'
 #' @examples
@@ -568,3 +573,4 @@ renderCytoscapeNetwork <- function(expr, env = parent.frame()) {
         quoted  = TRUE
     )
 }
+```
