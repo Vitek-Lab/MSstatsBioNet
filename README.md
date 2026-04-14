@@ -87,6 +87,28 @@ print(head(subnetwork$nodes))
 print(head(subnetwork$edges))
 ```
 
+### Filter Subnetwork by Context
+
+Filter a subnetwork by contextual relevance using `filterSubnetworkByContext`.
+
+```r
+# Define a query and cutoff
+query <- c("TP53", "DNA damage", "apoptosis")
+cutoff <- 2
+
+# Filter the subnetwork
+filtered_subnetwork <- filterSubnetworkByContext(
+  nodes = subnetwork$nodes,
+  edges = subnetwork$edges,
+  query = query,
+  cutoff = cutoff,
+  method = "tag_count"
+)
+
+print(head(filtered_subnetwork$nodes))
+print(head(filtered_subnetwork$edges))
+```
+
 ### Preview Network in Browser
 
 Quickly preview your network in a web browser using `previewNetworkInBrowser`.
