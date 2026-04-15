@@ -438,13 +438,14 @@ HTMLWidgets.widget({
 
         /* ── Right-click on edge → delete it ────────────────────────── */
 
-        /* Record which mouse button started the current click so the tap
-           handler can tell left from right without relying on Cytoscape's
-           originalEvent (which is unreliable for button detection). */
-        var lastMouseButton = 0;
+        /* Block right-click mousedown from reaching Cytoscape by intercepting
+           it in the capture phase (runs before any element-level listener).
+           This prevents Cytoscape from ever starting a tap cycle on right-click,
+           stopping the evidence link from opening. The contextmenu event is
+           fired by the OS independently and is unaffected by this. */
         cyContainer.addEventListener("mousedown", function (evt) {
-          lastMouseButton = evt.button;
-        });
+          if (evt.button === 2) evt.stopImmediatePropagation();
+        }, true);
 
         /* Track whichever non-PTM edge the cursor is currently over */
         var hoveredEdge = null;
@@ -478,8 +479,6 @@ HTMLWidgets.widget({
           var edge = evt.target;
           // skip compound/ptm attachment edges
           if (edge.data("edge_type") === "ptm_attachment") return;
-          // skip right-click — handled by the contextmenu listener above
-          if (lastMouseButton === 2) return;
           openSafe(edge.data("evidenceLink"));
           if (window.Shiny) {
             Shiny.setInputValue(el.id + "_edge_clicked", {
