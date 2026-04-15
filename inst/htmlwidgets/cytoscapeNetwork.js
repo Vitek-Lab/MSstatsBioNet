@@ -243,7 +243,9 @@ HTMLWidgets.widget({
         '  </div></div>' +
         (edgeItems ? '<div style="font-weight:bold;margin-bottom:6px;font-size:13px;">Edge types</div>' + edgeItems : '') +
         '<div style="margin-top:12px;padding:7px;background:#e3f2fd;border-radius:4px;font-size:10px;line-height:1.4;">' +
-        '<strong>PTM info:</strong> Hover over edges to see overlapping PTM sites.</div>';
+        '<strong>PTM info:</strong> Hover over edges to see overlapping PTM sites.</div>' +
+        '<div style="margin-top:8px;padding:7px;background:#fff3cd;border-radius:4px;font-size:10px;line-height:1.4;">' +
+        '<strong>Delete edge:</strong> Right-click or Ctrl+Click an edge to remove it from the network.</div>';
     }
 
     /* ── renderValue ──────────────────────────────────────────────────── */
