@@ -474,11 +474,27 @@ HTMLWidgets.widget({
           }
         });
 
-        /* ── Evidence link on left-click ────────────────────────────── */
+        /* ── Edge tap: Ctrl+Click → delete; plain click → evidence link ── */
         cy.on("tap", "edge", function (evt) {
           var edge = evt.target;
-          // skip compound/ptm attachment edges
+          // skip ptm attachment edges
           if (edge.data("edge_type") === "ptm_attachment") return;
+
+          // Ctrl+Click → delete edge
+          if (evt.originalEvent && evt.originalEvent.ctrlKey) {
+            var deleted = {
+              source:      edge.data("source"),
+              target:      edge.data("target"),
+              interaction: edge.data("interaction")
+            };
+            edge.remove();
+            if (window.Shiny) {
+              Shiny.setInputValue(el.id + "_edge_deleted", deleted, { priority: "event" });
+            }
+            return;
+          }
+
+          // Plain click → open evidence link
           openSafe(edge.data("evidenceLink"));
           if (window.Shiny) {
             Shiny.setInputValue(el.id + "_edge_clicked", {
