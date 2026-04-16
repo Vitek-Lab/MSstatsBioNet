@@ -3,6 +3,7 @@
 export(annotateProteinInfoFromIndra)
 export(cytoscapeNetwork)
 export(cytoscapeNetworkOutput)
+export(deleteEdgeFromNetwork)
 export(exportNetworkToHTML)
 export(filterSubnetworkByContext)
 export(getSubnetworkFromIndra)
