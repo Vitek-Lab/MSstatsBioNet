@@ -450,9 +450,6 @@ HTMLWidgets.widget({
           tooltip.style.display = "none";
         });
 
-        // Suppress the native context menu
-        cyContainer.addEventListener("contextmenu", e => e.preventDefault());
-
         /* ── Edge tap: Ctrl+Click → delete; plain click → evidence link ── */
         cy.on("cxttap tap", "edge", function (evt) {
           var edge = evt.target;
