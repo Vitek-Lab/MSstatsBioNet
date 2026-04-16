@@ -86,7 +86,7 @@ test_that(".relProps returns correct structure", {
     expect_true(all(c("complex", "regulatory", "phosphorylation", "other") %in% names(props)))
     
     expect_equal(props$complex$consolidate, "undirected")
-    expect_equal(props$regulatory$consolidate, "bidirectional")
+    expect_equal(props$regulatory$consolidate, "directed")
     expect_equal(props$phosphorylation$consolidate, "directed")
     
     expect_true("Inhibition" %in% names(props$regulatory$colors))
@@ -124,11 +124,6 @@ test_that(".edgeStyle returns no arrow for undirected complex edges", {
     expect_equal(style$color, "#8B4513")
 })
 
-test_that(".edgeStyle returns triangle arrows for bidirectional edges", {
-    style <- MSstatsBioNet:::.edgeStyle("Inhibition (bidirectional)", "regulatory", "bidirectional")
-    expect_equal(style$arrow, "triangle")
-})
-
 test_that(".edgeStyle falls back to grey for unknown category", {
     style <- MSstatsBioNet:::.edgeStyle("Unknown", "other", "directed")
     expect_equal(style$color, "#666666")
@@ -138,17 +133,17 @@ test_that(".edgeStyle falls back to grey for unknown category", {
 # .consolidateEdges
 # =============================================================================
 
-test_that(".consolidateEdges consolidates bidirectional inhibition into one edge", {
+test_that(".consolidateEdges keeps opposite regulatory edges as separate directed edges", {
     edges <- create_mock_edges()
     result <- MSstatsBioNet:::.consolidateEdges(edges)
-    
+
     expect_s3_class(result, "data.frame")
     expect_true(all(c("edge_type", "category", "ptm_overlap") %in% names(result)))
-    
-    # Two Inhibition edges in opposite directions → one bidirectional edge
+
+    # Two Inhibition edges in opposite directions → both kept as directed
     inhibition <- result[grepl("Inhibition", result$interaction), ]
-    expect_equal(nrow(inhibition), 1)
-    expect_equal(inhibition$edge_type, "bidirectional")
+    expect_equal(nrow(inhibition), 2)
+    expect_true(all(inhibition$edge_type == "directed"))
 })
 
 test_that(".consolidateEdges marks phosphorylation as directed", {

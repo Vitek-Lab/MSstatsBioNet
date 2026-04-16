@@ -64,7 +64,7 @@
             style       = "solid",
             arrow       = "triangle",
             width       = 3,
-            consolidate = "bidirectional"
+            consolidate = "directed"
         ),
         phosphorylation = list(
             types       = "Phosphorylation",
@@ -110,15 +110,13 @@
     p     <- if (category %in% names(props)) props[[category]] else props$other
     
     color <- if (category == "regulatory" && !is.null(p$colors)) {
-        base <- sub(" \\(bidirectional\\)", "", interaction)
-        if (base %in% names(p$colors)) p$colors[[base]] else "#666666"
+        if (interaction %in% names(p$colors)) p$colors[[interaction]] else "#666666"
     } else {
         p$color
     }
-    
+
     arrow <- switch(edge_type,
-                    undirected   = "none",
-                    bidirectional = "triangle",
+                    undirected = "none",
                     p$arrow
     )
     
@@ -170,7 +168,7 @@
     result
 }
 
-#' Consolidate bidirectional / undirected edges
+#' Consolidate undirected edges
 #' @keywords internal
 #' @noRd
 .consolidateEdges <- function(edges, nodes = NULL) {
@@ -194,20 +192,18 @@
         edge_key   <- paste(e$source, e$target, e$interaction, sep = "-")
         ptm_txt    <- if (edge_key %in% names(ptm_map)) ptm_map[[edge_key]] else ""
         
-        if (nrow(rev_edges) > 0 && con_type %in% c("undirected", "bidirectional")) {
-            new_interaction <- if (con_type == "undirected") e$interaction else
-                paste(e$interaction, "(bidirectional)")
+        if (nrow(rev_edges) > 0 && con_type == "undirected") {
             new_edge <- data.frame(source      = e$source,
                                    target      = e$target,
-                                   interaction = new_interaction,
-                                   edge_type   = if (con_type == "undirected") "undirected" else "bidirectional",
+                                   interaction = e$interaction,
+                                   edge_type   = "undirected",
                                    category    = cat,
                                    ptm_overlap = ptm_txt,
                                    stringsAsFactors = FALSE)
             for (col in setdiff(names(e), c("source", "target", "interaction"))) {
                 new_edge[[col]] <- e[[col]]
             }
-            key <- paste(e$source, e$target, new_interaction, sep = "-")
+            key <- paste(e$source, e$target, e$interaction, sep = "-")
             consolidated[[key]] <- new_edge
             processed <- c(processed, pair_key)
         } else {
