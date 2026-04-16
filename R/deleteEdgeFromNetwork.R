@@ -51,4 +51,4 @@ deleteEdgeFromNetwork <- function(edges, source, target, interaction) {
     keep <- !match_row
     edges[keep, , drop = FALSE]
 }
-}
+
