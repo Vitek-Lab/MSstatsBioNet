@@ -12,6 +12,7 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncIdsInDataFrame.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncNamesInDataFrame.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateKinaseInfoInDataFrame.html</loc></url>

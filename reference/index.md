@@ -8,6 +8,8 @@
   : Render a Cytoscape network visualisation
 - [`cytoscapeNetworkOutput()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.md)
   : Shiny output binding for cytoscapeNetwork
+- [`deleteEdgeFromNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.md)
+  : Delete an edge from a network edges data frame
 - [`.populateHgncIdsInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncIdsInDataFrame.md)
   : Populate HGNC IDs in Data Frame
 - [`.populateHgncNamesInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncNamesInDataFrame.md)
