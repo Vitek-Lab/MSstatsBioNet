@@ -1,0 +1,282 @@
+---
+title: "Interactive Edge Editor (Minimal Shiny App)"
+author: "Anthony Wu"
+package: MSstatsBioNet
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{MSstatsBioNet: Interactive Edge Editor (Minimal Shiny App)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment  = "#>"
+)
+```
+
+# Overview
+
+This vignette shows a self-contained Shiny app that lets you:
+
+1. Supply **nodes** and **edges** — either as built-in example data or by uploading
+   your own CSV files.
+2. **Visualise** the network with `cytoscapeNetwork()`.
+3. **Delete edges** interactively by Ctrl+clicking or right-clicking any edge.
+4. **Download analysis code** — an R script that reproduces the curated network,
+   including a `deleteEdgeFromNetwork()` call for every edge you removed.
+
+The app requires only `shiny` and `MSstatsBioNet`; no INDRA API calls or MSstats
+pipeline are involved.
+
+# CSV format
+
+If you choose to upload your own data the expected column layout is:
+
+| File | Required columns | Optional columns |
+|------|-----------------|-----------------|
+| Nodes CSV | `id` | `logFC`, `hgncName`, `Site` |
+| Edges CSV | `source`, `target`, `interaction` | `site`, `evidenceLink` |
+
+# App code
+
+Copy the block below into an `.R` file and call `shinyApp(ui, server)` to launch,
+or uncomment the last line and source the file directly.
+
+```{r eval = FALSE}
+if (!requireNamespace("shiny", quietly = TRUE)) {
+    stop("Install the 'shiny' package to run this app.")
+}
+
+library(shiny)
+library(MSstatsBioNet)
+
+# ── Built-in example data ─────────────────────────────────────────────────────
+
+example_nodes <- data.frame(
+    id    = c("TP53", "MDM2", "CDKN1A", "BCL2", "BAX", "CASP3"),
+    logFC = c( 1.8,   -0.9,    2.1,    -1.5,    1.2,   0.7),
+    stringsAsFactors = FALSE
+)
+
+example_edges <- data.frame(
+    source      = c("TP53",       "TP53",           "MDM2",
+                    "TP53",       "BCL2",            "BAX"),
+    target      = c("MDM2",       "CDKN1A",         "TP53",
+                    "BAX",        "BAX",             "CASP3"),
+    interaction = c("Activation", "IncreaseAmount",  "Inhibition",
+                    "Activation", "Inhibition",      "Activation"),
+    stringsAsFactors = FALSE
+)
+
+# ── UI ────────────────────────────────────────────────────────────────────────
+
+ui <- fluidPage(
+    titlePanel("Network Edge Editor"),
+
+    sidebarLayout(
+        sidebarPanel(
+            width = 3,
+
+            # Data source
+            radioButtons(
+                "data_source", "Data source",
+                choices  = c("Example data" = "example",
+                             "Upload CSV files" = "upload"),
+                selected = "example"
+            ),
+            conditionalPanel(
+                condition = "input.data_source == 'upload'",
+                fileInput("nodes_file", "Nodes CSV", accept = ".csv"),
+                tags$small(
+                    "Required column: ", tags$code("id"), ". ",
+                    "Optional: ", tags$code("logFC"), ", ",
+                    tags$code("hgncName"), "."
+                ),
+                br(),
+                fileInput("edges_file", "Edges CSV", accept = ".csv"),
+                tags$small(
+                    "Required columns: ", tags$code("source"), ", ",
+                    tags$code("target"), ", ", tags$code("interaction"), "."
+                )
+            ),
+
+            hr(),
+            actionButton(
+                "show_network", "Display Network",
+                class = "btn-primary", width = "100%"
+            ),
+
+            hr(),
+            tags$p(
+                tags$strong("To delete an edge:"),
+                " Ctrl+click or right-click it in the network."
+            ),
+
+            # Live deletion log
+            uiOutput("deleted_summary"),
+
+            hr(),
+            # Download button appears once network has been rendered
+            uiOutput("download_ui")
+        ),
+
+        mainPanel(
+            width = 9,
+            cytoscapeNetworkOutput("network", height = "600px")
+        )
+    )
+)
+
+# ── Server ────────────────────────────────────────────────────────────────────
+
+server <- function(input, output, session) {
+
+    # Accumulates edge info lists: list(source, target, interaction)
+    deleted_edges <- reactiveVal(list())
+
+    # ── Resolve input data ────────────────────────────────────────────────────
+
+    nodes_data <- reactive({
+        if (input$data_source == "example") return(example_nodes)
+        req(input$nodes_file)
+        read.csv(input$nodes_file$datapath, stringsAsFactors = FALSE)
+    })
+
+    edges_data <- reactive({
+        if (input$data_source == "example") return(example_edges)
+        req(input$edges_file)
+        read.csv(input$edges_file$datapath, stringsAsFactors = FALSE)
+    })
+
+    # ── Render network ────────────────────────────────────────────────────────
+
+    observeEvent(input$show_network, {
+        # Fresh render → reset the deletion log
+        deleted_edges(list())
+
+        output$network <- renderCytoscapeNetwork({
+            cytoscapeNetwork(nodes = nodes_data(), edges = edges_data())
+        })
+
+        # Reveal download button
+        output$download_ui <- renderUI({
+            downloadButton("download_code", "Download analysis code")
+        })
+    })
+
+    # ── Track deletions ───────────────────────────────────────────────────────
+
+    # The cytoscapeNetwork JS widget fires input$network_edge_deleted
+    # (with fields $source, $target, $interaction) on Ctrl+click / right-click.
+    observeEvent(input$network_edge_deleted, {
+        e <- input$network_edge_deleted
+        deleted_edges(c(deleted_edges(), list(e)))
+    })
+
+    # Live summary shown in the sidebar
+    output$deleted_summary <- renderUI({
+        deleted <- deleted_edges()
+        if (length(deleted) == 0) return(NULL)
+        items <- lapply(deleted, function(e) {
+            tags$li(paste0(e$source, " \u2192 ", e$target,
+                           " (", e$interaction, ")"))
+        })
+        tagList(
+            tags$p(tags$strong(paste(length(deleted), "edge(s) deleted:"))),
+            tags$ul(items)
+        )
+    })
+
+    # ── Download analysis code ────────────────────────────────────────────────
+
+    output$download_code <- downloadHandler(
+        filename = function() {
+            paste0("network-analysis-", Sys.Date(), ".R")
+        },
+        content = function(file) {
+            # Capture the data frames as self-contained R expressions
+            nodes_expr <- paste(
+                capture.output(dput(isolate(nodes_data()))),
+                collapse = "\n"
+            )
+            edges_expr <- paste(
+                capture.output(dput(isolate(edges_data()))),
+                collapse = "\n"
+            )
+
+            lines <- c(
+                "library(MSstatsBioNet)",
+                "",
+                "# Nodes",
+                paste0("nodes <- ", nodes_expr),
+                "",
+                "# Edges",
+                paste0("edges <- ", edges_expr),
+                ""
+            )
+
+            deleted <- isolate(deleted_edges())
+            if (length(deleted) > 0) {
+                lines <- c(lines, "# Delete edges removed interactively")
+                for (e in deleted) {
+                    lines <- c(lines, sprintf(
+                        'edges <- deleteEdgeFromNetwork(edges, "%s", "%s", "%s")',
+                        e$source, e$target, e$interaction
+                    ))
+                }
+                lines <- c(lines, "")
+            }
+
+            lines <- c(
+                lines,
+                "# Visualise network",
+                "cytoscapeNetwork(nodes, edges)",
+                "",
+                "# Export to a standalone HTML file",
+                "exportNetworkToHTML(nodes, edges)"
+            )
+
+            writeLines(lines, file)
+        }
+    )
+}
+
+# shinyApp(ui, server)   # uncomment to launch
+```
+
+# What the downloaded script looks like
+
+After displaying the network and deleting, say, the `MDM2 → TP53 (Inhibition)` and
+`BCL2 → BAX (Inhibition)` edges, clicking **Download analysis code** produces an `.R`
+file like this:
+
+```r
+library(MSstatsBioNet)
+
+# Nodes
+nodes <- structure(list(...), class = "data.frame")
+
+# Edges
+edges <- structure(list(...), class = "data.frame")
+
+# Delete edges removed interactively
+edges <- deleteEdgeFromNetwork(edges, "MDM2", "TP53", "Inhibition")
+edges <- deleteEdgeFromNetwork(edges, "BCL2", "BAX", "Inhibition")
+
+# Visualise network
+cytoscapeNetwork(nodes, edges)
+
+# Export to a standalone HTML file
+exportNetworkToHTML(nodes, edges)
+```
+
+The script is fully self-contained: running it from top to bottom reproduces the
+exact curated network without needing the Shiny app.
+
+# Session info
+
+```{r}
+sessionInfo()
+```
