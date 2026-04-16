@@ -29,12 +29,26 @@ deleteEdgeFromNetwork <- function(edges, source, target, interaction) {
     if (!is.data.frame(edges)) {
         stop("`edges` must be a data frame.")
     }
+    if (!is.character(source) || length(source) != 1L || is.na(source)) {
+        stop("`source` must be a single, non-NA character value.")
+    }
+    if (!is.character(target) || length(target) != 1L || is.na(target)) {
+        stop("`target` must be a single, non-NA character value.")
+    }
+    if (!is.character(interaction) || length(interaction) != 1L || is.na(interaction)) {
+        stop("`interaction` must be a single, non-NA character value.")
+    }
     required_cols <- c("source", "target", "interaction")
     if (!all(required_cols %in% names(edges))) {
         stop("`edges` must contain columns: source, target, interaction.")
     }
-    keep <- !(edges$source == source &
-              edges$target == target &
-              edges$interaction == interaction)
+    match_row <- !is.na(edges$source) &
+                 !is.na(edges$target) &
+                 !is.na(edges$interaction) &
+                 edges$source == source &
+                 edges$target == target &
+                 edges$interaction == interaction
+    keep <- !match_row
     edges[keep, , drop = FALSE]
+}
 }
