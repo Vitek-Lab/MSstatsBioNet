@@ -459,6 +459,7 @@ HTMLWidgets.widget({
           // Ctrl+Click or Right Click → delete edge
           if (evt.type === "cxttap" || (evt.originalEvent && evt.originalEvent.ctrlKey)) {
             deleteEdge(edge);
+            buildLegend(cy, legendPanel);
             return;
           }
 
