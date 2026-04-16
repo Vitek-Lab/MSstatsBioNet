@@ -122,14 +122,6 @@ HTMLWidgets.widget({
             "text-background-padding": "2px"
           }
         },
-        /* ── bidirectional edges – source arrow too ──────────────────── */
-        {
-          selector: "edge[edge_type = 'bidirectional']",
-          style: {
-            "source-arrow-shape": "triangle",
-            "target-arrow-shape": "triangle"
-          }
-        },
         /* ── undirected (complex) edges ──────────────────────────────── */
         {
           selector: "edge[category = 'complex']",
@@ -221,7 +213,7 @@ HTMLWidgets.widget({
       var existingTypes = {};
       cyInstance.edges().forEach(function (e) {
         var raw = e.data("interaction") || "";
-        existingTypes[raw.replace(" (bidirectional)", "")] = true;
+        existingTypes[raw] = true;
       });
 
       var edgeItems = edgeTypeConfigs
