@@ -15,7 +15,8 @@
                         evidenceLink? }, … ],
      layout       : { name, rankDir, … },          // dagre options
      container_id : "network-cy",                  // ignored – we use el
-     node_font_size : 12
+     node_font_size : 12,
+     network_id   : "net1a2b3c"                    // stable hash for localStorage
    }
    ========================================================================== */
 
@@ -239,17 +240,33 @@ HTMLWidgets.widget({
         '<div style="margin-top:8px;padding:7px;background:#fff3cd;border-radius:4px;font-size:10px;line-height:1.4;">' +
         '<strong>Delete edge:</strong> Right-click or Ctrl+Click an edge to remove it from the network.</div>';
     }
-    
-    // Helper to delete an edge and notify Shiny
-    function deleteEdge(edge) {
-      if (window.Shiny) {
-        Shiny.setInputValue(el.id + "_edge_deleted", {
-          source:      edge.data("source"),
-          target:      edge.data("target"),
-          interaction: edge.data("interaction")
-        }, { priority: "event" });
+
+    /* helper – persist current graph state (node positions + deleted edges)
+       to localStorage under the given networkId key */
+    function saveState(cyInstance, networkId, deletedEdgeIds) {
+      var state = {
+        deletedEdgeIds: deletedEdgeIds.slice(),
+        nodePositions:  {}
+      };
+      cyInstance.nodes().forEach(function (n) {
+        state.nodePositions[n.id()] = { x: n.position("x"), y: n.position("y") };
+      });
+      try {
+        localStorage.setItem("cytoscape_state_" + networkId, JSON.stringify(state));
+      } catch (e) {
+        console.warn("Could not save network state to localStorage:", e);
       }
-      edge.remove();
+    }
+
+    /* helper – retrieve previously saved state from localStorage, or null */
+    function loadState(networkId) {
+      try {
+        var raw = localStorage.getItem("cytoscape_state_" + networkId);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        console.warn("Could not load network state from localStorage:", e);
+        return null;
+      }
     }
 
     /* ── renderValue ──────────────────────────────────────────────────── */
@@ -299,6 +316,7 @@ HTMLWidgets.widget({
           "display:flex",
           "justify-content:flex-start",
           "padding:8px 10px 6px 10px",
+          "gap:6px",
           "background:" + PANEL_BG,
           "border-bottom:1px solid #dee2e6"
         ].join(";");
@@ -339,7 +357,35 @@ HTMLWidgets.widget({
           }, 300);
         });
 
+        /* ── State management setup ──────────────────────────────────── */
+        var networkId = (x.network_id && typeof x.network_id === "string")
+          ? x.network_id
+          : el.id;
+        var savedState     = loadState(networkId);
+        var deletedEdgeIds = savedState ? (savedState.deletedEdgeIds || []) : [];
+
+        /* Reset button — clears localStorage and reloads the page */
+        var resetBtn = document.createElement("button");
+        resetBtn.textContent = "Reset";
+        resetBtn.title = "Clear saved layout and restore original network";
+        resetBtn.style.cssText = [
+          "padding:4px 10px",
+          "cursor:pointer",
+          "font-size:13px",
+          "background:#dc3545",
+          "color:white",
+          "border:none",
+          "border-radius:4px",
+          "font-family:Arial,sans-serif",
+          "white-space:nowrap"
+        ].join(";");
+        resetBtn.addEventListener("click", function () {
+          localStorage.removeItem("cytoscape_state_" + networkId);
+          location.reload();
+        });
+
         btnBar.appendChild(btn);
+        btnBar.appendChild(resetBtn);
 
         /* Legend panel — fills remaining vertical space, scrolls if needed */
         var legendPanel = document.createElement("div");
@@ -397,9 +443,50 @@ HTMLWidgets.widget({
           layout:    layout
         });
 
-        /* After layout, fan PTM nodes around their parent protein */
+        /* Helper to delete an edge, track its ID, save state, and refresh legend.
+           Defined here to close over deletedEdgeIds, networkId, and legendPanel. */
+        function deleteEdge(edge) {
+          var edgeId = edge.id();
+          if (deletedEdgeIds.indexOf(edgeId) === -1) {
+            deletedEdgeIds.push(edgeId);
+          }
+          if (window.Shiny) {
+            Shiny.setInputValue(el.id + "_edge_deleted", {
+              source:      edge.data("source"),
+              target:      edge.data("target"),
+              interaction: edge.data("interaction")
+            }, { priority: "event" });
+          }
+          edge.remove();
+          saveState(cy, networkId, deletedEdgeIds);
+          buildLegend(cy, legendPanel);
+        }
+
+        /* After layout: reposition PTM nodes, restore saved state (first run
+           only), then build the legend */
+        var stateRestored = false;
         cy.on("layoutstop", function () {
           repositionPTMNodes(cy);
+
+          if (!stateRestored) {
+            stateRestored = true;
+
+            /* Re-remove any edges the user had previously deleted */
+            deletedEdgeIds.forEach(function (edgeId) {
+              var edge = cy.getElementById(edgeId);
+              if (edge.length > 0) edge.remove();
+            });
+
+            /* Restore saved node positions, then re-fit viewport */
+            if (savedState && savedState.nodePositions) {
+              cy.nodes().forEach(function (n) {
+                var pos = savedState.nodePositions[n.id()];
+                if (pos) n.position(pos);
+              });
+              cy.fit(undefined, 30);
+            }
+          }
+
           buildLegend(cy, legendPanel);
         });
 
@@ -451,7 +538,6 @@ HTMLWidgets.widget({
           // Ctrl+Click or Right Click → delete edge
           if (evt.type === "cxttap" || (evt.originalEvent && evt.originalEvent.ctrlKey)) {
             deleteEdge(edge);
-            buildLegend(cy, legendPanel);
             return;
           }
 
@@ -469,11 +555,16 @@ HTMLWidgets.widget({
           }
         });
 
+        /* ── Node drag: save positions to localStorage ───────────────── */
+        cy.on("dragfree", "node", function () {
+          saveState(cy, networkId, deletedEdgeIds);
+        });
+
         /* ── Node click — report to Shiny ───────────────────────────── */
         cy.on("tap", "node", function (evt) {
           var node = evt.target;
           // skip compound and ptm satellite nodes
-          if (node.data("node_type") === "compound" || 
+          if (node.data("node_type") === "compound" ||
             node.data("node_type") === "ptm") return;
           if (window.Shiny) {
             Shiny.setInputValue(el.id + "_node_clicked", {

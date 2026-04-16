@@ -18,6 +18,14 @@
 #' @param nodeFontSize Font size (px) for node labels.  Default \code{12}.
 #' @param layoutOptions Named list of dagre layout options to override the
 #'                    defaults (e.g. \code{list(rankDir = "LR")}).
+#' @param networkId    Optional string used as the localStorage key for saving
+#'                    the network state (node positions and deleted edges)
+#'                    between page loads.  If \code{NULL} (the default), a
+#'                    stable identifier is derived from the node and edge data
+#'                    so the correct state is restored when the same network is
+#'                    re-opened.  Supply an explicit value when you export
+#'                    multiple different networks to the same file and want to
+#'                    keep their saved states separate.
 #' @param width,height Widget dimensions passed to
 #'                    \code{\link[htmlwidgets]{createWidget}}.
 #' @param elementId   Optional explicit HTML element id.
@@ -45,13 +53,14 @@
 #' @importFrom grDevices colorRamp rgb
 #' @export
 cytoscapeNetwork <- function(nodes,
-                             edges         = data.frame(),
+                             edges            = data.frame(),
                              displayLabelType = "id",
-                             nodeFontSize  = 12,
-                             layoutOptions = NULL,
-                             width         = NULL,
-                             height        = NULL,
-                             elementId     = NULL) {
+                             nodeFontSize     = 12,
+                             layoutOptions    = NULL,
+                             networkId        = NULL,
+                             width            = NULL,
+                             height           = NULL,
+                             elementId        = NULL) {
     
     # Validate inputs
     if (!is.data.frame(nodes) || !("id" %in% names(nodes))) {
@@ -84,12 +93,30 @@ cytoscapeNetwork <- function(nodes,
     
     # Build element list
     elements <- .buildElements(nodes, edges, displayLabelType)
-    
+
+    # Derive a stable networkId from the data if none was supplied.
+    # This ensures the correct localStorage state is restored when the same
+    # network is re-opened, while different networks get different keys.
+    if (is.null(networkId)) {
+        node_str <- paste(sort(as.character(nodes$id)), collapse = "|")
+        edge_str <- if (nrow(edges) > 0) {
+            paste(sort(paste(edges$source, edges$target, edges$interaction,
+                             sep = "-")),
+                  collapse = "|")
+        } else ""
+        combined  <- paste0(node_str, "__", edge_str)
+        ints      <- utf8ToInt(combined)
+        hash_val  <- Reduce(function(acc, x) (acc * 31L + x) %% 16777216L,
+                            ints, 0L)
+        networkId <- sprintf("net%06x", hash_val)
+    }
+
     # Package everything for the JS side
     x <- list(
         elements       = elements,
         layout         = layout,
-        node_font_size = nodeFontSize
+        node_font_size = nodeFontSize,
+        network_id     = networkId
     )
     
     htmlwidgets::createWidget(
