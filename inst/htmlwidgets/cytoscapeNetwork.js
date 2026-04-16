@@ -247,6 +247,18 @@ HTMLWidgets.widget({
         '<div style="margin-top:8px;padding:7px;background:#fff3cd;border-radius:4px;font-size:10px;line-height:1.4;">' +
         '<strong>Delete edge:</strong> Right-click or Ctrl+Click an edge to remove it from the network.</div>';
     }
+    
+    // Helper to delete an edge and notify Shiny
+    function deleteEdge(edge) {
+      if (window.Shiny) {
+        Shiny.setInputValue(el.id + "_edge_deleted", {
+          source:      edge.data("source"),
+          target:      edge.data("target"),
+          interaction: edge.data("interaction")
+        }, { priority: "event" });
+      }
+      edge.remove();
+    }
 
     /* ── renderValue ──────────────────────────────────────────────────── */
     return {
@@ -438,61 +450,18 @@ HTMLWidgets.widget({
           tooltip.style.display = "none";
         });
 
-        /* ── Right-click on edge → delete it ────────────────────────── */
-
-        /* Block right-click mousedown from reaching Cytoscape by intercepting
-           it in the capture phase (runs before any element-level listener).
-           This prevents Cytoscape from ever starting a tap cycle on right-click,
-           stopping the evidence link from opening. The contextmenu event is
-           fired by the OS independently and is unaffected by this. */
-        cyContainer.addEventListener("mousedown", function (evt) {
-          if (evt.button === 2) evt.stopImmediatePropagation();
-        }, true);
-
-        /* Track whichever non-PTM edge the cursor is currently over */
-        var hoveredEdge = null;
-        cy.on("mouseover", "edge", function (evt) {
-          var e = evt.target;
-          if (e.data("edge_type") !== "ptm_attachment") hoveredEdge = e;
-        });
-        cy.on("mouseout", "edge", function () {
-          hoveredEdge = null;
-        });
-
-        /* contextmenu fires reliably on right-click before the browser
-           can show its native menu; preventDefault stops the native menu */
-        cyContainer.addEventListener("contextmenu", function (evt) {
-          evt.preventDefault();
-          if (!hoveredEdge || !hoveredEdge.inside()) return;
-          var deleted = {
-            source:      hoveredEdge.data("source"),
-            target:      hoveredEdge.data("target"),
-            interaction: hoveredEdge.data("interaction")
-          };
-          hoveredEdge.remove();
-          hoveredEdge = null;
-          if (window.Shiny) {
-            Shiny.setInputValue(el.id + "_edge_deleted", deleted, { priority: "event" });
-          }
-        });
+        // Suppress the native context menu
+        cyContainer.addEventListener("contextmenu", e => e.preventDefault());
 
         /* ── Edge tap: Ctrl+Click → delete; plain click → evidence link ── */
-        cy.on("tap", "edge", function (evt) {
+        cy.on("cxttap tap", "edge", function (evt) {
           var edge = evt.target;
           // skip ptm attachment edges
           if (edge.data("edge_type") === "ptm_attachment") return;
 
-          // Ctrl+Click → delete edge
-          if (evt.originalEvent && evt.originalEvent.ctrlKey) {
-            var deleted = {
-              source:      edge.data("source"),
-              target:      edge.data("target"),
-              interaction: edge.data("interaction")
-            };
-            edge.remove();
-            if (window.Shiny) {
-              Shiny.setInputValue(el.id + "_edge_deleted", deleted, { priority: "event" });
-            }
+          // Ctrl+Click or Right Click → delete edge
+          if (evt.type === "cxttap" || (evt.originalEvent && evt.originalEvent.ctrlKey)) {
+            deleteEdge(edge);
             return;
           }
 
