@@ -243,7 +243,21 @@ HTMLWidgets.widget({
         '  </div></div>' +
         (edgeItems ? '<div style="font-weight:bold;margin-bottom:6px;font-size:13px;">Edge types</div>' + edgeItems : '') +
         '<div style="margin-top:12px;padding:7px;background:#e3f2fd;border-radius:4px;font-size:10px;line-height:1.4;">' +
-        '<strong>PTM info:</strong> Hover over edges to see overlapping PTM sites.</div>';
+        '<strong>PTM info:</strong> Hover over edges to see overlapping PTM sites.</div>' +
+        '<div style="margin-top:8px;padding:7px;background:#fff3cd;border-radius:4px;font-size:10px;line-height:1.4;">' +
+        '<strong>Delete edge:</strong> Right-click or Ctrl+Click an edge to remove it from the network.</div>';
+    }
+    
+    // Helper to delete an edge and notify Shiny
+    function deleteEdge(edge) {
+      if (window.Shiny) {
+        Shiny.setInputValue(el.id + "_edge_deleted", {
+          source:      edge.data("source"),
+          target:      edge.data("target"),
+          interaction: edge.data("interaction")
+        }, { priority: "event" });
+      }
+      edge.remove();
     }
 
     /* ── renderValue ──────────────────────────────────────────────────── */
@@ -436,11 +450,20 @@ HTMLWidgets.widget({
           tooltip.style.display = "none";
         });
 
-        /* ── Evidence link on edge click ─────────────────────────────── */
-        cy.on("tap", "edge", function (evt) {
+        /* ── Edge tap: Ctrl+Click → delete; plain click → evidence link ── */
+        cy.on("cxttap tap", "edge", function (evt) {
           var edge = evt.target;
-          // skip compound/ptm attachment edges
+          // skip ptm attachment edges
           if (edge.data("edge_type") === "ptm_attachment") return;
+
+          // Ctrl+Click or Right Click → delete edge
+          if (evt.type === "cxttap" || (evt.originalEvent && evt.originalEvent.ctrlKey)) {
+            deleteEdge(edge);
+            buildLegend(cy, legendPanel);
+            return;
+          }
+
+          // Plain click → open evidence link
           openSafe(edge.data("evidenceLink"));
           if (window.Shiny) {
             Shiny.setInputValue(el.id + "_edge_clicked", {
