@@ -1,13 +1,31 @@
-#' Export network data with Cytoscape visualization
+```r
+#' Export Network Data to HTML with Cytoscape Visualization
 #' 
-#' Convenience function that takes nodes and edges data directly and creates
-#' both the configuration and HTML export in one step.
+#' @description
+#' This function facilitates the export of network data to an HTML file with 
+#' an embedded Cytoscape visualization. It combines the creation of the 
+#' network configuration and the HTML export into a single step.
 #' 
-#' @inheritParams cytoscapeNetwork
-#' @param filename Output HTML filename
-#' @param ... Additional arguments passed to exportCytoscapeToHTML()
+#' @param nodes A \code{data.frame} containing the nodes of the network. 
+#' Each row represents a node with at least an \code{id} column.
+#' @param edges A \code{data.frame} containing the edges of the network. 
+#' Each row represents an edge with at least \code{source} and \code{target} columns.
+#' @param filename A \code{character} string specifying the output HTML filename. 
+#' Defaults to \code{"network_visualization.html"}.
+#' @param displayLabelType A \code{character} string indicating the type of label 
+#' to display on nodes. Defaults to \code{"id"}.
+#' @param nodeFontSize A \code{numeric} value specifying the font size of node labels. 
+#' Defaults to \code{12}.
+#' @param ... Additional arguments passed to \code{exportCytoscapeToHTML()}.
+#' 
+#' @return Invisibly returns the file path of the created HTML file.
+#' 
+#' @examples
+#' nodes <- data.frame(id = c("Node1", "Node2", "Node3"))
+#' edges <- data.frame(source = c("Node1", "Node2"), target = c("Node2", "Node3"))
+#' exportNetworkToHTML(nodes, edges, filename = "my_network.html")
+#' 
 #' @export
-#' @return Invisibly returns the file path of the created HTML file
 exportNetworkToHTML <- function(nodes, edges, 
                                 filename = "network_visualization.html",
                                 displayLabelType = "id",
@@ -66,3 +84,4 @@ previewNetworkInBrowser <- function(nodes, edges,
     
     invisible(temp_file)
 }
+```
