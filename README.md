@@ -127,6 +127,46 @@ server <- function(input, output, session) {
 shinyApp(ui, server)
 ```
 
+### Filter Subnetwork by Context
+
+Use `filterSubnetworkByContext` to filter a subnetwork based on contextual relevance using PubMed abstracts.
+
+```r
+# Example nodes and edges
+nodes <- data.frame(id = c("TP53", "MDM2", "CDKN1A"))
+edges <- data.frame(
+  source = c("TP53", "MDM2"),
+  target = c("MDM2", "TP53"),
+  interaction = c("Activation", "Inhibition"),
+  site = c("", ""),
+  evidenceLink = c("", ""),
+  stmt_hash = c("", "")
+)
+
+# Define query and filter by context
+query <- c("TP53", "DNA damage")
+filtered_subnetwork <- filterSubnetworkByContext(nodes, edges, query, cutoff = 1, method = "tag_count")
+print(filtered_subnetwork)
+```
+
+### Delete an Edge from a Network
+
+Use `deleteEdgeFromNetwork` to remove an edge from the network data frame.
+
+```r
+# Example edges data frame
+edges <- data.frame(
+  source      = c("TP53",  "MDM2",  "CDKN1A"),
+  target      = c("MDM2",  "TP53",  "TP53"),
+  interaction = c("Activation", "Inhibition", "Activation"),
+  stringsAsFactors = FALSE
+)
+
+# Delete an edge
+edges <- deleteEdgeFromNetwork(edges, "MDM2", "TP53", "Inhibition")
+print(edges)
+```
+
 ## License
 This package is distributed under the [Artistic-2.0](https://opensource.org/licenses/Artistic-2.0) license. However, its dependencies may have different licenses.  
 
