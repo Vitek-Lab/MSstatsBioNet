@@ -1,13 +1,28 @@
-#' Export network data with Cytoscape visualization
+```r
+#' Export Network to HTML with Cytoscape Visualization
 #' 
-#' Convenience function that takes nodes and edges data directly and creates
-#' both the configuration and HTML export in one step.
+#' @description
+#' This function exports network data to an HTML file using Cytoscape for visualization.
+#' It combines the configuration and HTML export into a single step, making it easy to
+#' visualize networks directly from node and edge data.
 #' 
-#' @inheritParams cytoscapeNetwork
-#' @param filename Output HTML filename
-#' @param ... Additional arguments passed to exportCytoscapeToHTML()
+#' @param nodes \code{data.frame} containing the nodes of the network. Must include an \code{id} column.
+#' @param edges \code{data.frame} containing the edges of the network. Must include \code{source} and \code{target} columns.
+#' @param filename \code{character} string specifying the output HTML filename. Defaults to \code{"network_visualization.html"}.
+#' @param displayLabelType \code{character} string specifying the type of label to display on nodes. Defaults to \code{"id"}.
+#' @param nodeFontSize \code{numeric} value indicating the font size of node labels. Defaults to \code{12}.
+#' @param ... Additional arguments passed to \code{exportCytoscapeToHTML()}.
+#' 
+#' @return Invisibly returns the file path of the created HTML file.
+#' 
+#' @examples
+#' \dontrun{
+#' nodes <- data.frame(id = c("A", "B", "C"))
+#' edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
+#' exportNetworkToHTML(nodes, edges, filename = "my_network.html")
+#' }
+#' 
 #' @export
-#' @return Invisibly returns the file path of the created HTML file
 exportNetworkToHTML <- function(nodes, edges, 
                                 filename = "network_visualization.html",
                                 displayLabelType = "id",
@@ -66,3 +81,4 @@ previewNetworkInBrowser <- function(nodes, edges,
     
     invisible(temp_file)
 }
+```
