@@ -127,6 +127,40 @@ server <- function(input, output, session) {
 shinyApp(ui, server)
 ```
 
+### Delete an Edge from a Network
+
+Use `deleteEdgeFromNetwork` to programmatically remove an edge from a network.
+
+```r
+# Define edges
+edges <- data.frame(
+  source      = c("TP53",  "MDM2",  "CDKN1A"),
+  target      = c("MDM2",  "TP53",  "TP53"),
+  interaction = c("Activation", "Inhibition", "Activation"),
+  stringsAsFactors = FALSE
+)
+
+# Remove an edge
+edges <- deleteEdgeFromNetwork(edges, "MDM2", "TP53", "Inhibition")
+print(edges)
+```
+
+### Filter Subnetwork by Context
+
+Use `filterSubnetworkByContext` to filter a subnetwork based on contextual relevance.
+
+```r
+# Example nodes and edges
+nodes <- data.frame(id = c("A", "B", "C"))
+edges <- data.frame(source = c("A", "B"), target = c("B", "C"))
+
+# Define query and filter
+query <- c("CHEK1", "DNA damage", "DNA damage repair")
+filtered_subnetwork <- filterSubnetworkByContext(nodes, edges, query, cutoff = 1, method = "tag_count")
+print(filtered_subnetwork$nodes)
+print(filtered_subnetwork$edges)
+```
+
 ## License
 This package is distributed under the [Artistic-2.0](https://opensource.org/licenses/Artistic-2.0) license. However, its dependencies may have different licenses.  
 
