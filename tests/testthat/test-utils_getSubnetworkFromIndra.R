@@ -196,6 +196,38 @@ describe(".filterGetSubnetworkFromIndraInput", {
         )
         expect_true("D" %in% result$Protein)
     })
+
+    test_that(".filterGetSubnetworkFromIndraInput excludes infinite FC proteins with adj.pvalue=0 when include_infinite_fc is FALSE", {
+        # MSstats sets adj.pvalue=0 for infinite FC proteins; they must still be excluded
+        input <- data.frame(
+            Protein   = c("A", "B", "D"),
+            log2FC    = c(3, -3, Inf),
+            adj.pvalue = c(0.01, 0.01, 0),
+            stringsAsFactors = FALSE
+        )
+        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
+            input, pvalueCutoff = 0.05, logfc_cutoff = NULL,
+            force_include_other = NULL, include_infinite_fc = FALSE, direction = "both"
+        )
+        expect_false("D" %in% result$Protein)
+    })
+
+    test_that(".filterGetSubnetworkFromIndraInput includes infinite FC protein via force_include_other even when include_infinite_fc is FALSE", {
+        input <- cbind(
+            data.frame(
+                Protein   = c("A", "B", "D"),
+                log2FC    = c(3, -3, Inf),
+                adj.pvalue = c(0.01, 0.01, 0),
+                stringsAsFactors = FALSE
+            ),
+            HgncId = c("1", "2", "4")
+        )
+        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
+            input, pvalueCutoff = 0.05, logfc_cutoff = NULL,
+            force_include_other = c("HGNC:4"), include_infinite_fc = FALSE, direction = "both"
+        )
+        expect_true("D" %in% result$Protein)
+    })
     
     test_that(".filterGetSubnetworkFromIndraInput filters by direction up", {
         result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
