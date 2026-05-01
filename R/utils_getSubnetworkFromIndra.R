@@ -166,6 +166,10 @@
     infinite_fc_proteins <- NULL
     if (include_infinite_fc) {
         infinite_fc_proteins <- input[is.infinite(input$log2FC), ]
+    } else {
+        if ("log2FC" %in% colnames(input)) {
+            input <- input[!is.infinite(input$log2FC), ]
+        }
     }
 
     input <- input[!is.na(input$adj.pvalue),]
