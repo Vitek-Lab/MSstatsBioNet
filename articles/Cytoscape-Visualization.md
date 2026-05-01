@@ -1,6 +1,7 @@
 # Visualization Engine with CytoscapeJS
 
 ``` r
+
 library(MSstatsBioNet)
 ```
 
@@ -14,6 +15,7 @@ library(MSstatsBioNet)
     ##     savePlot
 
 ``` r
+
 nodes_min <- data.frame(
     id    = c("TP53", "MDM2", "CDKN1A"),
     stringsAsFactors = FALSE
@@ -31,6 +33,7 @@ cytoscapeNetwork(nodes_min, edges_min)
 ```
 
 ``` r
+
 # ── Example 2 · logFC colour gradient ───────────────────────────────────────
 # Nodes coloured on a blue (down) → grey (neutral) → red (up) scale.
 
@@ -51,6 +54,7 @@ cytoscapeNetwork(nodes_fc, edges_fc)
 ```
 
 ``` r
+
 # ── Example 3 · PTM satellite nodes ─────────────────────────────────────────
 # The `Site` column (underscore-separated) creates small circle child-nodes
 # clustered around the parent protein.  Hover over edges to see overlap
@@ -75,6 +79,7 @@ cytoscapeNetwork(nodes_ptm, edges_ptm, nodeFontSize = 14)
 ```
 
 ``` r
+
 # ── Example 4 · HGNC labels + left-to-right layout ─────────────────────────
 
 nodes_hgnc <- data.frame(
@@ -99,6 +104,7 @@ cytoscapeNetwork(
 ```
 
 ``` r
+
 # ── Example 5 · Evidence links ───────────────────────────────────────────────
 # Click an edge to open the evidence URL in a new tab.
 
@@ -117,6 +123,7 @@ cytoscapeNetwork(nodes_min, edges_ev)
 ```
 
 ``` r
+
 # ── Example 6 · Shiny integration ───────────────────────────────────────────
 if (requireNamespace("shiny", quietly = TRUE)) {
     library(shiny)
@@ -157,6 +164,7 @@ if (requireNamespace("shiny", quietly = TRUE)) {
     ##     markdown
 
 ``` r
+
 # ── Example 7 · Save to a standalone HTML file ──────────────────────────────
 
 widget <- cytoscapeNetwork(nodes_ptm, edges_ptm)

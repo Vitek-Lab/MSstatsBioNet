@@ -29,6 +29,7 @@ Use the `annotateProteinInfoFromIndra` function to annotate a data frame
 with protein information from Indra.
 
 ``` r
+
 library(MSstatsBioNet)
 
 # Example data frame
@@ -44,6 +45,7 @@ print(head(annotated_df))
 Create an interactive network diagram using `cytoscapeNetwork`.
 
 ``` r
+
 # Define nodes and edges
 nodes <- data.frame(
   id    = c("TP53", "MDM2", "CDKN1A"),
@@ -67,6 +69,7 @@ Export your network visualization to an HTML file using
 `exportNetworkToHTML`.
 
 ``` r
+
 # Export the network to an HTML file
 exportNetworkToHTML(nodes, edges, filename = "network.html")
 ```
@@ -77,6 +80,7 @@ Use `getSubnetworkFromIndra` to retrieve a subnetwork of protein
 interactions from the INDRA database.
 
 ``` r
+
 # Load example input data
 input <- data.table::fread(system.file(
     "extdata/groupComparisonModel.csv",
@@ -95,6 +99,7 @@ Quickly preview your network in a web browser using
 `previewNetworkInBrowser`.
 
 ``` r
+
 # Preview the network in a browser
 previewNetworkInBrowser(nodes, edges)
 ```
@@ -105,6 +110,7 @@ Use `cytoscapeNetworkOutput` and `renderCytoscapeNetwork` to integrate
 network visualization into a Shiny app.
 
 ``` r
+
 library(shiny)
 
 ui <- fluidPage(

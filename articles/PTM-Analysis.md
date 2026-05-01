@@ -5,6 +5,7 @@
 Run this code below to install MSstatsBioNet from bioconductor
 
 ``` r
+
 if (!require("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
 }
@@ -20,6 +21,7 @@ The table is the output of the MSstatsPTM function `groupComparisonPTM`
 (filtered down to the columns that are actually needed)
 
 ``` r
+
 input = data.table::fread(system.file(
     "extdata/garrido-2024.csv",
     package = "MSstatsBioNet"
@@ -54,6 +56,7 @@ IDs. We can also extract other information, such as hgnc gene name and
 protein function.
 
 ``` r
+
 library(MSstatsBioNet)
 #> Loading required package: MSstats
 #> 
@@ -97,6 +100,7 @@ abundance analysis results. This function may help finding off target
 subnetworks.
 
 ``` r
+
 subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), logfc_cutoff = 1, force_include_other = c("HGNC:3236"))
 #> Warning in getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), : NOTICE: This function includes third-party software components
 #>         that are licensed under the BSD 2-Clause License. Please ensure to
@@ -148,12 +152,14 @@ head(subnetwork$edges)
 Visualize the subnetwork on your browser
 
 ``` r
+
 previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "hgncName")
 ```
 
 ## Session info
 
 ``` r
+
 sessionInfo()
 #> R version 4.6.0 (2026-04-24)
 #> Platform: x86_64-pc-linux-gnu

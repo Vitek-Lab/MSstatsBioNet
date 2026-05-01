@@ -34,6 +34,7 @@ UniProt mnemonic identifier, the log2 fold-change, and the adjusted
 p-value from a differential expression analysis.
 
 ``` r
+
 input <- data.frame(
   Protein   = c("CHK1_HUMAN", "RFA1_HUMAN", "CLH1_HUMAN", "CRTC3_HUMAN"),
   log2FC    = c(2.31, 1.87, 1.45, 1.12),
@@ -64,6 +65,7 @@ maps UniProt mnemonics to HGNC gene identifiers and other metadata used
 downstream by the INDRA query engine.
 
 ``` r
+
 library(MSstatsBioNet)
 annotated_df <- annotateProteinInfoFromIndra(input, "Uniprot_Mnemonic")
 ```
@@ -88,6 +90,7 @@ Key parameters used here:
   automatically extracted interactions
 
 ``` r
+
 subnetwork <- getSubnetworkFromIndra(
   annotated_df,
   pvalueCutoff          = 0.2,
@@ -119,6 +122,7 @@ covers the major vocabulary used in the DNA damage repair and cancer
 literature.
 
 ``` r
+
 tags <- c(
   "dna damage repair",
   "cancer",
@@ -172,6 +176,7 @@ only edges whose supporting abstracts score at or above this value are
 retained.
 
 ``` r
+
 filtered_network <- filterSubnetworkByContext(
   nodes             = subnetwork$nodes,
   edges             = subnetwork$edges,
@@ -194,6 +199,7 @@ The function prints a progress summary to the console:
 ### Filtered nodes
 
 ``` r
+
 filtered_network$nodes
 ```
 
@@ -203,6 +209,7 @@ retained.
 ### Filtered edges
 
 ``` r
+
 filtered_network$edges
 ```
 
@@ -212,6 +219,7 @@ activation) supported by literature that passed the score threshold.
 ### Evidence with scores
 
 ``` r
+
 filtered_network$evidence
 ```
 
@@ -232,6 +240,7 @@ The evidence dataframe contains the following columns:
 You can sort by score to identify the most on-topic supporting evidence:
 
 ``` r
+
 filtered_network$evidence[
   order(filtered_network$evidence$score, decreasing = TRUE), 
 ]
@@ -240,6 +249,7 @@ filtered_network$evidence[
 ### Defining a cutoff
 
 ``` r
+
 # Run with permissive cutoff to see full score distribution
 exploratory <- filterSubnetworkByContext(
   nodes             = subnetwork$nodes,
@@ -272,6 +282,7 @@ covers the major vocabulary used in the DNA damage repair and cancer
 literature.
 
 ``` r
+
 my_query <- "DNA damage repair cancer oncology DNA repair genome integrity
   genomic instability double strand break DSB single strand break SSB
   base excision repair BER nucleotide excision repair NER mismatch repair MMR
@@ -291,6 +302,7 @@ only edges whose supporting abstracts score at or above this value are
 retained.
 
 ``` r
+
 filtered_network <- filterSubnetworkByContext(
   nodes             = subnetwork$nodes,
   edges             = subnetwork$edges,
@@ -313,6 +325,7 @@ The function prints a progress summary to the console:
 ### Filtered nodes
 
 ``` r
+
 filtered_network$nodes
 ```
 
@@ -322,6 +335,7 @@ retained.
 ### Filtered edges
 
 ``` r
+
 filtered_network$edges
 ```
 
@@ -331,6 +345,7 @@ activation) supported by literature that passed the score threshold.
 ### Evidence with scores
 
 ``` r
+
 filtered_network$evidence
 ```
 
@@ -351,6 +366,7 @@ The evidence dataframe contains the following columns:
 You can sort by score to identify the most on-topic supporting evidence:
 
 ``` r
+
 filtered_network$evidence[
   order(filtered_network$evidence$score, decreasing = TRUE), 
 ]
@@ -372,6 +388,7 @@ To explore the score distribution before committing to a cutoff, run the
 function at a low threshold and inspect the scores:
 
 ``` r
+
 # Run with permissive cutoff to see full score distribution
 exploratory <- filterSubnetworkByContext(
   nodes             = subnetwork$nodes,
@@ -394,6 +411,7 @@ hist(exploratory$evidence$score,
 ## Session Info
 
 ``` r
+
 sessionInfo()
 #> R version 4.6.0 (2026-04-24)
 #> Platform: x86_64-pc-linux-gnu
