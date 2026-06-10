@@ -254,32 +254,43 @@ INDRA_API_URL = "https://discovery.indra.bio"
     return(res)
 }
 
-#' Call gilda API to get HGNC IDs from HGNC names
-#' @param hgncNames list of hgnc names
-#' @return named character vector mapping HGNC names to HGNC IDs
+#' Call Gilda API to ground entity text against any namespace
+#'
+#' Posts each input text to Gilda's `ground_multi` endpoint and returns
+#' every grounding candidate per input (in Gilda's ranking order). When
+#' `keep_only` is set, candidates whose `term$db` does not match are
+#' filtered out. The canonical entity name is taken from `term$entry_name`
+#' when present, falling back to `term$text` (the input string).
+#' @param textInputs list of character strings to ground
+#' @param keep_only optional character; if non-NULL, only candidates whose
+#'        `term$db == keep_only` are retained
+#' @return Named list keyed by input text. Each value is a list with
+#'         three equal-length character vectors: `ns`, `id`, `name`,
+#'         positionally aligned across Gilda's returned candidates.
+#'         Texts with no surviving grounding are omitted from the result.
 #' @importFrom jsonlite toJSON
 #' @importFrom httr POST add_headers content
 #' @keywords internal
 #' @noRd
-.callGetHgncIdsFromGildaApi <- function(hgncNames) {
-    
-    if (!is.list(hgncNames)) {
+.callGroundEntitiesFromGildaApi <- function(textInputs, keep_only = NULL) {
+
+    if (!is.list(textInputs)) {
         stop("Input must be a list.")
     }
-    
-    if (any(!sapply(hgncNames, is.character))) {
-        stop("All elements in the list must be character strings representing hgnc names.")
+
+    if (any(!sapply(textInputs, is.character))) {
+        stop("All elements in the list must be character strings.")
     }
-    
-    if (length(hgncNames) == 0) {
+
+    if (length(textInputs) == 0) {
         stop("Input list must not be empty.")
     }
-    
+
     apiUrl <- file.path("https://grounding.indra.bio/", "ground_multi")
-    
-    requestBody <- lapply(hgncNames, function(hgnc_name) {
+
+    requestBody <- lapply(textInputs, function(text_input) {
         list(
-            text = hgnc_name,
+            text = text_input,
             organisms = list("9606")
         )
     })
@@ -296,27 +307,45 @@ INDRA_API_URL = "https://discovery.indra.bio"
         message("Error in API call: ", e)
         NULL
     })
-    
+
     if (is.null(res)) {
         return(NULL)
     }
-    
-    hgnc_mapping <- character(0)
-    
-    for (item in res) {
-        # Find the term where db == "HGNC"
-        hgnc_term <- NULL
+
+    grounding_map <- list()
+
+    for (i in seq_along(res)) {
+        item       <- res[[i]]
+        input_text <- as.character(textInputs[[i]])
+
+        ns_vec   <- character(0)
+        id_vec   <- character(0)
+        name_vec <- character(0)
+
         for (entry in item) {
-            if (!is.null(entry$term$db) && entry$term$db == "HGNC") {
-                hgnc_term <- entry$term
-                break
+            term <- entry$term
+            if (is.null(term) || is.null(term$db) || is.null(term$id)) next
+            if (!is.null(keep_only) && term$db != keep_only) next
+
+            entry_name <- if (!is.null(term$entry_name) && nzchar(term$entry_name)) {
+                term$entry_name
+            } else {
+                term$text
             }
+
+            ns_vec   <- c(ns_vec,   term$db)
+            id_vec   <- c(id_vec,   term$id)
+            name_vec <- c(name_vec, entry_name)
         }
-        
-        # Only add to mapping if HGNC term was found
-        if (!is.null(hgnc_term)) {
-            hgnc_mapping[hgnc_term$text] <- hgnc_term$id
+
+        if (length(ns_vec) > 0) {
+            grounding_map[[input_text]] <- list(
+                ns   = ns_vec,
+                id   = id_vec,
+                name = name_vec
+            )
         }
     }
-    return(hgnc_mapping)
+
+    return(grounding_map)
 }

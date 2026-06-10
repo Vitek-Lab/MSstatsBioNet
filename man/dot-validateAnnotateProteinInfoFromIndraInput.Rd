@@ -4,14 +4,16 @@
 \alias{.validateAnnotateProteinInfoFromIndraInput}
 \title{Validate Annotate Protein Info Input}
 \usage{
-.validateAnnotateProteinInfoFromIndraInput(df)
+.validateAnnotateProteinInfoFromIndraInput(df, proteinIdType)
 }
 \arguments{
 \item{df}{A data frame containing protein information.}
+
+\item{proteinIdType}{The proteinIdType supplied by the caller.}
 }
 \value{
 None. Throws an error if validation fails.
 }
 \description{
-This function validates the input data frame for the annotateProteinInfoFromIndra function.
+Validate Annotate Protein Info Input
 }

@@ -76,12 +76,38 @@ test_that(".callIsTranscriptionFactorApi works correctly", {
     expect_equal(result, expected_value)
 })
 
-test_that(".callGetHgncIdsFromGildaApi works correctly", {
-    hgnc_names <- list("EGFR", "CHEK1")
-    result <- .callGetHgncIdsFromGildaApi(hgnc_names)
-    expect_type(result, "character")
+test_that(".callGroundEntitiesFromGildaApi returns aligned (ns, id, name) per input (live)", {
+    text_inputs <- list("EGFR", "CHEK1")
+    result <- .callGroundEntitiesFromGildaApi(text_inputs, keep_only = "HGNC")
+    expect_type(result, "list")
     expect_true(length(result) == 2)
-    expected_value <- c("EGFR" = "3236", "CHEK1" = "1925")
-    expect_equal(result, expected_value)
+    expect_setequal(names(result), c("EGFR", "CHEK1"))
+    for (input_text in names(result)) {
+        g <- result[[input_text]]
+        expect_true(all(c("ns", "id", "name") %in% names(g)))
+        expect_equal(length(g$ns), length(g$id))
+        expect_equal(length(g$ns), length(g$name))
+        expect_true(all(g$ns == "HGNC"))
+    }
+    expect_true("3236"  %in% result[["EGFR"]]$id)
+    expect_true("1925"  %in% result[["CHEK1"]]$id)
+})
+
+test_that(".callGroundEntitiesFromGildaApi keeps non-HGNC namespaces when keep_only is NULL (mocked)", {
+    text_inputs <- list("EGFR", "glucose")
+    local_mocked_bindings(.callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL) {
+        list(
+            EGFR    = list(ns = "HGNC",         id = "3236",  name = "EGFR"),
+            glucose = list(ns = c("MESH", "CHEBI"),
+                           id = c("3815", "17234"),
+                           name = c("KIT",  "glucose"))
+        )
+    })
+    result <- .callGroundEntitiesFromGildaApi(text_inputs)
+    expect_setequal(names(result), c("EGFR", "glucose"))
+    expect_equal(result[["EGFR"]]$ns, "HGNC")
+    expect_equal(result[["glucose"]]$ns, c("MESH", "CHEBI"))
+    expect_equal(result[["glucose"]]$id, c("3815", "17234"))
+    expect_equal(result[["glucose"]]$name, c("KIT", "glucose"))
 })
 

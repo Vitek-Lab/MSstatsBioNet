@@ -4,14 +4,17 @@
 \alias{.populatePhophataseInfoInDataFrame}
 \title{Populate Phosphatase Info in Data Frame}
 \usage{
-.populatePhophataseInfoInDataFrame(df)
+.populatePhophataseInfoInDataFrame(df, proteinIdType)
 }
 \arguments{
 \item{df}{A data frame containing protein information.}
+
+\item{proteinIdType}{The proteinIdType supplied by the caller. Gene-only
+flags are \code{NA} (no API call) when this is \code{"Compound"}.}
 }
 \value{
 A data frame with populated phosphatase information.
 }
 \description{
-This function populates the phosphatase information in the data frame based on the HGNC names.
+Populate Phosphatase Info in Data Frame
 }

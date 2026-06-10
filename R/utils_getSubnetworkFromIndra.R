@@ -7,10 +7,13 @@
 #' @keywords internal
 #' @noRd
 .validateGetSubnetworkFromIndraInput <- function(input, protein_level_data, sources_filter, force_include_other) {
-    if (!"HgncId" %in% colnames(input)) {
-        stop("Invalid Input Error: Input must contain a column named 'HgncId'.")
+    if (!"EntityId" %in% colnames(input) || !"EntityNamespace" %in% colnames(input)) {
+        stop("Invalid Input Error: Input must contain columns named 'EntityId' and 'EntityNamespace'.")
     }
-    num_proteins = length(unique(input$HgncId)) + 
+    ids_split <- unlist(strsplit(as.character(input$EntityId),        ";"), use.names = FALSE)
+    nss_split <- unlist(strsplit(as.character(input$EntityNamespace), ";"), use.names = FALSE)
+    unique_pairs <- unique(paste(nss_split, ids_split, sep = ":"))
+    num_proteins = length(unique_pairs) +
         ifelse(!is.null(force_include_other), length(force_include_other), 0)
     if (num_proteins >= 400) {
         stop("Invalid Input Error: INDRA query must contain less than 400 proteins.  Consider lowering your p-value cutoff")
@@ -30,30 +33,72 @@
     }
 }
 
+#' Build the list of (namespace, id) groundings for the INDRA Cogex query
+#'
+#' Splits each row's semicolon-joined \code{EntityNamespace} / \code{EntityId}
+#' positionally, fans out each pair into its own grounding node, then appends
+#' any \code{force_include_other} entries (parsed as \code{"namespace:id"}),
+#' returning the unique set. Extracted from \code{.callIndraCogexApi} to keep
+#' the network-free portion unit-testable.
+#' @param namespaces character vector aligned with \code{ids}
+#' @param ids character vector aligned with \code{namespaces}
+#' @param force_include_other optional character vector of
+#'        \code{"namespace:id"} strings
+#' @return list of two-element \code{list(namespace, id)} groundings
+#' @keywords internal
+#' @noRd
+.buildCogexGroundings <- function(namespaces, ids, force_include_other = NULL) {
+    ns_split <- strsplit(as.character(namespaces), ";")
+    id_split <- strsplit(as.character(ids),        ";")
+    if (length(ns_split) != length(id_split)) {
+        stop("EntityNamespace and EntityId must have the same length")
+    }
+
+    pairs <- list()
+    for (i in seq_along(ns_split)) {
+        ns_i <- ns_split[[i]]
+        id_i <- id_split[[i]]
+        if (length(ns_i) != length(id_i)) {
+            stop("EntityNamespace and EntityId entries must be positionally aligned ",
+                 "after splitting on ';' (mismatch at row ", i, ")")
+        }
+        for (k in seq_along(ns_i)) {
+            pairs <- c(pairs, list(list(ns_i[k], id_i[k])))
+        }
+    }
+
+    if (!is.null(force_include_other)) {
+        for (x in force_include_other) {
+            parts <- unlist(strsplit(x, ":"))
+            if (length(parts) != 2) {
+                stop(paste0("Invalid identifier format: ", x,
+                            ". Expected format is 'namespace:identifier', e.g. 'HGNC:1234' or 'CHEBI:4911'."))
+            }
+            pairs <- c(pairs, list(list(parts[1], parts[2])))
+        }
+    }
+
+    unique(pairs)
+}
+
 #' Call INDRA Cogex API and return response
-#' @param hgncIds list of hgnc ids
-#' @param force_include_other list of identifiers to include in the network
+#' @param namespaces character vector of entity namespaces (semicolon-joined
+#'        for multi-grounded rows), aligned with \code{ids}
+#' @param ids character vector of entity ids (semicolon-joined for
+#'        multi-grounded rows), aligned with \code{namespaces}
+#' @param force_include_other list of \code{"namespace:id"} identifiers to
+#'        include in the network
 #' @return list of INDRA statements
 #' @importFrom jsonlite toJSON
 #' @importFrom httr POST add_headers content
 #' @keywords internal
 #' @noRd
-.callIndraCogexApi <- function(hgncIds, force_include_other) {
+.callIndraCogexApi <- function(namespaces, ids, force_include_other) {
     indraCogexUrl <-
         "https://discovery.indra.bio/api/indra_subnetwork_relations"
 
-    hgncIds = unique(hgncIds)
-    groundings <- lapply(hgncIds, function(x) list("HGNC", x))
-    if (!is.null(force_include_other)) {
-        groundings <- c(groundings, lapply(force_include_other, function(x) {
-            parts <- unlist(strsplit(x, ":"))
-            if (length(parts) != 2) {
-                stop(paste0("Invalid identifier format: ", x, ". Expected format is 'namespace:identifier', e.g. 'HGNC:1234' or 'CHEBI:4911'."))
-            }
-            list(parts[1], parts[2])
-        }))
-    }
-    groundings <- list(nodes = groundings)
+    pairs <- .buildCogexGroundings(namespaces, ids, force_include_other)
+    groundings <- list(nodes = pairs)
     groundings <- jsonlite::toJSON(groundings, auto_unbox = TRUE)
 
     res <- POST(
@@ -155,9 +200,28 @@
         if (!is.character(force_include_other)) {
             stop("force_include_other must be a character vector")
         }
-        if ("HgncId" %in% colnames(input) && any(grepl("^HGNC:", force_include_other))) {
-            hgnc_ids_to_include <- gsub("^HGNC:", "", force_include_other[grepl("^HGNC:", force_include_other)])
-            exempt_proteins <- input[input$HgncId %in% hgnc_ids_to_include, ]
+        if ("EntityId" %in% colnames(input) && "EntityNamespace" %in% colnames(input)) {
+            fio_pairs <- lapply(force_include_other, function(x) {
+                parts <- unlist(strsplit(x, ":"))
+                if (length(parts) == 2) list(ns = parts[1], id = parts[2]) else NULL
+            })
+            fio_pairs <- Filter(Negate(is.null), fio_pairs)
+            if (length(fio_pairs) > 0) {
+                row_matches_fio <- vapply(seq_len(nrow(input)), function(i) {
+                    row_ns <- unlist(strsplit(as.character(input$EntityNamespace[i]), ";"))
+                    row_id <- unlist(strsplit(as.character(input$EntityId[i]),        ";"))
+                    if (length(row_ns) != length(row_id) || length(row_ns) == 0) {
+                        return(FALSE)
+                    }
+                    for (p in fio_pairs) {
+                        if (any(row_ns == p$ns & row_id == p$id)) return(TRUE)
+                    }
+                    FALSE
+                }, logical(1))
+                exempt_proteins <- input[row_matches_fio, ]
+            } else {
+                exempt_proteins <- data.frame()
+            }
         } else {
             exempt_proteins <- data.frame()
         }
@@ -214,6 +278,24 @@
     return(input)
 }
 
+#' Row-level membership check for a (namespace, id) endpoint
+#'
+#' Splits each row's \code{EntityNamespace}/\code{EntityId} on \code{";"}
+#' and returns \code{TRUE} for rows whose grounding list contains the
+#' (\code{edge_ns}, \code{edge_id}) pair. Used to map an INDRA edge
+#' endpoint back to the original \code{Protein} value.
+#' @keywords internal
+#' @noRd
+.rowMatchesEndpoint <- function(input, edge_ns, edge_id) {
+    row_ns <- strsplit(as.character(input$EntityNamespace), ";")
+    row_id <- strsplit(as.character(input$EntityId),        ";")
+    vapply(seq_along(row_ns), function(i) {
+        rns <- row_ns[[i]]; rid <- row_id[[i]]
+        if (length(rns) != length(rid) || length(rns) == 0) return(FALSE)
+        any(rns == edge_ns & rid == edge_id)
+    }, logical(1))
+}
+
 #' Add additional metadata to an edge
 #' @param edge object representation of an INDRA statement
 #' @param input filtered groupComparison result
@@ -227,24 +309,26 @@
         edge$target_id, "@", edge$target_ns, "&format=html",
         sep = ""
     )
-    
-    # Convert back to uniprot IDs
-    matched_rows_source <- input[which(input$HgncId == edge$source_id), ]
+
+    # Map the grounded INDRA endpoint back to the original Protein value.
+    # Membership-test against each row's semicolon-split (namespace, id)
+    # pairs, using INDRA's source_ns/target_ns for namespace-aware disambiguation.
+    matched_rows_source <- input[.rowMatchesEndpoint(input, edge$source_ns, edge$source_id), ]
     uniprot_ids_source <- unique(matched_rows_source$Protein)
     if (length(uniprot_ids_source) != 1) {
         edge$source_uniprot_id <- edge$source_name
     } else {
         edge$source_uniprot_id <- uniprot_ids_source
     }
-    
-    matched_rows_target <- input[which(input$HgncId == edge$target_id), ]
+
+    matched_rows_target <- input[.rowMatchesEndpoint(input, edge$target_ns, edge$target_id), ]
     uniprot_ids_target = unique(matched_rows_target$Protein)
     if (length(uniprot_ids_target) != 1) {
         edge$target_uniprot_id <- edge$target_name
     } else {
         edge$target_uniprot_id <- uniprot_ids_target
     }
-    
+
     return(edge)
 }
 
@@ -346,15 +430,16 @@
 #' @keywords internal
 #' @noRd
 .constructNodesDataFrame <- function(input, edges) {
-    nodes = input[, c("Protein", "HgncName", "Site", "log2FC", "adj.pvalue")]
-    colnames(nodes) = c("id", "hgncName", "Site", "logFC", "adj.pvalue")
-    
+    nodes = input[, c("Protein", "EntityName", "EntityId", "Site", "log2FC", "adj.pvalue")]
+    colnames(nodes) = c("id", "entityName", "entityId", "Site", "logFC", "adj.pvalue")
+
     nodes = nodes[nodes$id %in% c(edges$source, edges$target), ]
     extra_force_include_other <- setdiff(unique(c(edges$source, edges$target)), nodes$id)
     if (length(extra_force_include_other) > 0) {
         extra_nodes <- data.frame(
             id = extra_force_include_other,
-            hgncName = NA,
+            entityName = NA,
+            entityId = NA,
             Site = NA,
             logFC = 0,
             adj.pvalue = 1,
@@ -362,8 +447,8 @@
         )
         nodes <- rbind(nodes, extra_nodes)
     }
-    nodes$hgncName = ifelse(is.na(nodes$hgncName), nodes$id, nodes$hgncName)
-    
+    nodes$entityName = ifelse(is.na(nodes$entityName), nodes$id, nodes$entityName)
+
     return(nodes)
 }
 

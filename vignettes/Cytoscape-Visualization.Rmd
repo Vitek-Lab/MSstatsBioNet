@@ -69,16 +69,16 @@ edges_ptm <- data.frame(
 cytoscapeNetwork(nodes_ptm, edges_ptm, nodeFontSize = 14)
 
 
-# ── Example 4 · HGNC labels + left-to-right layout ─────────────────────────
+# ── Example 4 · Entity labels + left-to-right layout ───────────────────────
 
-nodes_hgnc <- data.frame(
-    id       = c("ENSG001", "ENSG002", "ENSG003"),
-    hgncName = c("TP53",    "MDM2",    "CDKN1A"),
-    logFC    = c( 1.0,      -0.5,       2.0),
+nodes_entity <- data.frame(
+    id         = c("ENSG001", "ENSG002", "ENSG003"),
+    entityName = c("TP53",    "MDM2",    "CDKN1A"),
+    logFC      = c( 1.0,      -0.5,       2.0),
     stringsAsFactors = FALSE
 )
 
-edges_hgnc <- data.frame(
+edges_entity <- data.frame(
     source      = c("ENSG001", "ENSG001"),
     target      = c("ENSG002", "ENSG003"),
     interaction = c("Activation", "IncreaseAmount"),
@@ -86,8 +86,8 @@ edges_hgnc <- data.frame(
 )
 
 cytoscapeNetwork(
-    nodes_hgnc, edges_hgnc,
-    displayLabelType = "hgncName",
+    nodes_entity, edges_entity,
+    displayLabelType = "entityName",
     layoutOptions    = list(rankDir = "LR", rankSep = 120)
 )
 

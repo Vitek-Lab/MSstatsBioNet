@@ -125,7 +125,7 @@ The function `previewNetworkInBrowser` then takes the output of
 an internet browser to view the subnetwork
 
 ```{r}
-previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "hgncName")
+previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "entityName")
 ```
 
 In the network diagram displayed using CytoscapeJS, you should see three arrows

@@ -7,7 +7,7 @@ create_mock_nodes <- function() {
         id       = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "BRCA1_HUMAN"),
         logFC    = c(2.5, -1.8, 1.2, -2.1),
         pvalue   = c(0.001, 0.02, 0.03, 0.005),
-        hgncName = c("TP53", "MDM2", "ATM", "BRCA1"),
+        entityName = c("TP53", "MDM2", "ATM", "BRCA1"),
         stringsAsFactors = FALSE
     )
 }
@@ -16,7 +16,7 @@ create_mock_nodes_ptm <- function() {
     data.frame(
         id       = c("P53_HUMAN", "MDM2_HUMAN"),
         logFC    = c(2.5, -1.8),
-        hgncName = c("TP53", "MDM2"),
+        entityName = c("TP53", "MDM2"),
         Site     = c(NA, "S15_S20"),
         stringsAsFactors = FALSE
     )
@@ -236,9 +236,9 @@ test_that(".buildElements creates PTM child nodes and attachment edges", {
     expect_true("ptm_attachment" %in% edge_types)
 })
 
-test_that(".buildElements uses hgncName label when requested", {
+test_that(".buildElements uses entityName label when requested", {
     nodes  <- create_mock_nodes()
-    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "hgncName")
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "entityName")
     
     protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
                                 el$data$node_type == "protein", result)
@@ -246,10 +246,10 @@ test_that(".buildElements uses hgncName label when requested", {
     expect_true(all(labels %in% c("TP53", "MDM2", "ATM", "BRCA1")))
 })
 
-test_that(".buildElements falls back to id when hgncName is NA", {
+test_that(".buildElements falls back to id when entityName is NA", {
     nodes <- create_mock_nodes()
-    nodes$hgncName <- NA
-    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "hgncName")
+    nodes$entityName <- NA
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "entityName")
     
     protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
                                 el$data$node_type == "protein", result)

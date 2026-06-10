@@ -4,14 +4,17 @@
 \alias{.populateTranscriptionFactorInfoInDataFrame}
 \title{Populate Transcription Factor Info in Data Frame}
 \usage{
-.populateTranscriptionFactorInfoInDataFrame(df)
+.populateTranscriptionFactorInfoInDataFrame(df, proteinIdType)
 }
 \arguments{
 \item{df}{A data frame containing protein information.}
+
+\item{proteinIdType}{The proteinIdType supplied by the caller. Gene-only
+flags are \code{NA} (no API call) when this is \code{"Compound"}.}
 }
 \value{
 A data frame with populated transcription factor information.
 }
 \description{
-This function populates the transcription factor information in the data frame based on the HGNC names.
+Populate Transcription Factor Info in Data Frame
 }
