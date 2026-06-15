@@ -95,7 +95,7 @@ test_that(".callGroundEntitiesFromGildaApi returns aligned (ns, id, name) per in
 
 test_that(".callGroundEntitiesFromGildaApi keeps non-HGNC namespaces when keep_only is NULL (mocked)", {
     text_inputs <- list("EGFR", "glucose")
-    local_mocked_bindings(.callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL) {
+    local_mocked_bindings(.callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL) {
         list(
             EGFR    = list(ns = "HGNC",         id = "3236",  name = "EGFR"),
             glucose = list(ns = c("MESH", "CHEBI"),

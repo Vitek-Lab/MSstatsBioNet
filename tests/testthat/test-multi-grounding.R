@@ -1,5 +1,5 @@
 # Tests for the multi-grounding fan-out, membership round-trip, and the
-# post-split < 400 guard introduced for the "Compound" / Entity* contract.
+# post-split < 400 guard introduced for the "Metabolite" / Entity* contract.
 
 pair_str <- function(p) paste(p[[1]], p[[2]], sep = ":")
 
@@ -154,12 +154,12 @@ test_that(".validateGetSubnetworkFromIndraInput counts unique (ns, id) pairs AFT
     )
 })
 
-# ----- Compound proteinIdType unit test (mocked Gilda) -----
+# ----- Metabolite proteinIdType unit test (mocked Gilda) -----
 
-test_that("annotateProteinInfoFromIndra with Compound mocks Gilda and skips gene-only flags", {
+test_that("annotateProteinInfoFromIndra with Metabolite mocks Gilda and skips gene-only flags", {
     df <- data.frame(Protein = c("glucose", "FOO"))
     local_mocked_bindings(
-        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL) {
+        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL) {
             list(
                 glucose = list(ns = "CHEBI",
                                id = "17234",
@@ -170,11 +170,11 @@ test_that("annotateProteinInfoFromIndra with Compound mocks Gilda and skips gene
             )
         }
     )
-    annotated_df <- annotateProteinInfoFromIndra(df, "Compound")
+    annotated_df <- annotateProteinInfoFromIndra(df, "Metabolite")
 
     expect_true(all(c("EntityNamespace", "EntityId", "EntityName") %in% colnames(annotated_df)))
 
-    # UniprotId and gene-only flags must be NA for Compound (no API calls)
+    # UniprotId and gene-only flags must be NA for Metabolite (no API calls)
     expect_true(all(is.na(annotated_df$UniprotId)))
     expect_true(all(is.na(annotated_df$IsTranscriptionFactor)))
     expect_true(all(is.na(annotated_df$IsKinase)))
@@ -192,18 +192,18 @@ test_that("annotateProteinInfoFromIndra with Compound mocks Gilda and skips gene
     expect_equal(foo_row$EntityName,      "KIT;glucose")
 })
 
-# ----- Compound E2E test (mocked end-to-end; skipped if real fixture absent) -----
+# ----- Metabolite E2E test (mocked end-to-end; skipped if real fixture absent) -----
 
-test_that("annotateProteinInfoFromIndra(Compound) -> getSubnetworkFromIndra E2E (mocked, real fixture)", {
-    fixture_path <- system.file("extdata/groupComparisonModel_compound.csv",
+test_that("annotateProteinInfoFromIndra(Metabolite) -> getSubnetworkFromIndra E2E (mocked, real fixture)", {
+    fixture_path <- system.file("extdata/groupComparisonModel_metabolite.csv",
                                 package = "MSstatsBioNet")
     skip_if_not(nzchar(fixture_path) && file.exists(fixture_path),
-                "Compound fixture not yet provided (see TODO-MSBio-20260528).")
+                "Metabolite fixture not yet provided (see TODO-MSBio-20260528).")
 
     df <- data.table::fread(fixture_path)
 
     local_mocked_bindings(
-        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL) {
+        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL) {
             result <- list()
             for (i in seq_along(textInputs)) {
                 text_i <- as.character(textInputs[[i]])
@@ -218,7 +218,7 @@ test_that("annotateProteinInfoFromIndra(Compound) -> getSubnetworkFromIndra E2E 
         .callIndraCogexApi = function(ns, ids, fio) list()
     )
 
-    annotated <- annotateProteinInfoFromIndra(df, "Compound")
+    annotated <- annotateProteinInfoFromIndra(df, "Metabolite")
     expect_true(all(c("EntityNamespace", "EntityId", "EntityName") %in% colnames(annotated)))
     expect_true(any(grepl("CHEBI", annotated$EntityNamespace)))
     expect_true(all(is.na(annotated$UniprotId)))

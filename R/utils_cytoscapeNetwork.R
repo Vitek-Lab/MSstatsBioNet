@@ -249,10 +249,6 @@
 
     elements        <- list()
     emitted_prots   <- character(0)
-    # `emitted_cpds` and `node_type = "compound"` below refer to Cytoscape
-    # grouping containers used to parent PTM satellite nodes around a protein.
-    # This Cytoscape "compound" concept is UNRELATED to the chemical
-    # `proteinIdType = "Compound"` analyte type in annotateProteinInfoFromIndra.
     emitted_cpds    <- character(0)
     emitted_ptm_n   <- character(0)
     emitted_ptm_e   <- character(0)
@@ -270,7 +266,7 @@
         needs_compound <- row$id %in% has_ptm_sites
         compound_id    <- paste0(row$id, "__compound__")
 
-        # Cytoscape compound container (PTM grouping parent — not a chemical compound)
+        # Compound container
         if (needs_compound && !(compound_id %in% emitted_cpds)) {
             elements <- c(elements, list(
                 list(data = list(id        = compound_id,

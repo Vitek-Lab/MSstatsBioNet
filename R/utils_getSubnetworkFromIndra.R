@@ -38,8 +38,7 @@
 #' Splits each row's semicolon-joined \code{EntityNamespace} / \code{EntityId}
 #' positionally, fans out each pair into its own grounding node, then appends
 #' any \code{force_include_other} entries (parsed as \code{"namespace:id"}),
-#' returning the unique set. Extracted from \code{.callIndraCogexApi} to keep
-#' the network-free portion unit-testable.
+#' returning the unique set.
 #' @param namespaces character vector aligned with \code{ids}
 #' @param ids character vector aligned with \code{namespaces}
 #' @param force_include_other optional character vector of
@@ -48,16 +47,14 @@
 #' @keywords internal
 #' @noRd
 .buildCogexGroundings <- function(namespaces, ids, force_include_other = NULL) {
-    ns_split <- strsplit(as.character(namespaces), ";")
-    id_split <- strsplit(as.character(ids),        ";")
-    if (length(ns_split) != length(id_split)) {
+    if (length(namespaces) != length(ids)) {
         stop("EntityNamespace and EntityId must have the same length")
     }
 
     pairs <- list()
-    for (i in seq_along(ns_split)) {
-        ns_i <- ns_split[[i]]
-        id_i <- id_split[[i]]
+    for (i in seq_along(namespaces)) {
+        ns_i <- strsplit(as.character(namespaces[i]), ";")[[1]]
+        id_i <- strsplit(as.character(ids[i]),        ";")[[1]]
         if (length(ns_i) != length(id_i)) {
             stop("EntityNamespace and EntityId entries must be positionally aligned ",
                  "after splitting on ';' (mismatch at row ", i, ")")
@@ -186,14 +183,26 @@
 #' @return filtered groupComparison result
 #' @keywords internal
 #' @noRd
-.filterGetSubnetworkFromIndraInput <- function(input, 
-                                               pvalueCutoff, 
-                                               logfc_cutoff, 
-                                               force_include_other, 
-                                               include_infinite_fc, 
+.filterGetSubnetworkFromIndraInput <- function(input,
+                                               pvalueCutoff,
+                                               logfc_cutoff,
+                                               force_include_other,
+                                               include_infinite_fc,
                                                direction) {
     input$Protein <- as.character(input$Protein)
-    
+
+    # Drop rows with no grounding (NA EntityId) - they cannot become INDRA
+    # query nodes, and keeping them just wastes a fan-out slot.
+    if ("EntityId" %in% colnames(input)) {
+        na_entity_mask <- is.na(input$EntityId)
+        n_dropped <- sum(na_entity_mask)
+        if (n_dropped > 0) {
+            message("Dropping ", n_dropped,
+                    " row(s) with no entity grounding (NA EntityId).")
+            input <- input[!na_entity_mask, , drop = FALSE]
+        }
+    }
+
     # Extract exempt proteins before any filtering
     exempt_proteins <- NULL
     if (!is.null(force_include_other)) {

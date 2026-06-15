@@ -264,6 +264,11 @@ INDRA_API_URL = "https://discovery.indra.bio"
 #' @param textInputs list of character strings to ground
 #' @param keep_only optional character; if non-NULL, only candidates whose
 #'        `term$db == keep_only` are retained
+#' @param organisms optional list of NCBI taxonomy ids (e.g.
+#'        \code{list("9606")} for human) to constrain Gilda's grounding.
+#'        When \code{NULL}, the organisms filter is omitted from the
+#'        request body and Gilda may return groundings from any
+#'        organism / non-organism namespace (e.g. CHEBI for metabolites).
 #' @return Named list keyed by input text. Each value is a list with
 #'         three equal-length character vectors: `ns`, `id`, `name`,
 #'         positionally aligned across Gilda's returned candidates.
@@ -272,7 +277,7 @@ INDRA_API_URL = "https://discovery.indra.bio"
 #' @importFrom httr POST add_headers content
 #' @keywords internal
 #' @noRd
-.callGroundEntitiesFromGildaApi <- function(textInputs, keep_only = NULL) {
+.callGroundEntitiesFromGildaApi <- function(textInputs, keep_only = NULL, organisms = NULL) {
 
     if (!is.list(textInputs)) {
         stop("Input must be a list.")
@@ -289,10 +294,11 @@ INDRA_API_URL = "https://discovery.indra.bio"
     apiUrl <- file.path("https://grounding.indra.bio/", "ground_multi")
 
     requestBody <- lapply(textInputs, function(text_input) {
-        list(
-            text = text_input,
-            organisms = list("9606")
-        )
+        entry <- list(text = text_input)
+        if (!is.null(organisms)) {
+            entry$organisms <- organisms
+        }
+        entry
     })
     requestBody <- jsonlite::toJSON(requestBody, auto_unbox = TRUE)
     res <- tryCatch({

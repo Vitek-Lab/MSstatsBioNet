@@ -14,7 +14,7 @@ values are interpreted according to \code{proteinIdType}.}
 \item{proteinIdType}{A character string specifying the type of analyte
 identifier in the \code{Protein} column. One of
 \code{"Uniprot"}, \code{"Uniprot_Mnemonic"}, \code{"Hgnc_Name"}, or
-\code{"Compound"}. The \code{"Compound"} value treats inputs as
+\code{"Metabolite"}. The \code{"Metabolite"} value treats inputs as
 metabolite names and grounds them through Gilda, keeping whatever
 namespace Gilda returns (CHEBI / PUBCHEM / CHEMBL / ...).}
 }
@@ -22,10 +22,11 @@ namespace Gilda returns (CHEBI / PUBCHEM / CHEMBL / ...).}
 A data frame with the following columns:
 \describe{
   \item{Protein}{Character. The original identifier from the input.}
-  \item{GlobalProtein}{Character. The input identifier with the
-      MSstats mnemonic suffix stripped, used as the grounding key.}
+  \item{GlobalProtein}{Character. The input identifier with the PTM
+      site suffix (typically \code{<amino acid><site number>}, e.g.
+      \code{_S148}) stripped, used as the grounding key.}
   \item{UniprotId}{Character. The Uniprot ID of the protein, or
-      \code{NA} for \code{"Hgnc_Name"} and \code{"Compound"} inputs.}
+      \code{NA} for \code{"Hgnc_Name"} and \code{"Metabolite"} inputs.}
   \item{EntityNamespace}{Character. The grounding namespace
       (e.g. \code{"HGNC"}, \code{"CHEBI"}). When a single input grounds
       to multiple candidates, namespaces are semicolon-joined and
@@ -36,17 +37,17 @@ A data frame with the following columns:
   \item{EntityName}{Character. The canonical display name from the
       grounding source. Semicolon-joined when multi-grounded.}
   \item{IsTranscriptionFactor}{Logical. \code{NA} for
-      \code{proteinIdType == "Compound"}.}
+      \code{proteinIdType == "Metabolite"}.}
   \item{IsKinase}{Logical. \code{NA} for
-      \code{proteinIdType == "Compound"}.}
+      \code{proteinIdType == "Metabolite"}.}
   \item{IsPhosphatase}{Logical. \code{NA} for
-      \code{proteinIdType == "Compound"}.}
+      \code{proteinIdType == "Metabolite"}.}
 }
 }
 \description{
-This function annotates a data frame with entity (protein or compound)
-grounding information from INDRA / Gilda, plus gene-only flags
-(transcription factor / kinase / phosphatase) for the protein paths.
+This function standardizes entity identifiers from protein, compound, or
+gene inputs to a unified namespace using ID conversion from INDRA cogex
+or Gilda grounding.
 }
 \examples{
 df <- data.frame(Protein = c("CLH1_HUMAN"))
