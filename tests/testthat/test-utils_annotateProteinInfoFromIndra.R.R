@@ -77,6 +77,9 @@ test_that(".callIsTranscriptionFactorApi works correctly", {
 })
 
 test_that(".callGroundEntitiesFromGildaApi returns aligned (ns, id, name) per input (live)", {
+    skip_on_bioc()
+    skip_on_ci()
+    skip_if_offline()
     text_inputs <- list("EGFR", "CHEK1")
     result <- .callGroundEntitiesFromGildaApi(text_inputs, keep_only = "HGNC")
     expect_type(result, "list")

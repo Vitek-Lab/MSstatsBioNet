@@ -7,8 +7,12 @@
 #' @keywords internal
 #' @noRd
 .validateGetSubnetworkFromIndraInput <- function(input, protein_level_data, sources_filter, force_include_other) {
-    if (!"EntityId" %in% colnames(input) || !"EntityNamespace" %in% colnames(input)) {
-        stop("Invalid Input Error: Input must contain columns named 'EntityId' and 'EntityNamespace'.")
+    required_cols <- c("Protein", "log2FC", "adj.pvalue",
+                       "EntityNamespace", "EntityId", "EntityName")
+    missing_cols <- setdiff(required_cols, colnames(input))
+    if (length(missing_cols) > 0) {
+        stop("Invalid Input Error: input is missing required column(s): ",
+             paste(missing_cols, collapse = ", "), ".")
     }
     ids_split <- unlist(strsplit(as.character(input$EntityId),        ";"), use.names = FALSE)
     nss_split <- unlist(strsplit(as.character(input$EntityNamespace), ";"), use.names = FALSE)

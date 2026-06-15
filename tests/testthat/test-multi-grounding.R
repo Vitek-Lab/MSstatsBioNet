@@ -123,10 +123,11 @@ test_that(".validateGetSubnetworkFromIndraInput counts unique (ns, id) pairs AFT
     # 200 rows × 2 pairs each = 400 unique pairs → fails the < 400 guard
     input_over <- data.frame(
         Protein         = paste0("P", 1:200),
-        EntityNamespace = rep("HGNC;CHEBI", 200),
-        EntityId        = paste0(1:200, ";C", 1:200),
         log2FC          = rep(1.0, 200),
         adj.pvalue      = rep(0.01, 200),
+        EntityNamespace = rep("HGNC;CHEBI", 200),
+        EntityId        = paste0(1:200, ";C", 1:200),
+        EntityName      = paste0("name", 1:200, ";cname", 1:200),
         stringsAsFactors = FALSE
     )
     expect_error(
@@ -140,10 +141,11 @@ test_that(".validateGetSubnetworkFromIndraInput counts unique (ns, id) pairs AFT
     # 200 rows × 1 pair each = 200 unique pairs → passes
     input_under <- data.frame(
         Protein         = paste0("P", 1:200),
-        EntityNamespace = rep("HGNC", 200),
-        EntityId        = as.character(1:200),
         log2FC          = rep(1.0, 200),
         adj.pvalue      = rep(0.01, 200),
+        EntityNamespace = rep("HGNC", 200),
+        EntityId        = as.character(1:200),
+        EntityName      = paste0("name", 1:200),
         stringsAsFactors = FALSE
     )
     expect_silent(

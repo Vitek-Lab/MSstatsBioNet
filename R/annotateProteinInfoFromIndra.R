@@ -62,7 +62,8 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
                 stop("Input dataframe must contain 'Protein' column.")
         }
         allowed <- c("Uniprot", "Uniprot_Mnemonic", "Hgnc_Name", "Metabolite")
-        if (length(proteinIdType) != 1 || !proteinIdType %in% allowed) {
+        if (length(proteinIdType) != 1 || is.na(proteinIdType) ||
+            !(proteinIdType %in% allowed)) {
                 stop("Invalid proteinIdType '", proteinIdType, "'. ",
                      "Must be one of: ", paste(allowed, collapse = ", "), ".")
         }
