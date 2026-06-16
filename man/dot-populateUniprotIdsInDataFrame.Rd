@@ -9,12 +9,11 @@
 \arguments{
 \item{df}{A data frame containing protein information.}
 
-\item{proteinIdType}{A character string specifying the type of protein ID. 
-It can be either "Uniprot" or "Uniprot_Mnemonic".}
+\item{proteinIdType}{A character string specifying the type of protein ID.}
 }
 \value{
 A data frame with populated Uniprot IDs.
 }
 \description{
-This function populates the Uniprot IDs in the data frame based on the protein ID type.
+Populate Uniprot IDs in Data Frame
 }

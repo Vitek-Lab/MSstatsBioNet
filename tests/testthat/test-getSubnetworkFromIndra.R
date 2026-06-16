@@ -2,7 +2,7 @@ test_that("getSubnetworkFromIndra works correctly", {
     input <- data.table::fread(
         system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
     )
-    local_mocked_bindings(.callIndraCogexApi = function(x,y) {
+    local_mocked_bindings(.callIndraCogexApi = function(ns, ids, fio) {
         return(readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet")))
     })
     suppressWarnings(subnetwork <- getSubnetworkFromIndra(input, statement_types = c("Activation", "Phosphorylation")))
@@ -14,7 +14,7 @@ test_that("getSubnetworkFromIndra with different statement type works correctly"
     input <- data.table::fread(
         system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
     )
-    local_mocked_bindings(.callIndraCogexApi = function(x,y) {
+    local_mocked_bindings(.callIndraCogexApi = function(ns, ids, fio) {
         return(readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet")))
     })
     suppressWarnings(
@@ -26,10 +26,13 @@ test_that("getSubnetworkFromIndra with different statement type works correctly"
 
 test_that("Exception is thrown for 400+ proteins in dataframe", {
     input_400 <- data.frame(
-        Protein = paste0("Protein", 1:400),
-        HgncId = paste0("HGNCID", 1:400),
-        issue = NA,
-        adj.pvalue = 0.05
+        Protein         = paste0("Protein", 1:400),
+        log2FC          = rep(1.0, 400),
+        adj.pvalue      = rep(0.05, 400),
+        EntityNamespace = rep("HGNC", 400),
+        EntityId        = paste0("HGNCID", 1:400),
+        EntityName      = paste0("HGNCNAME", 1:400),
+        issue           = NA
     )
     expect_error(
         getSubnetworkFromIndra(input_400),
@@ -38,13 +41,13 @@ test_that("Exception is thrown for 400+ proteins in dataframe", {
 })
 
 test_that("Exception is thrown for missing columns in input", {
-    input_missing_hgnc_id <- data.frame(
+    input_missing_cols <- data.frame(
         Protein = paste0("Protein", 1:10),
         issue = NA,
         adj.pvalue = 0.05
     )
     expect_error(
-        getSubnetworkFromIndra(input_missing_hgnc_id),
-        "Invalid Input Error: Input must contain a column named 'HgncId'."
+        getSubnetworkFromIndra(input_missing_cols),
+        "Invalid Input Error: input is missing required column\\(s\\): log2FC, EntityNamespace, EntityId, EntityName\\."
     )
 })

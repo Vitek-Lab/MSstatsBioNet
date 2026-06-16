@@ -3,10 +3,13 @@
 #' Using differential abundance results from MSstats, this function retrieves
 #' a subnetwork of protein interactions from INDRA database.
 #'
-#' @param input output of \code{\link[MSstats]{groupComparison}} function's 
-#' comparisionResult table, which contains a list of proteins and their 
-#' corresponding p-values, logFCs, along with additional HGNC ID and HGNC 
-#' name columns
+#' @param input output of \code{\link[MSstats]{groupComparison}} function's
+#' comparisionResult table, annotated by
+#' \code{\link{annotateProteinInfoFromIndra}}. Must contain \code{Protein},
+#' \code{EntityNamespace}, and \code{EntityId} columns (and typically also
+#' \code{EntityName}, \code{log2FC}, \code{adj.pvalue}). When an analyte
+#' grounds to multiple candidates the three \code{Entity*} columns are
+#' semicolon-joined and positionally aligned.
 #' @param protein_level_data output of the \code{\link[MSstats]{dataProcess}} 
 #' function's ProteinLevelData table, which contains a list of proteins and 
 #' their corresponding abundances.  Used for annotating correlation information 
@@ -72,7 +75,7 @@ getSubnetworkFromIndra <- function(input,
     direction = match.arg(direction)
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other, include_infinite_fc, direction)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
-    res <- .callIndraCogexApi(input$HgncId, force_include_other)
+    res <- .callIndraCogexApi(input$EntityNamespace, input$EntityId, force_include_other)
     res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)
     edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)

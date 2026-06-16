@@ -238,34 +238,34 @@
         rep("#D3D3D3", nrow(nodes))
     }
     
-    label_col <- if (display_label_type == "hgncName" &&
-                     "hgncName" %in% names(nodes)) "hgncName" else "id"
-    
+    label_col <- if (display_label_type == "entityName" &&
+                     "entityName" %in% names(nodes)) "entityName" else "id"
+
     has_ptm_sites <- if ("Site" %in% names(nodes)) {
         unique(nodes$id[!is.na(nodes$Site) & trimws(nodes$Site) != ""])
     } else {
         character(0)
     }
-    
+
     elements        <- list()
     emitted_prots   <- character(0)
     emitted_cpds    <- character(0)
     emitted_ptm_n   <- character(0)
     emitted_ptm_e   <- character(0)
-    
+
     for (i in seq_len(nrow(nodes))) {
         row       <- nodes[i, , drop = FALSE]
         color     <- node_colors[i]
         has_site  <- "Site" %in% names(nodes) &&
             !is.na(row$Site) && trimws(row$Site) != ""
-        
-        display_label <- if (label_col == "hgncName" &&
-                             !is.na(row$hgncName) && row$hgncName != "")
-            row$hgncName else row$id
-        
+
+        display_label <- if (label_col == "entityName" &&
+                             !is.na(row$entityName) && row$entityName != "")
+            row$entityName else row$id
+
         needs_compound <- row$id %in% has_ptm_sites
         compound_id    <- paste0(row$id, "__compound__")
-        
+
         # Compound container
         if (needs_compound && !(compound_id %in% emitted_cpds)) {
             elements <- c(elements, list(

@@ -4,14 +4,17 @@
 \alias{.populateKinaseInfoInDataFrame}
 \title{Populate Kinase Info in Data Frame}
 \usage{
-.populateKinaseInfoInDataFrame(df)
+.populateKinaseInfoInDataFrame(df, proteinIdType)
 }
 \arguments{
 \item{df}{A data frame containing protein information.}
+
+\item{proteinIdType}{The proteinIdType supplied by the caller. Gene-only
+flags are \code{NA} (no API call) when this is \code{"Metabolite"}.}
 }
 \value{
 A data frame with populated kinase information.
 }
 \description{
-This function populates the kinase information in the data frame based on the HGNC names.
+Populate Kinase Info in Data Frame
 }

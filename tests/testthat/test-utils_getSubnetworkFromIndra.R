@@ -181,7 +181,9 @@ describe(".filterGetSubnetworkFromIndraInput", {
     })
     
     test_that(".filterGetSubnetworkFromIndraInput respects force_include_other", {
-        input <- cbind(.make_test_input(), HgncId = c("1", "2", "3", "4"))
+        input <- cbind(.make_test_input(),
+                       EntityNamespace = rep("HGNC", 4),
+                       EntityId = c("1", "2", "3", "4"))
         result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
             input, pvalueCutoff = 0.001, logfc_cutoff = 10,
             force_include_other = c("HGNC:1"), include_infinite_fc = FALSE, direction = "both"
@@ -220,7 +222,8 @@ describe(".filterGetSubnetworkFromIndraInput", {
                 adj.pvalue = c(0.01, 0.01, 0),
                 stringsAsFactors = FALSE
             ),
-            HgncId = c("1", "2", "4")
+            EntityNamespace = rep("HGNC", 3),
+            EntityId = c("1", "2", "4")
         )
         result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
             input, pvalueCutoff = 0.05, logfc_cutoff = NULL,

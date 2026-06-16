@@ -22,10 +22,13 @@ getSubnetworkFromIndra(
 )
 }
 \arguments{
-\item{input}{output of \code{\link[MSstats]{groupComparison}} function's 
-comparisionResult table, which contains a list of proteins and their 
-corresponding p-values, logFCs, along with additional HGNC ID and HGNC 
-name columns}
+\item{input}{output of \code{\link[MSstats]{groupComparison}} function's
+comparisionResult table, annotated by
+\code{\link{annotateProteinInfoFromIndra}}. Must contain \code{Protein},
+\code{EntityNamespace}, and \code{EntityId} columns (and typically also
+\code{EntityName}, \code{log2FC}, \code{adj.pvalue}). When an analyte
+grounds to multiple candidates the three \code{Entity*} columns are
+semicolon-joined and positionally aligned.}
 
 \item{protein_level_data}{output of the \code{\link[MSstats]{dataProcess}} 
 function's ProteinLevelData table, which contains a list of proteins and 

@@ -7,28 +7,47 @@
 annotateProteinInfoFromIndra(df, proteinIdType)
 }
 \arguments{
-\item{df}{output of \code{\link[MSstats]{groupComparison}} function's 
-comparisonResult table, which contains a list of proteins and their 
-corresponding p-values, logFCs, along with additional HGNC ID and HGNC 
-name columns}
+\item{df}{output of \code{\link[MSstats]{groupComparison}} function's
+comparisonResult table. Must contain a \code{Protein} column whose
+values are interpreted according to \code{proteinIdType}.}
 
-\item{proteinIdType}{A character string specifying the type of protein ID. 
-It can be either "Uniprot", "Uniprot_Mnemonic", or "Hgnc_Name".}
+\item{proteinIdType}{A character string specifying the type of analyte
+identifier in the \code{Protein} column. One of
+\code{"Uniprot"}, \code{"Uniprot_Mnemonic"}, \code{"Hgnc_Name"}, or
+\code{"Metabolite"}. The \code{"Metabolite"} value treats inputs as
+metabolite names and grounds them through Gilda, keeping whatever
+namespace Gilda returns (CHEBI / PUBCHEM / CHEMBL / ...).}
 }
 \value{
 A data frame with the following columns:
 \describe{
-  \item{Protein}{Character. The original protein identifier.}
-  \item{UniprotID}{Character. The Uniprot ID of the protein.}
-  \item{HgncID}{Character. The HGNC ID of the protein.}
-  \item{HgncName}{Character. The HGNC name of the protein.}
-  \item{IsTranscriptionFactor}{Logical. Indicates if the protein is a transcription factor.}
-  \item{IsKinase}{Logical. Indicates if the protein is a kinase.}
-  \item{IsPhosphatase}{Logical. Indicates if the protein is a phosphatase.}
+  \item{Protein}{Character. The original identifier from the input.}
+  \item{GlobalProtein}{Character. The input identifier without the PTM
+      site suffix (typically \code{_<amino acid><site number>}, e.g.
+      \code{_S148}) stripped, used as the grounding key.}
+  \item{UniprotId}{Character. The Uniprot ID of the protein, or
+      \code{NA} for \code{"Hgnc_Name"} and \code{"Metabolite"} inputs.}
+  \item{EntityNamespace}{Character. The grounding namespace
+      (e.g. \code{"HGNC"}, \code{"CHEBI"}). When a single input grounds
+      to multiple candidates, namespaces are semicolon-joined and
+      positionally aligned with \code{EntityId} and \code{EntityName}.}
+  \item{EntityId}{Character. The bare grounding identifier within its
+      namespace (e.g. \code{"1097"} for HGNC, \code{"28748"} for
+      CHEBI). Semicolon-joined when multi-grounded.}
+  \item{EntityName}{Character. The canonical display name from the
+      grounding source. Semicolon-joined when multi-grounded.}
+  \item{IsTranscriptionFactor}{Logical. \code{NA} for
+      \code{proteinIdType == "Metabolite"}.}
+  \item{IsKinase}{Logical. \code{NA} for
+      \code{proteinIdType == "Metabolite"}.}
+  \item{IsPhosphatase}{Logical. \code{NA} for
+      \code{proteinIdType == "Metabolite"}.}
 }
 }
 \description{
-This function annotates a data frame with protein information from Indra.
+This function standardizes entity identifiers from protein, compound, or
+gene inputs to a unified namespace using ID conversion from INDRA cogex
+or Gilda grounding.
 }
 \examples{
 df <- data.frame(Protein = c("CLH1_HUMAN"))

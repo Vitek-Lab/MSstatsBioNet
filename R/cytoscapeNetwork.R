@@ -7,13 +7,14 @@
 #' overlaps are surfaced as hover tooltips.
 #'
 #' @param nodes       Data frame with at minimum an \code{id} column.  Optional
-#'                    columns: \code{logFC} (numeric), \code{hgncName}
-#'                    (character), \code{Site} (character, underscore-separated
-#'                    PTM site list).
+#'                    columns: \code{logFC} (numeric), \code{entityName}
+#'                    (character; may be semicolon-joined for multi-grounded
+#'                    rows), \code{entityId} (character), \code{Site}
+#'                    (character, underscore-separated PTM site list).
 #' @param edges       Data frame with columns \code{source}, \code{target},
 #'                    \code{interaction}.  Optional: \code{site},
 #'                    \code{evidenceLink}.
-#' @param displayLabelType \code{"id"} (default) or \code{"hgncName"} –
+#' @param displayLabelType \code{"id"} (default) or \code{"entityName"} –
 #'                    controls which column is used as the visible node label.
 #' @param nodeFontSize Font size (px) for node labels.  Default \code{12}.
 #' @param layoutOptions Named list of dagre layout options to override the
