@@ -22,8 +22,8 @@ namespace Gilda returns (CHEBI / PUBCHEM / CHEMBL / ...).}
 A data frame with the following columns:
 \describe{
   \item{Protein}{Character. The original identifier from the input.}
-  \item{GlobalProtein}{Character. The input identifier with the PTM
-      site suffix (typically \code{<amino acid><site number>}, e.g.
+  \item{GlobalProtein}{Character. The input identifier without the PTM
+      site suffix (typically \code{_<amino acid><site number>}, e.g.
       \code{_S148}) stripped, used as the grounding key.}
   \item{UniprotId}{Character. The Uniprot ID of the protein, or
       \code{NA} for \code{"Hgnc_Name"} and \code{"Metabolite"} inputs.}
