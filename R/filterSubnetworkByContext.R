@@ -48,9 +48,10 @@
 #'     contains tag counts (integer) or cosine similarities (numeric) depending
 #'     on the method used.}
 #'
-#' @importFrom text2vec itoken word_tokenizer create_vocabulary prune_vocabulary
-#'   vocab_vectorizer create_dtm TfIdf fit_transform
+#' @importFrom text2vec itoken word_tokenizer create_vocabulary prune_vocabulary vocab_vectorizer create_dtm TfIdf fit_transform
 #' @importFrom stopwords stopwords
+#' @note \strong{Beta feature:} This function is experimental and the API may
+#'   change without notice in future versions.
 #' @export
 filterSubnetworkByContext <- function(nodes,
                                       edges,
@@ -196,8 +197,7 @@ filterSubnetworkByContext <- function(nodes,
 #'   as \code{abstracts}.
 #' @keywords internal
 #' @noRd
-#' @importFrom text2vec itoken word_tokenizer create_vocabulary prune_vocabulary
-#'   vocab_vectorizer create_dtm TfIdf fit_transform
+#' @importFrom text2vec itoken word_tokenizer create_vocabulary prune_vocabulary vocab_vectorizer create_dtm TfIdf fit_transform
 #' @importFrom stopwords stopwords
 .score_by_cosine <- function(query, abstracts) {
     all_texts  <- c(query, abstracts)
