@@ -91,7 +91,7 @@ The procedure is:
 }
 }
 \note{
-**Beta feature:** This function is experimental and the API may
+\strong{Beta feature:} This function is experimental and the API may
   change without notice in future versions.
 }
 \examples{

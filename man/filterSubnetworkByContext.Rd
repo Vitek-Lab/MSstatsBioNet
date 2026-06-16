@@ -69,6 +69,6 @@ Two scoring methods are available, controlled by the \code{method} argument:
 }
 }
 \note{
-**Beta feature:** This function is experimental and the API may
+\strong{Beta feature:} This function is experimental and the API may
   change without notice in future versions.
 }

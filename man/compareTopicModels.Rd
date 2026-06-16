@@ -89,7 +89,7 @@ The expensive, network-bound steps (evidence extraction, abstract fetching,
 matrix construction) run once; only the NMF is repeated per seed.
 }
 \note{
-**Beta feature:** This function is experimental and the API may
+\strong{Beta feature:} This function is experimental and the API may
   change without notice in future versions.
 }
 \examples{

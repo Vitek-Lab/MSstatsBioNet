@@ -73,7 +73,7 @@ variability reported reflects \emph{data} resampling rather than random
 initialization.
 }
 \note{
-**Beta feature:** This function is experimental and the API may
+\strong{Beta feature:} This function is experimental and the API may
   change without notice in future versions.
 }
 \examples{

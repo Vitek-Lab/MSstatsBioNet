@@ -50,7 +50,7 @@
 #'
 #' @importFrom text2vec itoken word_tokenizer create_vocabulary prune_vocabulary vocab_vectorizer create_dtm TfIdf fit_transform
 #' @importFrom stopwords stopwords
-#' @note **Beta feature:** This function is experimental and the API may
+#' @note \strong{Beta feature:} This function is experimental and the API may
 #'   change without notice in future versions.
 #' @export
 filterSubnetworkByContext <- function(nodes,
