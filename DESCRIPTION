@@ -46,4 +46,4 @@ Encoding: UTF-8
 URL: http://msstats.org, https://vitek-lab.github.io/MSstatsBioNet/
 BugReports: https://groups.google.com/forum/#!forum/msstats
 Config/testthat/edition: 3
-RoxygenNote: 7.3.3
+Config/roxygen2/version: 8.0.0

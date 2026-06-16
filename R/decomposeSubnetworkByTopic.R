@@ -2,7 +2,7 @@
 #'
 #' Takes a subnetwork (the output of \code{\link{getSubnetworkFromIndra}}) and
 #' splits it into a list of smaller, topic-specific subnetworks discovered with
-#' unsupervised joint non-negative matrix factorization (NMF).
+#' unsupervised non-negative matrix factorization (NMF).
 #'
 #' The procedure is:
 #' \enumerate{
@@ -13,10 +13,16 @@
 #'     \code{X_text} (papers x words, term counts from the abstracts) and
 #'     \code{X_edges} (papers x unique \code{source_target_interaction}
 #'     combinations, evidence-sentence counts).
-#'   \item A joint NMF learns a single shared basis matrix \code{W}
-#'     (papers x topics) such that \eqn{X_{text} \approx W H_{text}} and
-#'     \eqn{X_{edges} \approx W H_{edges}}. Sharing \code{W} ties each learned
-#'     topic to both a set of words and a set of edges.
+#'   \item NMF learns a basis matrix \code{W} (papers x topics). When
+#'     \code{include_ppi = TRUE} (the default) a \emph{joint} NMF learns a
+#'     single shared \code{W} such that \eqn{X_{text} \approx W H_{text}} and
+#'     \eqn{X_{edges} \approx W H_{edges}}, tying each learned topic to both a
+#'     set of words and a set of edges. When \code{include_ppi = FALSE} the
+#'     factorization uses only \code{X_text} (\eqn{X_{text} \approx W H_{text}});
+#'     the PPI evidence is excluded from the modeling and edge-topic loadings
+#'     are instead derived afterwards by folding the edge counts onto the
+#'     text-learned topics (\eqn{H_{edges} = W^\top X_{edges}}). This lets you
+#'     compare topic structure with and without the PPI view.
 #'   \item Each topic becomes its own subnetwork: an edge is included in a
 #'     topic when that topic carries at least \code{edge_topic_cutoff} of the
 #'     edge's loading (soft, overlapping assignment), and nodes are restricted
@@ -37,6 +43,11 @@
 #'   Default 200.
 #' @param tol relative-change tolerance for NMF early stopping. Default 1e-4.
 #' @param seed random seed for NMF initialization. Default 1.
+#' @param include_ppi logical; if \code{TRUE} (default) the PPI/edge matrix is
+#'   factorized jointly with the text matrix via a shared basis. If
+#'   \code{FALSE}, NMF is run on the paper-word matrix only and edge-topic
+#'   loadings are derived afterwards by folding edge counts onto the
+#'   text-learned topics, so the PPIs do not influence the topics themselves.
 #'
 #' @return A list of length \code{n_topics}, named \code{topic_1} ...
 #'   \code{topic_k}. Each element is a topic-specific subnetwork: a list with
@@ -74,48 +85,33 @@ decomposeSubnetworkByTopic <- function(subnetwork,
                                        min_term_count = 2,
                                        max_iter = 200,
                                        tol = 1e-4,
-                                       seed = 1) {
+                                       seed = 1,
+                                       include_ppi = TRUE) {
 
     .validateDecomposeSubnetworkByTopicInput(subnetwork, n_topics,
-                                             edge_topic_cutoff)
-    nodes <- subnetwork$nodes
-    edges <- subnetwork$edges
-    n_topics <- as.integer(n_topics)
+                                             edge_topic_cutoff, include_ppi)
 
-    # 1. Evidence (paper <-> edge links) for every edge.
-    evidence <- .extract_evidence_text(edges)
-    evidence <- evidence[!is.na(evidence$pmid) & nchar(evidence$pmid) > 0, ]
-    if (nrow(evidence) == 0) {
-        stop("No evidence with PMIDs was found for any edge; ",
-             "cannot decompose into topics.")
+    # 1-3. Build the shared paper-by-word and paper-by-edge matrices.
+    mats <- .buildTopicMatrices(subnetwork, n_topics, min_term_count)
+    nodes     <- mats$nodes
+    edges     <- mats$edges
+    pmids     <- mats$pmids
+    edge_keys <- mats$edge_keys
+    X_text    <- mats$X_text
+    X_edges   <- mats$X_edges
+    n_topics  <- mats$n_topics
+
+    # 4. NMF: jointly over text + PPIs, or over text only.
+    if (include_ppi) {
+        model <- .jointNMF(X_text, X_edges, k = n_topics,
+                           max_iter = max_iter, tol = tol, seed = seed)
+    } else {
+        model <- .textNMF(X_text, k = n_topics,
+                          max_iter = max_iter, tol = tol, seed = seed)
+        # Edges are excluded from the modeling, but still need topic loadings:
+        # fold the edge counts onto the text-learned topics.
+        model$H_edges <- .edgeLoadingsFromTopics(model$W, X_edges)
     }
-
-    pmids <- unique(evidence$pmid)
-    edge_keys <- unique(.edgeKey(evidence$source, evidence$target,
-                                 evidence$interaction))
-
-    if (length(pmids) < n_topics) {
-        warning(sprintf(
-            "Only %d papers available; reducing n_topics from %d to %d.",
-            length(pmids), n_topics, length(pmids)
-        ))
-        n_topics <- length(pmids)
-    }
-
-    # 2. X_text (papers x words) from PubMed abstracts.
-    abstract_list <- .fetch_clean_abstracts_xml(pmids)
-    abstracts <- vapply(pmids, function(p) {
-        a <- abstract_list[[p]]
-        if (is.null(a)) "" else a
-    }, character(1))
-    X_text <- .buildTextMatrix(pmids, abstracts, min_term_count)
-
-    # 3. X_edges (papers x source_target_interaction) of evidence counts.
-    X_edges <- .buildEdgeMatrix(evidence, pmids, edge_keys)
-
-    # 4. Joint NMF with a shared W.
-    model <- .jointNMF(X_text, X_edges, k = n_topics,
-                       max_iter = max_iter, tol = tol, seed = seed)
 
     # 5. One subnetwork per topic (soft / overlapping edge assignment).
     shares <- .edgeTopicShares(model$H_edges)            # topics x edges
@@ -147,14 +143,15 @@ decomposeSubnetworkByTopic <- function(subnetwork,
     names(topics) <- paste0("topic_", seq_len(n_topics))
 
     attr(topics, "nmf") <- list(
-        W         = model$W,
-        H_text    = model$H_text,
-        H_edges   = model$H_edges,
-        terms     = colnames(X_text),
-        edge_keys = edge_keys,
-        pmids     = pmids,
-        objective = model$objective,
-        n_iter    = model$n_iter
+        W           = model$W,
+        H_text      = model$H_text,
+        H_edges     = model$H_edges,
+        terms       = colnames(X_text),
+        edge_keys   = edge_keys,
+        pmids       = pmids,
+        objective   = model$objective,
+        n_iter      = model$n_iter,
+        include_ppi = include_ppi
     )
     return(topics)
 }
