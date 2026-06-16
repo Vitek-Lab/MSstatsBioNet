@@ -169,10 +169,18 @@ licenses.
 
 - [`annotateProteinInfoFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.md)
   : Annotate Protein Information from Indra
+- [`bootstrapTopicModels()`](https://vitek-lab.github.io/MSstatsBioNet/reference/bootstrapTopicModels.md)
+  : Bootstrap the topic decomposition to find each topic's robust top
+  words
+- [`compareTopicModels()`](https://vitek-lab.github.io/MSstatsBioNet/reference/compareTopicModels.md)
+  : Test whether including PPIs changes topic structure beyond random
+  chance
 - [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
   : Render a Cytoscape network visualisation
 - [`cytoscapeNetworkOutput()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.md)
   : Shiny output binding for cytoscapeNetwork
+- [`decomposeSubnetworkByTopic()`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.md)
+  : Decompose a subnetwork into topic-specific subnetworks via joint NMF
 - [`deleteEdgeFromNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.md)
   : Delete an edge from a network edges data frame
 - [`.populateEntityInformationInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationInDataFrame.md)

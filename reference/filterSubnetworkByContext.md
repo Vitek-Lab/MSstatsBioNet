@@ -86,3 +86,8 @@ Two scoring methods are available, controlled by the `method` argument:
   to a decimal threshold - e.g. `cutoff = 0.10`. `query` should be a
   single character string; expand it with synonyms and related terms for
   better recall under exact token matching.
+
+## Note
+
+**Beta feature:** This function is experimental and the API may change
+without notice in future versions.

@@ -10,8 +10,11 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/index.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/news/index.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/bootstrapTopicModels.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/compareTopicModels.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationInDataFrame.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationWithGilda.html</loc></url>
