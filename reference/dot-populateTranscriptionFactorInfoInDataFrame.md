@@ -1,12 +1,11 @@
 # Populate Transcription Factor Info in Data Frame
 
-This function populates the transcription factor information in the data
-frame based on the HGNC names.
+Populate Transcription Factor Info in Data Frame
 
 ## Usage
 
 ``` r
-.populateTranscriptionFactorInfoInDataFrame(df)
+.populateTranscriptionFactorInfoInDataFrame(df, proteinIdType)
 ```
 
 ## Arguments
@@ -14,6 +13,11 @@ frame based on the HGNC names.
 - df:
 
   A data frame containing protein information.
+
+- proteinIdType:
+
+  The proteinIdType supplied by the caller. Gene-only flags are `NA` (no
+  API call) when this is `"Metabolite"`.
 
 ## Value
 

@@ -74,22 +74,22 @@ head(annotated_df)
 #> 4:        P00533_T693 t0 vs t1 -0.0233444 0.17724459     9 0.898113182
 #> 5:   P00533_T693_S695 t0 vs t1 -0.1659957 0.15000754     9 0.297173769
 #> 6:       P00533_Y1110 t0 vs t1  0.2106324 0.09279031     9 0.049364434
-#>    adj.pvalue  issue GlobalProtein UniprotId HgncId HgncName
-#>         <num> <lgcl>        <char>    <char> <char>   <char>
-#> 1: 0.28024590     NA        P00533    P00533   3236     EGFR
-#> 2: 0.06863598     NA        P00533    P00533   3236     EGFR
-#> 3: 0.57907374     NA        P00533    P00533   3236     EGFR
-#> 4: 0.96083634     NA        P00533    P00533   3236     EGFR
-#> 5: 0.58809108     NA        P00533    P00533   3236     EGFR
-#> 6: 0.25258914     NA        P00533    P00533   3236     EGFR
-#>    IsTranscriptionFactor IsKinase IsPhosphatase
-#>                   <lgcl>   <lgcl>        <lgcl>
-#> 1:                 FALSE     TRUE         FALSE
-#> 2:                 FALSE     TRUE         FALSE
-#> 3:                 FALSE     TRUE         FALSE
-#> 4:                 FALSE     TRUE         FALSE
-#> 5:                 FALSE     TRUE         FALSE
-#> 6:                 FALSE     TRUE         FALSE
+#>    adj.pvalue  issue GlobalProtein UniprotId EntityNamespace EntityId
+#>         <num> <lgcl>        <char>    <char>          <char>   <char>
+#> 1: 0.28024590     NA        P00533    P00533            HGNC     3236
+#> 2: 0.06863598     NA        P00533    P00533            HGNC     3236
+#> 3: 0.57907374     NA        P00533    P00533            HGNC     3236
+#> 4: 0.96083634     NA        P00533    P00533            HGNC     3236
+#> 5: 0.58809108     NA        P00533    P00533            HGNC     3236
+#> 6: 0.25258914     NA        P00533    P00533            HGNC     3236
+#>    EntityName IsTranscriptionFactor IsKinase IsPhosphatase
+#>        <char>                <lgcl>   <lgcl>        <lgcl>
+#> 1:       EGFR                 FALSE     TRUE         FALSE
+#> 2:       EGFR                 FALSE     TRUE         FALSE
+#> 3:       EGFR                 FALSE     TRUE         FALSE
+#> 4:       EGFR                 FALSE     TRUE         FALSE
+#> 5:       EGFR                 FALSE     TRUE         FALSE
+#> 6:       EGFR                 FALSE     TRUE         FALSE
 ```
 
 ### Subnetwork Query
@@ -108,14 +108,14 @@ subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statemen
 #>         package or utilizing the results based on this package.
 #>         See the LICENSE file for more details.
 head(subnetwork$nodes)
-#>        id hgncName        Site      logFC adj.pvalue
-#>    <char>   <char>      <char>      <num>      <num>
-#> 1: P00533     EGFR S1039_S1042 -0.3200363 0.28024590
-#> 2: P00533     EGFR       S1064  0.3566531 0.06863598
-#> 3: P00533     EGFR   S991_S995 -0.1229037 0.57907374
-#> 4: P00533     EGFR        T693 -0.0233444 0.96083634
-#> 5: P00533     EGFR   T693_S695 -0.1659957 0.58809108
-#> 6: P00533     EGFR       Y1110  0.2106324 0.25258914
+#>        id entityName entityId        Site      logFC adj.pvalue
+#>    <char>     <char>   <char>      <char>      <num>      <num>
+#> 1: P00533       EGFR     3236 S1039_S1042 -0.3200363 0.28024590
+#> 2: P00533       EGFR     3236       S1064  0.3566531 0.06863598
+#> 3: P00533       EGFR     3236   S991_S995 -0.1229037 0.57907374
+#> 4: P00533       EGFR     3236        T693 -0.0233444 0.96083634
+#> 5: P00533       EGFR     3236   T693_S695 -0.1659957 0.58809108
+#> 6: P00533       EGFR     3236       Y1110  0.2106324 0.25258914
 head(subnetwork$edges)
 #>   source target site     interaction evidenceCount paperCount
 #> 1 Q13480 P00533 <NA> Phosphorylation             2          1
@@ -153,7 +153,7 @@ Visualize the subnetwork on your browser
 
 ``` r
 
-previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "hgncName")
+previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "entityName")
 ```
 
 ## Session info
@@ -189,9 +189,9 @@ sessionInfo()
 #>  [4] farver_2.1.2          S7_0.2.2              bitops_1.0-9         
 #>  [7] fastmap_1.2.0         lazyeval_0.2.3        XML_3.99-0.23        
 #> [10] digest_0.6.39         lifecycle_1.0.5       survival_3.8-6       
-#> [13] statmod_1.5.1         magrittr_2.0.5        compiler_4.6.0       
+#> [13] statmod_1.5.2         magrittr_2.0.5        compiler_4.6.0       
 #> [16] r2r_0.1.2             rlang_1.2.0           sass_0.4.10          
-#> [19] tools_4.6.0           yaml_2.3.12           data.table_1.18.2.1  
+#> [19] tools_4.6.0           yaml_2.3.12           data.table_1.18.4    
 #> [22] knitr_1.51            stopwords_2.3         htmlwidgets_1.6.4    
 #> [25] curl_7.1.0            MSstatsConvert_1.22.0 marray_1.90.0        
 #> [28] xml2_1.5.2            RColorBrewer_1.1-3    KernSmooth_2.23-26   
@@ -205,7 +205,7 @@ sessionInfo()
 #> [52] parallel_4.6.0        BiocManager_1.30.27   vctrs_0.7.3          
 #> [55] boot_1.3-32           Matrix_1.7-5          jsonlite_2.0.0       
 #> [58] bookdown_0.46         ggrepel_0.9.8         systemfonts_1.3.2    
-#> [61] limma_3.68.0          plotly_4.12.0         lgr_0.5.2            
+#> [61] limma_3.68.4          plotly_4.12.0         lgr_0.5.2            
 #> [64] jquerylib_0.1.4       tidyr_1.3.2           glue_1.8.1           
 #> [67] nloptr_2.2.1          pkgdown_2.2.0         gtable_0.3.6         
 #> [70] lme4_2.0-1            mlapi_0.1.1           tibble_3.3.1         
@@ -213,8 +213,8 @@ sessionInfo()
 #> [76] float_0.3-3           rsparse_0.5.3         R6_2.6.1             
 #> [79] textshaping_1.0.5     Rdpack_2.6.6          evaluate_1.0.5       
 #> [82] lattice_0.22-9        rentrez_1.2.4         rbibutils_2.4.1      
-#> [85] backports_1.5.1       RhpcBLASctl_0.23-42   bslib_0.10.0         
+#> [85] backports_1.5.1       RhpcBLASctl_0.23-42   bslib_0.11.0         
 #> [88] text2vec_0.6.6        Rcpp_1.1.1-1.1        nlme_3.1-169         
-#> [91] checkmate_2.3.4       xfun_0.57             fs_2.1.0             
+#> [91] checkmate_2.3.4       xfun_0.58             fs_2.1.0             
 #> [94] pkgconfig_2.0.3
 ```

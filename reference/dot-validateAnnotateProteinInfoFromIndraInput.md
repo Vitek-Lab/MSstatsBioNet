@@ -1,12 +1,11 @@
 # Validate Annotate Protein Info Input
 
-This function validates the input data frame for the
-annotateProteinInfoFromIndra function.
+Validate Annotate Protein Info Input
 
 ## Usage
 
 ``` r
-.validateAnnotateProteinInfoFromIndraInput(df)
+.validateAnnotateProteinInfoFromIndraInput(df, proteinIdType)
 ```
 
 ## Arguments
@@ -14,6 +13,10 @@ annotateProteinInfoFromIndra function.
 - df:
 
   A data frame containing protein information.
+
+- proteinIdType:
+
+  The proteinIdType supplied by the caller.
 
 ## Value
 

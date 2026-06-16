@@ -30,9 +30,12 @@ getSubnetworkFromIndra(
 
   output of
   [`groupComparison`](https://rdrr.io/pkg/MSstats/man/groupComparison.html)
-  function's comparisionResult table, which contains a list of proteins
-  and their corresponding p-values, logFCs, along with additional HGNC
-  ID and HGNC name columns
+  function's comparisionResult table, annotated by
+  [`annotateProteinInfoFromIndra`](https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.md).
+  Must contain `Protein`, `EntityNamespace`, and `EntityId` columns (and
+  typically also `EntityName`, `log2FC`, `adj.pvalue`). When an analyte
+  grounds to multiple candidates the three `Entity*` columns are
+  semicolon-joined and positionally aligned.
 
 - protein_level_data:
 
@@ -124,14 +127,14 @@ subnetwork <- getSubnetworkFromIndra(input)
 #>         package or utilizing the results based on this package.
 #>         See the LICENSE file for more details.
 head(subnetwork$nodes)
-#>        id hgncName   Site     logFC  adj.pvalue
-#>    <char>   <char> <char>     <num>       <num>
-#> 1: O00217   NDUFS8   <NA> 2.0285031 0.013821932
-#> 2: O60313     OPA1   <NA> 0.9299641 0.019584180
-#> 3: O75306   NDUFS2   <NA> 2.4745040 0.004457034
-#> 4: P05023   ATP1A1   <NA> 1.8391155 0.003251073
-#> 5: P05067      APP   <NA> 0.7360012 0.020306662
-#> 6: P05090     APOD   <NA> 0.5683951 0.013715050
+#>        id entityName entityId   Site     logFC  adj.pvalue
+#>    <char>     <char>    <int> <char>     <num>       <num>
+#> 1: O00217     NDUFS8     7715   <NA> 2.0285031 0.013821932
+#> 2: O60313       OPA1     8140   <NA> 0.9299641 0.019584180
+#> 3: O75306     NDUFS2     7708   <NA> 2.4745040 0.004457034
+#> 4: P05023     ATP1A1      799   <NA> 1.8391155 0.003251073
+#> 5: P05067        APP      620   <NA> 0.7360012 0.020306662
+#> 6: P05090       APOD      612   <NA> 0.5683951 0.013715050
 head(subnetwork$edges)
 #>   source target site interaction evidenceCount paperCount
 #> 1 P05023 O75306 <NA>     Complex             1          1

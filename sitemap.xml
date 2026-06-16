@@ -13,8 +13,9 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.html</loc></url>
-<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncIdsInDataFrame.html</loc></url>
-<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncNamesInDataFrame.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationInDataFrame.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationWithGilda.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationWithIndraCogex.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateKinaseInfoInDataFrame.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populatePhophataseInfoInDataFrame.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateTranscriptionFactorInfoInDataFrame.html</loc></url>

@@ -10,10 +10,12 @@
   : Shiny output binding for cytoscapeNetwork
 - [`deleteEdgeFromNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.md)
   : Delete an edge from a network edges data frame
-- [`.populateHgncIdsInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncIdsInDataFrame.md)
-  : Populate HGNC IDs in Data Frame
-- [`.populateHgncNamesInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateHgncNamesInDataFrame.md)
-  : Populate HGNC Names in Data Frame
+- [`.populateEntityInformationInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationInDataFrame.md)
+  : Populate Entity Information in Data Frame
+- [`.populateEntityInformationWithGilda()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationWithGilda.md)
+  : Populate entity grounding columns via Gilda
+- [`.populateEntityInformationWithIndraCogex()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationWithIndraCogex.md)
+  : Populate entity grounding columns via INDRA cogex APIs
 - [`.populateKinaseInfoInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateKinaseInfoInDataFrame.md)
   : Populate Kinase Info in Data Frame
 - [`.populatePhophataseInfoInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populatePhophataseInfoInDataFrame.md)

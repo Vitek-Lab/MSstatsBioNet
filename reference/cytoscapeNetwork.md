@@ -26,7 +26,8 @@ cytoscapeNetwork(
 - nodes:
 
   Data frame with at minimum an `id` column. Optional columns: `logFC`
-  (numeric), `hgncName` (character), `Site` (character,
+  (numeric), `entityName` (character; may be semicolon-joined for
+  multi-grounded rows), `entityId` (character), `Site` (character,
   underscore-separated PTM site list).
 
 - edges:
@@ -36,7 +37,7 @@ cytoscapeNetwork(
 
 - displayLabelType:
 
-  `"id"` (default) or `"hgncName"` – controls which column is used as
+  `"id"` (default) or `"entityName"` – controls which column is used as
   the visible node label.
 
 - nodeFontSize:

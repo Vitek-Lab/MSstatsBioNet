@@ -1,7 +1,8 @@
 # Annotate Protein Information from Indra
 
-This function annotates a data frame with protein information from
-Indra.
+This function standardizes entity identifiers from protein, compound, or
+gene inputs to a unified namespace using ID conversion from INDRA cogex
+or Gilda grounding.
 
 ## Usage
 
@@ -15,14 +16,16 @@ annotateProteinInfoFromIndra(df, proteinIdType)
 
   output of
   [`groupComparison`](https://rdrr.io/pkg/MSstats/man/groupComparison.html)
-  function's comparisonResult table, which contains a list of proteins
-  and their corresponding p-values, logFCs, along with additional HGNC
-  ID and HGNC name columns
+  function's comparisonResult table. Must contain a `Protein` column
+  whose values are interpreted according to `proteinIdType`.
 
 - proteinIdType:
 
-  A character string specifying the type of protein ID. It can be either
-  "Uniprot", "Uniprot_Mnemonic", or "Hgnc_Name".
+  A character string specifying the type of analyte identifier in the
+  `Protein` column. One of `"Uniprot"`, `"Uniprot_Mnemonic"`,
+  `"Hgnc_Name"`, or `"Metabolite"`. The `"Metabolite"` value treats
+  inputs as metabolite names and grounds them through Gilda, keeping
+  whatever namespace Gilda returns (CHEBI / PUBCHEM / CHEMBL / ...).
 
 ## Value
 
@@ -30,31 +33,48 @@ A data frame with the following columns:
 
 - Protein:
 
-  Character. The original protein identifier.
+  Character. The original identifier from the input.
 
-- UniprotID:
+- GlobalProtein:
 
-  Character. The Uniprot ID of the protein.
+  Character. The input identifier without the PTM site suffix (typically
+  `_<amino acid><site number>`, e.g. `_S148`) stripped, used as the
+  grounding key.
 
-- HgncID:
+- UniprotId:
 
-  Character. The HGNC ID of the protein.
+  Character. The Uniprot ID of the protein, or `NA` for `"Hgnc_Name"`
+  and `"Metabolite"` inputs.
 
-- HgncName:
+- EntityNamespace:
 
-  Character. The HGNC name of the protein.
+  Character. The grounding namespace (e.g. `"HGNC"`, `"CHEBI"`). When a
+  single input grounds to multiple candidates, namespaces are
+  semicolon-joined and positionally aligned with `EntityId` and
+  `EntityName`.
+
+- EntityId:
+
+  Character. The bare grounding identifier within its namespace (e.g.
+  `"1097"` for HGNC, `"28748"` for CHEBI). Semicolon-joined when
+  multi-grounded.
+
+- EntityName:
+
+  Character. The canonical display name from the grounding source.
+  Semicolon-joined when multi-grounded.
 
 - IsTranscriptionFactor:
 
-  Logical. Indicates if the protein is a transcription factor.
+  Logical. `NA` for `proteinIdType == "Metabolite"`.
 
 - IsKinase:
 
-  Logical. Indicates if the protein is a kinase.
+  Logical. `NA` for `proteinIdType == "Metabolite"`.
 
 - IsPhosphatase:
 
-  Logical. Indicates if the protein is a phosphatase.
+  Logical. `NA` for `proteinIdType == "Metabolite"`.
 
 ## Examples
 
@@ -62,8 +82,8 @@ A data frame with the following columns:
 df <- data.frame(Protein = c("CLH1_HUMAN"))
 annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot_Mnemonic")
 head(annotated_df)
-#>      Protein GlobalProtein UniprotId HgncId HgncName IsTranscriptionFactor
-#> 1 CLH1_HUMAN    CLH1_HUMAN    Q00610   2092     CLTC                 FALSE
-#>   IsKinase IsPhosphatase
-#> 1    FALSE         FALSE
+#>      Protein GlobalProtein UniprotId EntityNamespace EntityId EntityName
+#> 1 CLH1_HUMAN    CLH1_HUMAN    Q00610            HGNC     2092       CLTC
+#>   IsTranscriptionFactor IsKinase IsPhosphatase
+#> 1                 FALSE    FALSE         FALSE
 ```
