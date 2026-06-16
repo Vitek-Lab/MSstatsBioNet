@@ -72,6 +72,10 @@ remain comparable across resamples, and the NMF seed is held fixed so the
 variability reported reflects \emph{data} resampling rather than random
 initialization.
 }
+\note{
+**Beta feature:** This function is experimental and the API may
+  change without notice in future versions.
+}
 \examples{
 \dontrun{
 input <- data.table::fread(system.file(

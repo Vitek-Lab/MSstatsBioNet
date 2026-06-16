@@ -46,7 +46,8 @@
 #'
 #' @seealso \code{\link{decomposeSubnetworkByTopic}},
 #'   \code{\link{compareTopicModels}}
-#'
+#' @note **Beta feature:** This function is experimental and the API may
+#'   change without notice in future versions.
 #' @export
 #'
 #' @examples

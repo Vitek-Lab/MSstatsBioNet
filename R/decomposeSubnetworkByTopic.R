@@ -66,6 +66,9 @@
 #'   \code{\link{filterSubnetworkByContext}}
 #'
 #' @export
+#' 
+#' @note **Beta feature:** This function is experimental and the API may
+#'   change without notice in future versions.
 #'
 #' @examples
 #' \dontrun{

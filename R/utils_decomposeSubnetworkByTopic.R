@@ -125,8 +125,7 @@
 #' @return dense numeric matrix (papers x words) with rownames = pmids
 #' @keywords internal
 #' @noRd
-#' @importFrom text2vec itoken word_tokenizer create_vocabulary
-#'   prune_vocabulary vocab_vectorizer create_dtm
+#' @importFrom text2vec itoken word_tokenizer create_vocabulary prune_vocabulary vocab_vectorizer create_dtm
 #' @importFrom stopwords stopwords
 .buildTextMatrix <- function(pmids, abstracts, min_term_count = 2) {
     tokens <- itoken(abstracts,
