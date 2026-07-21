@@ -36,7 +36,7 @@ BiocManager::install("MSstatsBioNet")
 The development version can be installed directly from this repository:
 
 ```r
-BiocManager::install("Vitek-Lab/MSstatsBioNet", ref = "devel")
+remotes::install_github("Vitek-Lab/MSstatsBioNet")
 ```
 
 ## Quick Start
