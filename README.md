@@ -1,145 +1,127 @@
 # MSstatsBioNet
 
+<!-- badges: start -->
+[![Bioconductor Release Build](https://bioconductor.org/shields/build/release/bioc/MSstatsBioNet.svg)](https://bioconductor.org/checkResults/release/bioc-LATEST/MSstatsBioNet/)
 [![Codecov test coverage](https://codecov.io/github/Vitek-Lab/MSstatsBioNet/graph/badge.svg?token=SCPSPMTOEF)](https://codecov.io/github/Vitek-Lab/MSstatsBioNet)
+[![Bioconductor Downloads Rank](https://bioconductor.org/shields/downloads/release/MSstatsBioNet.svg)](https://bioconductor.org/packages/stats/bioc/MSstatsBioNet/)
+[![Years in Bioconductor](https://bioconductor.org/shields/years-in-bioc/MSstatsBioNet.svg)](https://bioconductor.org/packages/release/bioc/html/MSstatsBioNet.html#since)
+[![License: Artistic-2.0](https://img.shields.io/badge/license-Artistic--2.0-blue.svg)](https://opensource.org/licenses/Artistic-2.0)
+<!-- badges: end -->
 
-This package provides a suite of functions to query various network databases, filter queries & results, and visualize networks.
+MSstatsBioNet is an R/Bioconductor package for network analysis and enrichment
+of MSstats differential abundance results in the context of prior-knowledge
+biomolecular networks. It takes the output of MSstats (or MSstatsTMT /
+MSstatsPTM) differential abundance analysis, queries network databases for the
+interactions among the analyzed proteins, and filters, contextualizes, and
+visualizes the resulting subnetworks. Notably, it integrates with
+[INDRA](https://github.com/sorgerlab/indra), a database of biological networks
+assembled from the literature using text mining, enabling interpretation of
+proteomic and phosphoproteomic results against past published knowledge.
 
-## Installation Instructions
+MSstatsBioNet is part of the [MSstats](https://github.com/Vitek-Lab/MSstats)
+family of packages, developed and maintained by the
+[Vitek Lab](https://olga-vitek-lab.khoury.northeastern.edu/) at Northeastern
+University. The package and its documentation are also available at
+[msstats.org](http://msstats.org).
 
-To install this package on bioconductor, run the following command:
-```
-if (!require("BiocManager", quietly = TRUE))
+## Installation
+
+```r
+if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
 BiocManager::install("MSstatsBioNet")
 ```
 
-You can install the development version of this package through Github:
+The development version can be installed directly from this repository:
 
+```r
+BiocManager::install("Vitek-Lab/MSstatsBioNet", ref = "devel")
 ```
-devtools::install_github("Vitek-Lab/MSstatsBioNet", build_vignettes = TRUE)
-```
 
-## Usage Examples
-
-Here are some examples to help you get started with MSstatsBioNet:
-
-### Annotate Protein Information
-
-Use the `annotateProteinInfoFromIndra` function to annotate a data frame with protein information from Indra.
+## Quick Start
 
 ```r
 library(MSstatsBioNet)
 
-# Example data frame
-df <- data.frame(Protein = c("CLH1_HUMAN"))
+# Example MSstats differential abundance results (groupComparison output)
+input <- data.table::fread(system.file("extdata/groupComparisonModel.csv",
+                                        package = "MSstatsBioNet"))
 
-# Annotate protein information
-annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot_Mnemonic")
-print(head(annotated_df))
-```
-
-### Visualize Networks with Cytoscape
-
-Create an interactive network diagram using `cytoscapeNetwork`.
-
-```r
-# Define nodes and edges
-nodes <- data.frame(
-  id    = c("TP53", "MDM2", "CDKN1A"),
-  logFC = c(1.5, -0.8, 2.1),
-  stringsAsFactors = FALSE
-)
-edges <- data.frame(
-  source      = c("TP53",  "MDM2"),
-  target      = c("MDM2",  "TP53"),
-  interaction = c("Activation", "Inhibition"),
-  stringsAsFactors = FALSE
-)
-
-# Render the network
-cytoscapeNetwork(nodes, edges)
-```
-
-### Export Network to HTML
-
-Export your network visualization to an HTML file using `exportNetworkToHTML`.
-
-```r
-# Export the network to an HTML file
-exportNetworkToHTML(nodes, edges, filename = "network.html")
-```
-
-### Retrieve Subnetwork from INDRA
-
-Use `getSubnetworkFromIndra` to retrieve a subnetwork of protein interactions from the INDRA database.
-
-```r
-# Load example input data
-input <- data.table::fread(system.file(
-    "extdata/groupComparisonModel.csv",
-    package = "MSstatsBioNet"
-))
-
-# Get subnetwork
+# Retrieve the subnetwork of interactions among these proteins from INDRA
 subnetwork <- getSubnetworkFromIndra(input)
-print(head(subnetwork$nodes))
-print(head(subnetwork$edges))
+
+head(subnetwork$nodes)
+head(subnetwork$edges)
+
+# Visualize the network (e.g. in Cytoscape, or export to HTML)
+cytoscapeNetwork(subnetwork$nodes, subnetwork$edges)
 ```
 
-### Preview Network in Browser
+## Input Formats
 
-Quickly preview your network in a web browser using `previewNetworkInBrowser`.
+MSstatsBioNet works on **differential abundance results**, not raw search-tool
+output. Its main entry point, `getSubnetworkFromIndra()`, accepts the
+`ComparisonResult` table produced by the group-comparison functions across the
+MSstats ecosystem:
 
-```r
-# Preview the network in a browser
-previewNetworkInBrowser(nodes, edges)
-```
+| Upstream package | Function producing input |
+| --- | --- |
+| [MSstats](https://github.com/Vitek-Lab/MSstats) | `groupComparison()` |
+| [MSstatsTMT](https://github.com/Vitek-Lab/MSstatsTMT) | `groupComparisonTMT()` |
+| [MSstatsPTM](https://github.com/Vitek-Lab/MSstatsPTM) | `groupComparisonPTM()` |
 
-### Integrate with Shiny
+The input table provides, per protein and comparison, the log2 fold change,
+p-value, and adjusted p-value used for filtering and network coloring. UniProt
+identifiers can be annotated with `annotateProteinInfoFromIndra()`.
 
-Use `cytoscapeNetworkOutput` and `renderCytoscapeNetwork` to integrate network visualization into a Shiny app.
+- **Databases supported:** INDRA
+- **Filtering options:** p-value filter, context/topic-based filtering
+  (`filterSubnetworkByContext()`)
+- **Visualization options:** Cytoscape Desktop (`cytoscapeNetwork()`), in-browser
+  preview (`previewNetworkInBrowser()`), standalone HTML export
+  (`exportNetworkToHTML()`), and Shiny integration
+  (`cytoscapeNetworkOutput()` / `renderCytoscapeNetwork()`)
 
-```r
-library(shiny)
+## Documentation
 
-ui <- fluidPage(
-  cytoscapeNetworkOutput("cytoNetwork")
-)
+- [MSstatsBioNet overview](vignettes/MSstatsBioNet.Rmd) — getting started
+- [Cytoscape visualization](vignettes/Cytoscape-Visualization.Rmd)
+- [Filter by context](vignettes/Filter-By-Context.Rmd)
+- [PTM analysis](vignettes/PTM-Analysis.Rmd)
+- [Official website: msstats.org](http://msstats.org)
+- [Bioconductor package page and reference manual](https://bioconductor.org/packages/MSstatsBioNet)
 
-server <- function(input, output, session) {
-  output$cytoNetwork <- renderCytoscapeNetwork({
-    nodes <- data.frame(
-      id = c("TP53", "MDM2", "CDKN1A"),
-      logFC = c(1.5, -0.8, 2.1),
-      stringsAsFactors = FALSE
-    )
-    edges <- data.frame(
-      source = c("TP53", "MDM2"),
-      target = c("MDM2", "TP53"),
-      interaction = c("Activation", "Inhibition"),
-      stringsAsFactors = FALSE
-    )
-    cytoscapeNetwork(nodes, edges)
-  })
-}
+## Getting Help / Reporting Bugs
 
-shinyApp(ui, server)
-```
+- **Questions about usage, statistical methods, or troubleshooting:** please
+  post to the [MSstats Google Group](https://groups.google.com/forum/#!forum/msstats).
+  This is monitored by the development team and searchable, so it's the fastest
+  way to get help and to see if your question has already been answered.
+- **Bug reports and feature requests for this repository:** please open a
+  [GitHub issue](https://github.com/Vitek-Lab/MSstatsBioNet/issues).
+
+## References
+
+If you use MSstatsBioNet, please cite:
+
+1. Wu A, Kohler D, Navada P, Robbins J, Boyle G, Boshart A, Karis K, Neefjes J,
+   Konvalinka A, Sarthy J, Pino L, Gyori B, Vitek O. **MSstatsBioNet: Integrating
+   Statistical Analyses with Prior Knowledge Biomolecular Networks for
+   Quantitative Proteomics and Phosphoproteomics.** *bioRxiv*. 2026.
+   [DOI: 10.64898/2026.07.09.737605](https://doi.org/10.64898/2026.07.09.737605)
+
+## Funding
+
+MSstats development has been supported by the Chan Zuckerberg Initiative's
+[Essential Open Source Software for Science](https://chanzuckerberg.com/eoss/proposals/).
 
 ## License
-This package is distributed under the [Artistic-2.0](https://opensource.org/licenses/Artistic-2.0) license. However, its dependencies may have different licenses.  
 
-Notably, INDRA is distributed under the [BSD 2-Clause](https://opensource.org/license/bsd-2-clause) license. Furthermore, INDRA's knowledge sources may have different licenses for commercial applications. Please refer to the [INDRA README](https://github.com/sorgerlab/indra?tab=readme-ov-file#indra-modules) for more information on its knowledge sources and their associated licenses.
-
-## Databases Supported
-
-- INDRA
-
-## Filtering Options Supported
-
-- P-Value Filter
-
-## Visualization Options Supported
-
-- Cytoscape Desktop
+MSstatsBioNet is released under the [Artistic-2.0](https://opensource.org/licenses/Artistic-2.0)
+license. However, its dependencies may have different licenses. Notably, INDRA
+is distributed under the [BSD 2-Clause](https://opensource.org/license/bsd-2-clause)
+license, and INDRA's knowledge sources may have different licenses for commercial
+applications. Please refer to the
+[INDRA README](https://github.com/sorgerlab/indra?tab=readme-ov-file#indra-modules)
+for more information on its knowledge sources and their associated licenses.
