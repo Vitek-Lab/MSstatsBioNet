@@ -137,24 +137,24 @@ head(subnetwork$nodes)
 #> 6: P05090       APOD      612   <NA> 0.5683951 0.013715050
 head(subnetwork$edges)
 #>   source target site interaction evidenceCount paperCount
-#> 1 P05023 O75306 <NA>     Complex             1          1
-#> 2 O75306 P08574 <NA>     Complex             1          1
-#> 3 P05067 O60313 <NA>  Activation             2          1
+#> 1 O75306 P08574 <NA>     Complex             1          1
+#> 2 P05067 O60313 <NA>  Activation             2          1
+#> 3 P05023 O75306 <NA>     Complex             1          1
 #> 4 O60313 O00217 <NA>     Complex             1          1
-#> 5 P05362 P05067 <NA>     Complex            13          1
-#> 6 O75306 P05067 <NA>     Complex             1          1
+#> 5 O75306 P05067 <NA>     Complex             1          1
+#> 6 P05362 P05067 <NA>     Complex            13          1
 #>                                                                                 evidenceLink
-#> 1  https://db.indra.bio/statements/from_agents?subject=799@HGNC&object=7708@HGNC&format=html
-#> 2 https://db.indra.bio/statements/from_agents?subject=7708@HGNC&object=2579@HGNC&format=html
-#> 3  https://db.indra.bio/statements/from_agents?subject=620@HGNC&object=8140@HGNC&format=html
+#> 1 https://db.indra.bio/statements/from_agents?subject=7708@HGNC&object=2579@HGNC&format=html
+#> 2  https://db.indra.bio/statements/from_agents?subject=620@HGNC&object=8140@HGNC&format=html
+#> 3  https://db.indra.bio/statements/from_agents?subject=799@HGNC&object=7708@HGNC&format=html
 #> 4 https://db.indra.bio/statements/from_agents?subject=8140@HGNC&object=7715@HGNC&format=html
-#> 5  https://db.indra.bio/statements/from_agents?subject=5344@HGNC&object=620@HGNC&format=html
-#> 6  https://db.indra.bio/statements/from_agents?subject=7708@HGNC&object=620@HGNC&format=html
+#> 5  https://db.indra.bio/statements/from_agents?subject=7708@HGNC&object=620@HGNC&format=html
+#> 6  https://db.indra.bio/statements/from_agents?subject=5344@HGNC&object=620@HGNC&format=html
 #>                  sourceCounts          stmt_hash
-#> 1              {"biogrid": 1}  -5813063534036006
-#> 2              {"biogrid": 1}   6349003830434161
-#> 3                {"reach": 2}   3948742039105656
+#> 1              {"biogrid": 1}   6349003830434161
+#> 2                {"reach": 2}   3948742039105656
+#> 3              {"biogrid": 1}  -5813063534036006
 #> 4              {"biogrid": 1} -19747883270157675
-#> 5 {"sparser": 10, "reach": 3} -20220236678417803
-#> 6              {"biogrid": 1}  22463147519060585
+#> 5              {"biogrid": 1}  22463147519060585
+#> 6 {"sparser": 10, "reach": 3} -20220236678417803
 ```

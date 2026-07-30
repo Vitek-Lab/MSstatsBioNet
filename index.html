@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">MSstatsBioNet</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,147 +57,120 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="msstatsbionet">MSstatsBioNet<a class="anchor" aria-label="anchor" href="#msstatsbionet"></a>
 </h1></div>
-<p><a href="https://codecov.io/github/Vitek-Lab/MSstatsBioNet" class="external-link"><img src="https://codecov.io/github/Vitek-Lab/MSstatsBioNet/graph/badge.svg?token=SCPSPMTOEF" alt="Codecov test coverage"></a></p>
-<p>This package provides a suite of functions to query various network databases, filter queries &amp; results, and visualize networks.</p>
+<!-- badges: start -->
+
+<p>MSstatsBioNet is an R/Bioconductor package for network analysis and enrichment of MSstats differential abundance results in the context of prior-knowledge biomolecular networks. It takes the output of MSstats (or MSstatsTMT / MSstatsPTM) differential abundance analysis, queries network databases for the interactions among the analyzed proteins, and filters, contextualizes, and visualizes the resulting subnetworks. Notably, it integrates with <a href="https://github.com/sorgerlab/indra" class="external-link">INDRA</a>, a database of biological networks assembled from the literature using text mining, enabling interpretation of proteomic and phosphoproteomic results against past published knowledge.</p>
+<p>MSstatsBioNet is part of the <a href="https://github.com/Vitek-Lab/MSstats" class="external-link">MSstats</a> family of packages, developed and maintained by the <a href="https://olga-vitek-lab.khoury.northeastern.edu/" class="external-link">Vitek Lab</a> at Northeastern University. The package and its documentation are also available at <a href="http://msstats.org" class="external-link">msstats.org</a>.</p>
 <div class="section level2">
-<h2 id="installation-instructions">Installation Instructions<a class="anchor" aria-label="anchor" href="#installation-instructions"></a>
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>To install this package on bioconductor, run the following command:</p>
-<pre><code><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://bioconductor.github.io/BiocManager/" class="external-link">"BiocManager"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"MSstatsBioNet"</span><span class="op">)</span></span></code></pre>
-<p>You can install the development version of this package through Github:</p>
-<pre><code><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"Vitek-Lab/MSstatsBioNet"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"MSstatsBioNet"</span><span class="op">)</span></span></code></pre></div>
+<p>The development version can be installed directly from this repository:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"Vitek-Lab/MSstatsBioNet"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="usage-examples">Usage Examples<a class="anchor" aria-label="anchor" href="#usage-examples"></a>
+<h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<p>Here are some examples to help you get started with MSstatsBioNet:</p>
-<div class="section level3">
-<h3 id="annotate-protein-information">Annotate Protein Information<a class="anchor" aria-label="anchor" href="#annotate-protein-information"></a>
-</h3>
-<p>Use the <code>annotateProteinInfoFromIndra</code> function to annotate a data frame with protein information from Indra.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://msstats.org" class="external-link">MSstatsBioNet</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Example data frame</span></span>
-<span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Protein <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CLH1_HUMAN"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co"># Example MSstats differential abundance results (groupComparison output)</span></span>
+<span><span class="va">input</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/groupComparisonModel.csv"</span>,</span>
+<span>                                        package <span class="op">=</span> <span class="st">"MSstatsBioNet"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Annotate protein information</span></span>
-<span><span class="va">annotated_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/annotateProteinInfoFromIndra.html">annotateProteinInfoFromIndra</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"Uniprot_Mnemonic"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">annotated_df</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="visualize-networks-with-cytoscape">Visualize Networks with Cytoscape<a class="anchor" aria-label="anchor" href="#visualize-networks-with-cytoscape"></a>
-</h3>
-<p>Create an interactive network diagram using <code>cytoscapeNetwork</code>.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Define nodes and edges</span></span>
-<span><span class="va">nodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  id    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TP53"</span>, <span class="st">"MDM2"</span>, <span class="st">"CDKN1A"</span><span class="op">)</span>,</span>
-<span>  logFC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="op">-</span><span class="fl">0.8</span>, <span class="fl">2.1</span><span class="op">)</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">edges</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>  source      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TP53"</span>,  <span class="st">"MDM2"</span><span class="op">)</span>,</span>
-<span>  target      <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MDM2"</span>,  <span class="st">"TP53"</span><span class="op">)</span>,</span>
-<span>  interaction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Activation"</span>, <span class="st">"Inhibition"</span><span class="op">)</span>,</span>
-<span>  stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Render the network</span></span>
-<span><span class="fu"><a href="reference/cytoscapeNetwork.html">cytoscapeNetwork</a></span><span class="op">(</span><span class="va">nodes</span>, <span class="va">edges</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="export-network-to-html">Export Network to HTML<a class="anchor" aria-label="anchor" href="#export-network-to-html"></a>
-</h3>
-<p>Export your network visualization to an HTML file using <code>exportNetworkToHTML</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Export the network to an HTML file</span></span>
-<span><span class="fu"><a href="reference/exportNetworkToHTML.html">exportNetworkToHTML</a></span><span class="op">(</span><span class="va">nodes</span>, <span class="va">edges</span>, filename <span class="op">=</span> <span class="st">"network.html"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="retrieve-subnetwork-from-indra">Retrieve Subnetwork from INDRA<a class="anchor" aria-label="anchor" href="#retrieve-subnetwork-from-indra"></a>
-</h3>
-<p>Use <code>getSubnetworkFromIndra</code> to retrieve a subnetwork of protein interactions from the INDRA database.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load example input data</span></span>
-<span><span class="va">input</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
-<span>    <span class="st">"extdata/groupComparisonModel.csv"</span>,</span>
-<span>    package <span class="op">=</span> <span class="st">"MSstatsBioNet"</span></span>
-<span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Get subnetwork</span></span>
+<span><span class="co"># Retrieve the subnetwork of interactions among these proteins from INDRA</span></span>
 <span><span class="va">subnetwork</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra</a></span><span class="op">(</span><span class="va">input</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="preview-network-in-browser">Preview Network in Browser<a class="anchor" aria-label="anchor" href="#preview-network-in-browser"></a>
-</h3>
-<p>Quickly preview your network in a web browser using <code>previewNetworkInBrowser</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Preview the network in a browser</span></span>
-<span><span class="fu"><a href="reference/previewNetworkInBrowser.html">previewNetworkInBrowser</a></span><span class="op">(</span><span class="va">nodes</span>, <span class="va">edges</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="integrate-with-shiny">Integrate with Shiny<a class="anchor" aria-label="anchor" href="#integrate-with-shiny"></a>
-</h3>
-<p>Use <code>cytoscapeNetworkOutput</code> and <code>renderCytoscapeNetwork</code> to integrate network visualization into a Shiny app.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://shiny.posit.co/" class="external-link">shiny</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/shiny/man/fluidPage.html" class="external-link">fluidPage</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="reference/cytoscapeNetworkOutput.html">cytoscapeNetworkOutput</a></span><span class="op">(</span><span class="st">"cytoNetwork"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">output</span><span class="op">$</span><span class="va">cytoNetwork</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/renderCytoscapeNetwork.html">renderCytoscapeNetwork</a></span><span class="op">(</span><span class="op">{</span></span>
-<span>    <span class="va">nodes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>      id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TP53"</span>, <span class="st">"MDM2"</span>, <span class="st">"CDKN1A"</span><span class="op">)</span>,</span>
-<span>      logFC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1.5</span>, <span class="op">-</span><span class="fl">0.8</span>, <span class="fl">2.1</span><span class="op">)</span>,</span>
-<span>      stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>    <span class="op">)</span></span>
-<span>    <span class="va">edges</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>      source <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TP53"</span>, <span class="st">"MDM2"</span><span class="op">)</span>,</span>
-<span>      target <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MDM2"</span>, <span class="st">"TP53"</span><span class="op">)</span>,</span>
-<span>      interaction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Activation"</span>, <span class="st">"Inhibition"</span><span class="op">)</span>,</span>
-<span>      stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
-<span>    <span class="op">)</span></span>
-<span>    <span class="fu"><a href="reference/cytoscapeNetwork.html">cytoscapeNetwork</a></span><span class="op">(</span><span class="va">nodes</span>, <span class="va">edges</span><span class="op">)</span></span>
-<span>  <span class="op">}</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span><span class="va">ui</span>, <span class="va">server</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># Visualize the network (e.g. in Cytoscape, or export to HTML)</span></span>
+<span><span class="fu"><a href="reference/cytoscapeNetwork.html">cytoscapeNetwork</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="input-formats">Input Formats<a class="anchor" aria-label="anchor" href="#input-formats"></a>
+</h2>
+<p>MSstatsBioNet works on <strong>differential abundance results</strong>, not raw search-tool output. Its main entry point, <code><a href="reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code>, accepts the <code>ComparisonResult</code> table produced by the group-comparison functions across the MSstats ecosystem:</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Upstream package</th>
+<th>Function producing input</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/Vitek-Lab/MSstats" class="external-link">MSstats</a></td>
+<td><code><a href="https://rdrr.io/pkg/MSstats/man/groupComparison.html" class="external-link">groupComparison()</a></code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/Vitek-Lab/MSstatsTMT" class="external-link">MSstatsTMT</a></td>
+<td><code>groupComparisonTMT()</code></td>
+</tr>
+<tr>
+<td><a href="https://github.com/Vitek-Lab/MSstatsPTM" class="external-link">MSstatsPTM</a></td>
+<td><code>groupComparisonPTM()</code></td>
+</tr>
+</tbody>
+</table>
+<p>The input table provides, per protein and comparison, the log2 fold change, p-value, and adjusted p-value used for filtering and network coloring. UniProt identifiers can be annotated with <code><a href="reference/annotateProteinInfoFromIndra.html">annotateProteinInfoFromIndra()</a></code>.</p>
+<ul>
+<li>
+<strong>Databases supported:</strong> INDRA</li>
+<li>
+<strong>Filtering options:</strong> p-value filter, context/topic-based filtering (<code><a href="reference/filterSubnetworkByContext.html">filterSubnetworkByContext()</a></code>)</li>
+<li>
+<strong>Visualization options:</strong> Cytoscape Desktop (<code><a href="reference/cytoscapeNetwork.html">cytoscapeNetwork()</a></code>), in-browser preview (<code><a href="reference/previewNetworkInBrowser.html">previewNetworkInBrowser()</a></code>), standalone HTML export (<code><a href="reference/exportNetworkToHTML.html">exportNetworkToHTML()</a></code>), and Shiny integration (<code><a href="reference/cytoscapeNetworkOutput.html">cytoscapeNetworkOutput()</a></code> / <code><a href="reference/renderCytoscapeNetwork.html">renderCytoscapeNetwork()</a></code>)</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+</h2>
+<ul>
+<li>
+<a href="vignettes/MSstatsBioNet.Rmd">MSstatsBioNet overview</a> — getting started</li>
+<li><a href="vignettes/Cytoscape-Visualization.Rmd">Cytoscape visualization</a></li>
+<li><a href="vignettes/Filter-By-Context.Rmd">Filter by context</a></li>
+<li><a href="vignettes/PTM-Analysis.Rmd">PTM analysis</a></li>
+<li><a href="http://msstats.org" class="external-link">Official website: msstats.org</a></li>
+<li><a href="https://bioconductor.org/packages/MSstatsBioNet" class="external-link">Bioconductor package page and reference manual</a></li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="getting-help--reporting-bugs">Getting Help / Reporting Bugs<a class="anchor" aria-label="anchor" href="#getting-help--reporting-bugs"></a>
+</h2>
+<ul>
+<li>
+<strong>Questions about usage, statistical methods, or troubleshooting:</strong> please post to the <a href="https://groups.google.com/forum/#!forum/msstats" class="external-link">MSstats Google Group</a>. This is monitored by the development team and searchable, so it’s the fastest way to get help and to see if your question has already been answered.</li>
+<li>
+<strong>Bug reports and feature requests for this repository:</strong> please open a <a href="https://github.com/Vitek-Lab/MSstatsBioNet/issues" class="external-link">GitHub issue</a>.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<p>If you use MSstatsBioNet, please cite:</p>
+<ol style="list-style-type: decimal">
+<li>Wu A, Kohler D, Navada P, Robbins J, Boyle G, Boshart A, Karis K, Neefjes J, Konvalinka A, Sarthy J, Pino L, Gyori B, Vitek O. <strong>MSstatsBioNet: Integrating Statistical Analyses with Prior Knowledge Biomolecular Networks for Quantitative Proteomics and Phosphoproteomics.</strong> <em>bioRxiv</em>. 2026. <a href="https://doi.org/10.64898/2026.07.09.737605" class="external-link">DOI: 10.64898/2026.07.09.737605</a>
+</li>
+</ol>
+</div>
+<div class="section level2">
+<h2 id="funding">Funding<a class="anchor" aria-label="anchor" href="#funding"></a>
+</h2>
+<p>MSstats development has been supported by the Chan Zuckerberg Initiative’s <a href="https://chanzuckerberg.com/eoss/proposals/" class="external-link">Essential Open Source Software for Science</a>.</p>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
-<p>This package is distributed under the <a href="https://opensource.org/licenses/Artistic-2.0" class="external-link">Artistic-2.0</a> license. However, its dependencies may have different licenses.</p>
-<p>Notably, INDRA is distributed under the <a href="https://opensource.org/license/bsd-2-clause" class="external-link">BSD 2-Clause</a> license. Furthermore, INDRA’s knowledge sources may have different licenses for commercial applications. Please refer to the <a href="https://github.com/sorgerlab/indra?tab=readme-ov-file#indra-modules" class="external-link">INDRA README</a> for more information on its knowledge sources and their associated licenses.</p>
-</div>
-<div class="section level2">
-<h2 id="databases-supported">Databases Supported<a class="anchor" aria-label="anchor" href="#databases-supported"></a>
-</h2>
-<ul>
-<li>INDRA</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="filtering-options-supported">Filtering Options Supported<a class="anchor" aria-label="anchor" href="#filtering-options-supported"></a>
-</h2>
-<ul>
-<li>P-Value Filter</li>
-</ul>
-</div>
-<div class="section level2">
-<h2 id="visualization-options-supported">Visualization Options Supported<a class="anchor" aria-label="anchor" href="#visualization-options-supported"></a>
-</h2>
-<ul>
-<li>Cytoscape Desktop</li>
-</ul>
+<p>MSstatsBioNet is released under the <a href="https://opensource.org/licenses/Artistic-2.0" class="external-link">Artistic-2.0</a> license. However, its dependencies may have different licenses. Notably, INDRA is distributed under the <a href="https://opensource.org/license/bsd-2-clause" class="external-link">BSD 2-Clause</a> license, and INDRA’s knowledge sources may have different licenses for commercial applications. Please refer to the <a href="https://github.com/sorgerlab/indra?tab=readme-ov-file#indra-modules" class="external-link">INDRA README</a> for more information on its knowledge sources and their associated licenses.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -232,7 +205,16 @@
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://bioconductor.org/checkResults/release/bioc-LATEST/MSstatsBioNet/" class="external-link"><img src="https://bioconductor.org/shields/build/release/bioc/MSstatsBioNet.svg" alt="Bioconductor Release Build"></a></li>
+<li><a href="https://codecov.io/github/Vitek-Lab/MSstatsBioNet" class="external-link"><img src="https://codecov.io/github/Vitek-Lab/MSstatsBioNet/graph/badge.svg?token=SCPSPMTOEF" alt="Codecov test coverage"></a></li>
+<li><a href="https://bioconductor.org/packages/stats/bioc/MSstatsBioNet/" class="external-link"><img src="https://bioconductor.org/shields/downloads/release/MSstatsBioNet.svg" alt="Bioconductor Downloads Rank"></a></li>
+<li><a href="https://bioconductor.org/packages/release/bioc/html/MSstatsBioNet.html#since" class="external-link"><img src="https://bioconductor.org/shields/years-in-bioc/MSstatsBioNet.svg" alt="Years in Bioconductor"></a></li>
+<li><a href="https://opensource.org/licenses/Artistic-2.0" class="external-link"><img src="https://img.shields.io/badge/license-Artistic--2.0-blue.svg" alt="License: Artistic-2.0"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>
@@ -243,7 +225,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

@@ -10,12 +10,12 @@
 ## Citation
 
 Wu A, Vitek O (2026). *MSstatsBioNet: Network Analysis for MS-based
-Proteomics Experiments*. R package version 1.5.1, <http://msstats.org>.
+Proteomics Experiments*. R package version 1.5.2, <http://msstats.org>.
 
     @Manual{,
       title = {MSstatsBioNet: Network Analysis for MS-based Proteomics Experiments},
       author = {Anthony Wu and Olga Vitek},
       year = {2026},
-      note = {R package version 1.5.1},
+      note = {R package version 1.5.2},
       url = {http://msstats.org},
     }

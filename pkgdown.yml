@@ -1,12 +1,12 @@
 pandoc: 3.8.3
-pkgdown: 2.2.0
+pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   Cytoscape-Visualization: Cytoscape-Visualization.html
   Filter-By-Context: Filter-By-Context.html
   MSstatsBioNet: MSstatsBioNet.html
   PTM-Analysis: PTM-Analysis.html
-last_built: 2026-06-16T14:59Z
+last_built: 2026-07-30T18:30Z
 urls:
   reference: https://vitek-lab.github.io/MSstatsBioNet/reference
   article: https://vitek-lab.github.io/MSstatsBioNet/articles
