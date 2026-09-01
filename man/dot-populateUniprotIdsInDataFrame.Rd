@@ -15,5 +15,7 @@
 A data frame with populated Uniprot IDs.
 }
 \description{
-Populate Uniprot IDs in Data Frame
+Derives \code{GlobalProtein} by stripping the PTM site suffix from each
+protein group member, then resolves UniProt IDs per member. For a
+protein group the resolved IDs are semicolon-joined in member order.
 }

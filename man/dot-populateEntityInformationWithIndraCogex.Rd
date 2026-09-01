@@ -7,14 +7,17 @@
 .populateEntityInformationWithIndraCogex(df)
 }
 \arguments{
-\item{df}{A data frame with a populated \code{UniprotId} column.}
+\item{df}{A data frame with a populated \code{UniprotId} column, whose
+values may be semicolon-joined protein groups.}
 }
 \value{
 The data frame with EntityNamespace, EntityId, EntityName set
         for resolved rows.
 }
 \description{
-Converts \code{UniprotId} to an HGNC id via the INDRA cogex endpoint,
-then looks up the canonical HGNC name. Sets \code{EntityNamespace =
-"HGNC"} for any row whose UniProt resolved.
+Converts each \code{UniprotId} member to an HGNC id via the INDRA cogex
+endpoint, then looks up the canonical HGNC name. Sets
+\code{EntityNamespace = "HGNC"} for any row whose UniProt resolved. A
+protein group contributes one grounding per member that resolved,
+deduplicated and semicolon-joined across the three Entity columns.
 }

@@ -7,7 +7,8 @@
 .populateEntityInformationWithGilda(df, proteinIdType)
 }
 \arguments{
-\item{df}{A data frame with a \code{GlobalProtein} column.}
+\item{df}{A data frame with a \code{GlobalProtein} column, whose values
+may be semicolon-joined protein groups.}
 
 \item{proteinIdType}{One of \code{"Hgnc_Name"} or \code{"Metabolite"}.}
 }
@@ -16,10 +17,11 @@ The data frame with EntityNamespace, EntityId, EntityName set
         for resolved rows.
 }
 \description{
-Grounds each \code{GlobalProtein} text through Gilda. For
+Grounds each \code{GlobalProtein} member text through Gilda. For
 \code{"Hgnc_Name"} the response is filtered to HGNC candidates
 (and restricted to human via the organism filter); for
 \code{"Metabolite"} every grounding namespace Gilda returns is kept.
 Multi-grounded inputs are semicolon-joined and positionally aligned
-across all three Entity columns.
+across all three Entity columns; a protein group pools the groundings
+of all its members into that same representation.
 }
