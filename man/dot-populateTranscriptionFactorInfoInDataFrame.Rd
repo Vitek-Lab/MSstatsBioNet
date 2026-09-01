@@ -16,5 +16,7 @@ flags are \code{NA} (no API call) when this is \code{"Metabolite"}.}
 A data frame with populated transcription factor information.
 }
 \description{
-Populate Transcription Factor Info in Data Frame
+Rows carrying more than one grounding -- a semicolon-joined
+\code{EntityName}, from a protein group or an ambiguous input -- are
+skipped, because the flag describes a single gene.
 }
