@@ -299,52 +299,90 @@ filterSubnetworkByContext <- function(nodes,
 
 
 #' Fetch and clean PubMed abstracts via rentrez
-#' @param pmids Character vector of PubMed IDs
+#'
+#' PMIDs are requested in batches rather than one request per PMID, which is
+#' far faster for the hundreds of PMIDs a typical subnetwork produces. PMIDs
+#' that are missing from the response (unknown IDs, or a batch whose request
+#' failed) are returned with an empty abstract.
+#'
+#' @param pmids      Character vector of PubMed IDs
+#' @param batch_size Number of PMIDs to request per efetch call
 #' @return Named list: pmid -> abstract text
 #' @keywords internal
 #' @noRd
 #' @importFrom rentrez entrez_fetch
-#' @importFrom xml2 read_xml xml_find_all xml_text
-.fetch_clean_abstracts_xml <- function(pmids) {
-    results <- list()
-    total   <- length(pmids)
-    
-    cat(sprintf("Fetching %d abstracts...\n", total))
-    
-    for (i in seq_along(pmids)) {
-        pmid <- pmids[i]
-        
+.fetch_clean_abstracts_xml <- function(pmids, batch_size = 200) {
+    pmids <- as.character(pmids)
+    total <- length(pmids)
+
+    if (total == 0) return(list())
+
+    results        <- as.list(rep("", total))
+    names(results) <- pmids
+
+    batches   <- split(pmids, ceiling(seq_along(pmids) / batch_size))
+    n_batches <- length(batches)
+
+    cat(sprintf("Fetching %d abstracts in %d batch(es) of up to %d...\n",
+                total, n_batches, batch_size))
+
+    for (i in seq_along(batches)) {
+        batch <- batches[[i]]
+
         record <- tryCatch(
-            entrez_fetch(db = "pubmed", id = pmid, rettype = "xml"),
+            entrez_fetch(db = "pubmed", id = batch, rettype = "xml"),
             error = function(e) {
-                cat(sprintf("Error fetching PMID %s at %d/%d: %s\n", pmid, i, total, e$message))
+                cat(sprintf("Error fetching batch %d/%d (%d PMIDs): %s\n",
+                            i, n_batches, length(batch), conditionMessage(e)))
                 NULL
             }
         )
-        
-        if (is.null(record)) {
-            results[[pmid]] <- ""
-            next
+
+        if (!is.null(record)) {
+            fetched <- .parse_pubmed_abstracts(record)
+            matched <- intersect(names(fetched), batch)
+            results[matched] <- fetched[matched]
         }
-        
-        doc <- read_xml(record)
-        abstract_nodes <- xml_find_all(doc, ".//AbstractText")
-        
-        if (length(abstract_nodes) > 0) {
-            results[[pmid]] <- paste(trimws(xml_text(abstract_nodes)), collapse = " ")
-        } else {
-            results[[pmid]] <- ""
-        }
-        
-        if (i %% 10 == 0 || i == total) {
-            cat(sprintf("Progress: %d/%d (%.1f%%)\n", i, total, (i / total) * 100))
-        }
-        
-        Sys.sleep(0.34)
+
+        cat(sprintf("Progress: %d/%d batches (%.1f%%)\n",
+                    i, n_batches, (i / n_batches) * 100))
+
+        # NCBI allows 3 requests/second without an API key
+        if (i < n_batches) Sys.sleep(0.34)
     }
-    
+
     cat("Done fetching abstracts!\n")
     return(results)
+}
+
+
+#' Parse abstracts out of a PubMed efetch XML response
+#' @param record Character string of XML returned by efetch
+#' @return Named list: pmid -> abstract text (empty string when no abstract)
+#' @keywords internal
+#' @noRd
+#' @importFrom xml2 read_xml xml_find_all xml_find_first xml_text
+.parse_pubmed_abstracts <- function(record) {
+    doc      <- read_xml(record)
+    articles <- xml_find_all(doc, ".//PubmedArticle")
+
+    if (length(articles) == 0) return(list())
+
+    # ".//PMID" would also match PMIDs of cited references
+    pmids <- vapply(
+        articles,
+        function(article) xml_text(xml_find_first(article, "./MedlineCitation/PMID")),
+        character(1)
+    )
+
+    abstracts <- lapply(articles, function(article) {
+        nodes <- xml_find_all(article, ".//Abstract/AbstractText")
+        if (length(nodes) == 0) return("")
+        paste(trimws(xml_text(nodes)), collapse = " ")
+    })
+    names(abstracts) <- pmids
+
+    abstracts[!is.na(pmids) & nzchar(pmids)]
 }
 
 

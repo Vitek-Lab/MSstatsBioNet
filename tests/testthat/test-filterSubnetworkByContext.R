@@ -18,6 +18,18 @@ make_nodes <- function() {
     )
 }
 
+make_pubmed_xml <- function(pmids) {
+    articles <- vapply(pmids, function(pmid) {
+        sprintf(paste0(
+            "<PubmedArticle><MedlineCitation><PMID>%s</PMID><Article><Abstract>",
+            "<AbstractText>Abstract for %s.</AbstractText>",
+            "</Abstract></Article></MedlineCitation></PubmedArticle>"
+        ), pmid, pmid)
+    }, character(1))
+
+    paste0("<PubmedArticleSet>", paste(articles, collapse = ""), "</PubmedArticleSet>")
+}
+
 describe(".score_by_tag_count", {
     
     test_that("returns 0 for an abstract that contains none of the tags", {
@@ -94,7 +106,78 @@ describe(".fetch_clean_abstracts_xml", {
         expect_true("99999999" %in% names(result))
         expect_equal(result[["99999999"]], "")
     })
-    
+
+    test_that("requests PMIDs in batches and keeps every PMID in the result", {
+        requested <- list()
+        mockery::stub(
+            .fetch_clean_abstracts_xml,
+            "entrez_fetch",
+            function(db, id, rettype) {
+                requested[[length(requested) + 1]] <<- id
+                make_pubmed_xml(id)
+            }
+        )
+        pmids  <- as.character(seq(11111111, 11111115))
+        result <- suppressMessages(
+            .fetch_clean_abstracts_xml(pmids, batch_size = 2)
+        )
+
+        expect_length(requested, 3)
+        expect_equal(lengths(requested), c(2, 2, 1))
+        expect_equal(names(result), pmids)
+        expect_equal(result[["11111113"]], "Abstract for 11111113.")
+    })
+
+    test_that("returns an empty string for a PMID missing from the response", {
+        mockery::stub(
+            .fetch_clean_abstracts_xml,
+            "entrez_fetch",
+            function(db, id, rettype) make_pubmed_xml(setdiff(id, "22222222"))
+        )
+        result <- suppressMessages(
+            .fetch_clean_abstracts_xml(c("11111111", "22222222"))
+        )
+        expect_equal(result[["11111111"]], "Abstract for 11111111.")
+        expect_equal(result[["22222222"]], "")
+    })
+
+})
+
+describe(".parse_pubmed_abstracts", {
+
+    test_that("joins multi-section abstracts and ignores cited reference PMIDs", {
+        record <- paste0(
+            "<PubmedArticleSet><PubmedArticle>",
+            "<MedlineCitation><PMID>11111111</PMID>",
+            "<Article><Abstract>",
+            "<AbstractText Label='BACKGROUND'>  First part. </AbstractText>",
+            "<AbstractText Label='RESULTS'>Second part.</AbstractText>",
+            "</Abstract></Article></MedlineCitation>",
+            "<PubmedData><ReferenceList><Reference><ArticleIdList>",
+            "<ArticleId IdType='pubmed'>99999999</ArticleId>",
+            "</ArticleIdList></Reference></ReferenceList></PubmedData>",
+            "</PubmedArticle></PubmedArticleSet>"
+        )
+        result <- .parse_pubmed_abstracts(record)
+        expect_equal(names(result), "11111111")
+        expect_equal(result[["11111111"]], "First part. Second part.")
+    })
+
+    test_that("returns an empty string for an article with no abstract", {
+        record <- paste0(
+            "<PubmedArticleSet><PubmedArticle><MedlineCitation>",
+            "<PMID>11111111</PMID><Article><ArticleTitle>T</ArticleTitle></Article>",
+            "</MedlineCitation></PubmedArticle></PubmedArticleSet>"
+        )
+        expect_equal(.parse_pubmed_abstracts(record)[["11111111"]], "")
+    })
+
+    test_that("returns an empty list when the response has no articles", {
+        result <- .parse_pubmed_abstracts("<PubmedArticleSet></PubmedArticleSet>")
+        expect_true(is.list(result))
+        expect_length(result, 0)
+    })
+
 })
 
 describe("filterSubnetworkByContext", {
