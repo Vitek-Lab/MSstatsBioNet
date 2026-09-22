@@ -129,10 +129,6 @@ test_that("annotateProteinInfoFromIndra works correctly with HGNC name", {
 
 })
 
-# ----- Protein groups: ";"-joined identifiers are grounded member by member,
-# then pooled into the semicolon-joined Entity* columns that
-# getSubnetworkFromIndra already fans out. Mocked, so no network access. -----
-
 test_that(".splitProteinGroup splits, trims and drops empty members", {
     expect_equal(MSstatsBioNet:::.splitProteinGroup("P13747;P23132"),
                  c("P13747", "P23132"))
@@ -155,10 +151,12 @@ test_that(".stripPtmSite removes only the site suffix", {
     expect_equal(MSstatsBioNet:::.stripPtmSite(c("P13747_S148", "P23132")),
                  c("P13747", "P23132"))
     expect_equal(MSstatsBioNet:::.stripPtmSite("CLH1_HUMAN"), "CLH1_HUMAN")
+    expect_equal(MSstatsBioNet:::.stripPtmSite(c("P13747_S148_T149")),
+                 c("P13747"))
 })
 
 test_that("PTM site suffixes are stripped from every protein group member", {
-    df <- data.frame(Protein = c("P13747_S148;P23132_T20", "P13747_S148"),
+    df <- data.frame(Protein = c("P13747;P23132_T20", "P13747_S148"),
                      stringsAsFactors = FALSE)
     out <- MSstatsBioNet:::.populateUniprotIdsInDataFrame(df, "Uniprot")
 
