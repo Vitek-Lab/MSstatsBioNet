@@ -122,7 +122,6 @@ describe(".fetch_clean_abstracts_xml", {
             .fetch_clean_abstracts_xml(pmids, batch_size = 2)
         )
 
-        # 5 PMIDs, batch_size 2 -> requested as 2 + 2 + 1
         expect_equal(
             requested,
             list(c("11111111", "11111112"), c("11111113", "11111114"), "11111115")
