@@ -198,7 +198,11 @@
     }
     if (!is.null(abstracts)) {
         if (!(is.character(abstracts) || is.list(abstracts)) ||
-            (length(abstracts) > 0 && is.null(names(abstracts)))) {
+            (length(abstracts) > 0 && is.null(names(abstracts))) ||
+            (is.list(abstracts) &&
+             any(!vapply(abstracts, function(a) {
+                 is.character(a) && length(a) == 1L
+             }, logical(1)))) {
             stop("`abstracts` must be a named character vector or list ",
                  "mapping PMID to abstract text.")
         }
