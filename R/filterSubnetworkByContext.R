@@ -296,12 +296,10 @@ filterSubnetworkByContext <- function(nodes,
 }
 
 
-#' Fetch and clean PubMed abstracts via rentrez
-#'
-#' PMIDs are requested in batches rather than one request per PMID, which is
-#' far faster for the hundreds of PMIDs a typical subnetwork produces. PMIDs
-#' that are missing from the response (unknown IDs, or a batch whose request
-#' failed) are returned with an empty abstract.
+#' Fetch and clean PubMed abstracts via rentrez. 
+#' 
+#' PMIDs that are missing from the response (unknown IDs, or a batch whose 
+#' request failed) are returned with an empty abstract.
 #'
 #' @param pmids      Character vector of PubMed IDs
 #' @param batch_size Number of PMIDs to request per efetch call
@@ -362,12 +360,10 @@ filterSubnetworkByContext <- function(nodes,
 #' @importFrom xml2 read_xml xml_find_all xml_find_first xml_text
 .parse_pubmed_abstracts <- function(record) {
     doc      <- read_xml(record)
-    # Book chapters are returned as PubmedBookArticle, not PubmedArticle
     articles <- xml_find_all(doc, ".//PubmedArticle | .//PubmedBookArticle")
 
     if (length(articles) == 0) return(list())
 
-    # ".//PMID" would also match PMIDs of cited references
     pmids <- vapply(
         articles,
         function(article) {
@@ -391,9 +387,7 @@ filterSubnetworkByContext <- function(nodes,
 
 #' Query INDRA API for evidence text
 #'
-#' Statement hashes are requested in batches rather than one request per hash,
-#' which is far faster for the hundreds of hashes a typical subnetwork
-#' produces. Hashes that are missing from the response (unknown hashes, or a
+#' Hashes that are missing from the response (unknown hashes, or a
 #' batch whose request failed) are absent from the returned list.
 #'
 #' @param stmt_hashes Character vector of statement hash strings
@@ -424,7 +418,6 @@ filterSubnetworkByContext <- function(nodes,
         parsed <- tryCatch({
             response <- POST(
                 url,
-                # unbox = FALSE keeps a single hash encoded as a JSON array
                 body   = list(stmt_hashes = I(batch)),
                 encode = "json",
                 content_type_json()
@@ -452,7 +445,6 @@ filterSubnetworkByContext <- function(nodes,
             results[matched] <- parsed[matched]
         }
 
-        # Pause between calls to avoid overloading the INDRA API
         if (i < n_batches) Sys.sleep(sleep)
     }
 
