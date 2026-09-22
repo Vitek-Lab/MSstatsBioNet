@@ -17,7 +17,9 @@ decomposeSubnetworkByTopic(
   max_iter = 200,
   tol = 1e-04,
   seed = 1,
-  include_ppi = TRUE
+  include_ppi = TRUE,
+  evidence = NULL,
+  abstracts = NULL
 )
 ```
 
@@ -68,6 +70,20 @@ decomposeSubnetworkByTopic(
   by folding edge counts onto the text-learned topics, so the PPIs do
   not influence the topics themselves.
 
+- evidence:
+
+  optional pre-fetched evidence data.frame, e.g.
+  `attr(topics, "corpus")$evidence` from a previous call. It is subset
+  to the edges of `subnetwork`, so the evidence gathered for a parent
+  network can be reused for any of its topic subnetworks. When `NULL`
+  (default) the evidence is queried from INDRA.
+
+- abstracts:
+
+  optional named character vector (or list) mapping PMID to abstract
+  text, e.g. `attr(topics, "corpus")$abstracts`. Only PMIDs missing from
+  it are fetched from PubMed. Default `NULL` fetches all.
+
 ## Value
 
 A list of length `n_topics`, named `topic_1` ... `topic_k`. Each element
@@ -95,7 +111,10 @@ is a topic-specific subnetwork: a list with
   PMIDs whose strongest topic loading is this topic.
 
 The full factorization (W, H_text, H_edges, etc.) is attached as the
-`"nmf"` attribute of the returned list.
+`"nmf"` attribute of the returned list. The evidence and abstracts used
+are attached as the `"corpus"` attribute (a list with `evidence` and
+`abstracts`) so they can be passed back in via the `evidence` and
+`abstracts` arguments.
 
 ## Details
 
@@ -135,7 +154,8 @@ without notice in future versions.
 ## See also
 
 [`getSubnetworkFromIndra`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md),
-[`filterSubnetworkByContext`](https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.md)
+[`filterSubnetworkByContext`](https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.md),
+[`decomposeSubnetworkIntoHierarchicalTopics`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkIntoHierarchicalTopics.md)
 
 ## Examples
 
@@ -149,5 +169,12 @@ subnetwork <- getSubnetworkFromIndra(input)
 topics <- decomposeSubnetworkByTopic(subnetwork, n_topics = 5)
 topics$topic_1$topTerms
 exportNetworkToHTML(topics$topic_1$nodes, topics$topic_1$edges)
+
+# Re-decompose a topic without re-querying INDRA / PubMed.
+corpus <- attr(topics, "corpus")
+topics_deeper <- decomposeSubnetworkByTopic(
+    topics$topic_1, n_topics = 5,
+    evidence = corpus$evidence, abstracts = corpus$abstracts
+)
 } # }
 ```

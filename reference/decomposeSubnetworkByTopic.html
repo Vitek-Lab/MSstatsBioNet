@@ -60,7 +60,9 @@ unsupervised non-negative matrix factorization (NMF).</p>
 <span>  max_iter <span class="op">=</span> <span class="fl">200</span>,</span>
 <span>  tol <span class="op">=</span> <span class="fl">1e-04</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  include_ppi <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  include_ppi <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  evidence <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  abstracts <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -113,6 +115,20 @@ factorized jointly with the text matrix via a shared basis. If
 loadings are derived afterwards by folding edge counts onto the
 text-learned topics, so the PPIs do not influence the topics themselves.</p></dd>
 
+
+<dt id="arg-evidence">evidence<a class="anchor" aria-label="anchor" href="#arg-evidence"></a></dt>
+<dd><p>optional pre-fetched evidence data.frame, e.g.
+<code>attr(topics, "corpus")$evidence</code> from a previous call. It is subset
+to the edges of <code>subnetwork</code>, so the evidence gathered for a parent
+network can be reused for any of its topic subnetworks. When <code>NULL</code>
+(default) the evidence is queried from INDRA.</p></dd>
+
+
+<dt id="arg-abstracts">abstracts<a class="anchor" aria-label="anchor" href="#arg-abstracts"></a></dt>
+<dd><p>optional named character vector (or list) mapping PMID to
+abstract text, e.g. <code>attr(topics, "corpus")$abstracts</code>. Only PMIDs
+missing from it are fetched from PubMed. Default <code>NULL</code> fetches all.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -135,7 +151,10 @@ text-learned topics, so the PPIs do not influence the topics themselves.</p></dd
 
 
 </dl><p>The full factorization (W, H_text, H_edges, etc.) is attached as the
-  <code>"nmf"</code> attribute of the returned list.</p>
+  <code>"nmf"</code> attribute of the returned list. The evidence and abstracts
+  used are attached as the <code>"corpus"</code> attribute (a list with
+  <code>evidence</code> and <code>abstracts</code>) so they can be passed back in via
+  the <code>evidence</code> and <code>abstracts</code> arguments.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -169,7 +188,8 @@ text-learned topics, so the PPIs do not influence the topics themselves.</p></dd
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="getSubnetworkFromIndra.html">getSubnetworkFromIndra</a></code>,
-  <code><a href="filterSubnetworkByContext.html">filterSubnetworkByContext</a></code></p></div>
+  <code><a href="filterSubnetworkByContext.html">filterSubnetworkByContext</a></code>,
+  <code><a href="decomposeSubnetworkIntoHierarchicalTopics.html">decomposeSubnetworkIntoHierarchicalTopics</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -183,6 +203,13 @@ text-learned topics, so the PPIs do not influence the topics themselves.</p></dd
 <span class="r-in"><span><span class="va">topics</span> <span class="op">&lt;-</span> <span class="fu">decomposeSubnetworkByTopic</span><span class="op">(</span><span class="va">subnetwork</span>, n_topics <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">topics</span><span class="op">$</span><span class="va">topic_1</span><span class="op">$</span><span class="va">topTerms</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="exportNetworkToHTML.html">exportNetworkToHTML</a></span><span class="op">(</span><span class="va">topics</span><span class="op">$</span><span class="va">topic_1</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">topics</span><span class="op">$</span><span class="va">topic_1</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Re-decompose a topic without re-querying INDRA / PubMed.</span></span></span>
+<span class="r-in"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">topics</span>, <span class="st">"corpus"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">topics_deeper</span> <span class="op">&lt;-</span> <span class="fu">decomposeSubnetworkByTopic</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="va">topics</span><span class="op">$</span><span class="va">topic_1</span>, n_topics <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>    evidence <span class="op">=</span> <span class="va">corpus</span><span class="op">$</span><span class="va">evidence</span>, abstracts <span class="op">=</span> <span class="va">corpus</span><span class="op">$</span><span class="va">abstracts</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

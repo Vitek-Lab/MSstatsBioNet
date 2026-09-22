@@ -15,6 +15,7 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkIntoHierarchicalTopics.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationInDataFrame.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-validateAnnotateProteinInfoFromIndraInput.html</loc></url>
@@ -23,6 +24,7 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/index.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/print.topicHierarchy.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/renderCytoscapeNetwork.html</loc></url>
 </urlset>
 

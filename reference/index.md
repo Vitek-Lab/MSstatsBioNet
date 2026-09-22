@@ -16,6 +16,9 @@
   : Shiny output binding for cytoscapeNetwork
 - [`decomposeSubnetworkByTopic()`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.md)
   : Decompose a subnetwork into topic-specific subnetworks via joint NMF
+- [`decomposeSubnetworkIntoHierarchicalTopics()`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkIntoHierarchicalTopics.md)
+  : Recursively decompose a subnetwork into a hierarchy of topic
+  subnetworks
 - [`deleteEdgeFromNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.md)
   : Delete an edge from a network edges data frame
 - [`.populateEntityInformationInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationInDataFrame.md)
@@ -30,6 +33,8 @@
   : Get subnetwork from INDRA database
 - [`previewNetworkInBrowser()`](https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.md)
   : Preview network in browser
+- [`print(`*`<topicHierarchy>`*`)`](https://vitek-lab.github.io/MSstatsBioNet/reference/print.topicHierarchy.md)
+  : Print a topic hierarchy as an indented tree
 - [`renderCytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/renderCytoscapeNetwork.md)
   : Render a Cytoscape network in a Shiny application. This function is
   used to render a Cytoscape network visualization within a Shiny
