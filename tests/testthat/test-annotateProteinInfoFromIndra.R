@@ -174,9 +174,9 @@ test_that("annotateProteinInfoFromIndra grounds each Uniprot protein group membe
         .callGetHgncNamesFromHgncIdsApi = function(hgncIds) {
             list(`4931` = "HLA-E", `10012` = "RAD23A", `2092` = "CLTC")
         },
-        .callIsTranscriptionFactorApi = function(genes) list(CLTC = FALSE),
-        .callIsKinaseApi = function(genes) list(CLTC = FALSE),
-        .callIsPhosphataseApi = function(genes) list(CLTC = FALSE)
+        .callIsTranscriptionFactorApi = function(genes) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE),
+        .callIsKinaseApi = function(genes) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE),
+        .callIsPhosphataseApi = function(genes) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE)
     )
     annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot")
 
@@ -185,12 +185,10 @@ test_that("annotateProteinInfoFromIndra grounds each Uniprot protein group membe
     expect_equal(group_row$EntityNamespace, "HGNC;HGNC")
     expect_equal(group_row$EntityId,        "4931;10012")
     expect_equal(group_row$EntityName,      "HLA-E;RAD23A")
-    # Gene-only flags stay NA while the row carries more than one grounding
     expect_true(is.na(group_row$IsTranscriptionFactor))
     expect_true(is.na(group_row$IsKinase))
     expect_true(is.na(group_row$IsPhosphatase))
 
-    # A single-identifier row is unaffected by the split
     single_row <- annotated_df[annotated_df$Protein == "Q00610", ]
     expect_equal(single_row$EntityNamespace, "HGNC")
     expect_equal(single_row$EntityId,        "2092")
@@ -214,7 +212,6 @@ test_that("a protein group whose members share a gene collapses to one grounding
     expect_equal(annotated_df$EntityNamespace, "HGNC")
     expect_equal(annotated_df$EntityId,        "4931")
     expect_equal(annotated_df$EntityName,      "HLA-E")
-    # Collapsed to a single grounding, so the gene-only flags are populated
     expect_equal(annotated_df$IsTranscriptionFactor, FALSE)
     expect_equal(annotated_df$IsPhosphatase,         TRUE)
 })
@@ -231,14 +228,10 @@ test_that("unresolvable protein group members are dropped, not carried as NA", {
     )
     annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot")
 
-    # Partially resolved group keeps only the member that grounded, and so is
-    # single-grounded and does get the gene-only flags
     expect_equal(annotated_df$EntityId[1],   "4931")
     expect_equal(annotated_df$EntityName[1], "HLA-E")
     expect_equal(annotated_df$IsKinase[1],   FALSE)
 
-    # Fully unresolved group stays NA across the Entity columns, and its
-    # presence alongside a resolved row must not break the flag lookups
     expect_true(is.na(annotated_df$EntityNamespace[2]))
     expect_true(is.na(annotated_df$EntityId[2]))
     expect_true(is.na(annotated_df$EntityName[2]))
@@ -268,8 +261,7 @@ test_that("Uniprot_Mnemonic groups map each member to its own UniProt id", {
     expect_equal(annotated_df$EntityNamespace[1], "HGNC;HGNC")
     expect_equal(annotated_df$EntityId[1],        "2092;4931")
     expect_equal(annotated_df$EntityName[1],      "CLTC;HLA-E")
-
-    # Only one member resolves, so the row degrades to that single grounding
+    
     expect_equal(annotated_df$UniprotId[2],  "Q00610")
     expect_equal(annotated_df$EntityName[2], "CLTC")
     expect_equal(annotated_df$IsKinase[2],   FALSE)
@@ -293,7 +285,6 @@ test_that("Hgnc_Name groups pool and deduplicate Gilda groundings", {
     expect_equal(annotated_df$EntityId[1],        "3236;3430")
     expect_equal(annotated_df$EntityName[1],      "EGFR;ERBB2")
 
-    # A repeated member contributes its grounding once
     expect_equal(annotated_df$EntityId[2],   "3236")
     expect_equal(annotated_df$EntityName[2], "EGFR")
     expect_equal(annotated_df$IsKinase[2],   TRUE)
