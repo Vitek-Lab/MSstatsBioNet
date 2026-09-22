@@ -362,14 +362,19 @@ filterSubnetworkByContext <- function(nodes,
 #' @importFrom xml2 read_xml xml_find_all xml_find_first xml_text
 .parse_pubmed_abstracts <- function(record) {
     doc      <- read_xml(record)
-    articles <- xml_find_all(doc, ".//PubmedArticle")
+    # Book chapters are returned as PubmedBookArticle, not PubmedArticle
+    articles <- xml_find_all(doc, ".//PubmedArticle | .//PubmedBookArticle")
 
     if (length(articles) == 0) return(list())
 
     # ".//PMID" would also match PMIDs of cited references
     pmids <- vapply(
         articles,
-        function(article) xml_text(xml_find_first(article, "./MedlineCitation/PMID")),
+        function(article) {
+            xml_text(xml_find_first(
+                article, "./MedlineCitation/PMID | ./BookDocument/PMID"
+            ))
+        },
         character(1)
     )
 
