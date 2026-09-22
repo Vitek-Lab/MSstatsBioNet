@@ -17,7 +17,11 @@ annotateProteinInfoFromIndra(df, proteinIdType)
   output of
   [`groupComparison`](https://rdrr.io/pkg/MSstats/man/groupComparison.html)
   function's comparisonResult table. Must contain a `Protein` column
-  whose values are interpreted according to `proteinIdType`.
+  whose values are interpreted according to `proteinIdType`. A value may
+  name a protein group – several identifiers for the same quantified
+  analyte joined by `";"`, e.g. `"P13747;P23132"` – in which case every
+  member is grounded independently and the results are pooled onto the
+  row.
 
 - proteinIdType:
 
@@ -38,20 +42,22 @@ A data frame with the following columns:
 - GlobalProtein:
 
   Character. The input identifier without the PTM site suffix (typically
-  `_<amino acid><site number>`, e.g. `_S148`) stripped, used as the
-  grounding key.
+  `_<amino acid><site number>`, e.g. `_S148`) stripped from each protein
+  group member, used as the grounding key. `NA` when the input holds no
+  usable identifier.
 
 - UniprotId:
 
-  Character. The Uniprot ID of the protein, or `NA` for `"Hgnc_Name"`
-  and `"Metabolite"` inputs.
+  Character. The Uniprot ID of the protein, semicolon-joined in the case
+  of multiple proteins, or `NA` for `"Hgnc_Name"` and `"Metabolite"`
+  inputs.
 
 - EntityNamespace:
 
   Character. The grounding namespace (e.g. `"HGNC"`, `"CHEBI"`). When a
-  single input grounds to multiple candidates, namespaces are
-  semicolon-joined and positionally aligned with `EntityId` and
-  `EntityName`.
+  row grounds to multiple candidates – whether from a protein group or
+  from an ambiguous single input – namespaces are semicolon-joined and
+  positionally aligned with `EntityId` and `EntityName`.
 
 - EntityId:
 
@@ -62,19 +68,23 @@ A data frame with the following columns:
 - EntityName:
 
   Character. The canonical display name from the grounding source.
-  Semicolon-joined when multi-grounded.
+  Semicolon-joined when multi-grounded, with `"NA"` in the positions
+  whose name lookup failed.
 
 - IsTranscriptionFactor:
 
-  Logical. `NA` for `proteinIdType == "Metabolite"`.
+  Logical. `NA` for `proteinIdType == "Metabolite"` and for
+  multi-grounded rows.
 
 - IsKinase:
 
-  Logical. `NA` for `proteinIdType == "Metabolite"`.
+  Logical. `NA` for `proteinIdType == "Metabolite"` and for
+  multi-grounded rows.
 
 - IsPhosphatase:
 
-  Logical. `NA` for `proteinIdType == "Metabolite"`.
+  Logical. `NA` for `proteinIdType == "Metabolite"` and for
+  multi-grounded rows.
 
 ## Examples
 

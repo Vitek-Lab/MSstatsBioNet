@@ -61,7 +61,11 @@ or Gilda grounding.</p>
 <dl><dt id="arg-df">df<a class="anchor" aria-label="anchor" href="#arg-df"></a></dt>
 <dd><p>output of <code><a href="https://rdrr.io/pkg/MSstats/man/groupComparison.html" class="external-link">groupComparison</a></code> function's
 comparisonResult table. Must contain a <code>Protein</code> column whose
-values are interpreted according to <code>proteinIdType</code>.</p></dd>
+values are interpreted according to <code>proteinIdType</code>. A value
+may name a protein group – several identifiers for the same
+quantified analyte joined by <code>";"</code>, e.g.
+<code>"P13747;P23132"</code> – in which case every member is grounded
+independently and the results are pooled onto the row.</p></dd>
 
 
 <dt id="arg-proteinidtype">proteinIdType<a class="anchor" aria-label="anchor" href="#arg-proteinidtype"></a></dt>
@@ -81,16 +85,20 @@ namespace Gilda returns (CHEBI / PUBCHEM / CHEMBL / ...).</p></dd>
   <dt>GlobalProtein</dt>
 <dd><p>Character. The input identifier without the PTM
       site suffix (typically <code>_&lt;amino acid&gt;&lt;site number&gt;</code>, e.g.
-      <code>_S148</code>) stripped, used as the grounding key.</p></dd>
+      <code>_S148</code>) stripped from each protein group member, used as
+      the grounding key. <code>NA</code> when the input holds no usable
+      identifier.</p></dd>
 
   <dt>UniprotId</dt>
-<dd><p>Character. The Uniprot ID of the protein, or
+<dd><p>Character. The Uniprot ID of the protein,
+      semicolon-joined in the case of multiple proteins, or
       <code>NA</code> for <code>"Hgnc_Name"</code> and <code>"Metabolite"</code> inputs.</p></dd>
 
   <dt>EntityNamespace</dt>
 <dd><p>Character. The grounding namespace
-      (e.g. <code>"HGNC"</code>, <code>"CHEBI"</code>). When a single input grounds
-      to multiple candidates, namespaces are semicolon-joined and
+      (e.g. <code>"HGNC"</code>, <code>"CHEBI"</code>). When a row grounds to
+      multiple candidates – whether from a protein group or from an
+      ambiguous single input – namespaces are semicolon-joined and
       positionally aligned with <code>EntityId</code> and <code>EntityName</code>.</p></dd>
 
   <dt>EntityId</dt>
@@ -100,19 +108,20 @@ namespace Gilda returns (CHEBI / PUBCHEM / CHEMBL / ...).</p></dd>
 
   <dt>EntityName</dt>
 <dd><p>Character. The canonical display name from the
-      grounding source. Semicolon-joined when multi-grounded.</p></dd>
+      grounding source. Semicolon-joined when multi-grounded, with
+      <code>"NA"</code> in the positions whose name lookup failed.</p></dd>
 
   <dt>IsTranscriptionFactor</dt>
 <dd><p>Logical. <code>NA</code> for
-      <code>proteinIdType == "Metabolite"</code>.</p></dd>
+      <code>proteinIdType == "Metabolite"</code> and for multi-grounded rows.</p></dd>
 
   <dt>IsKinase</dt>
 <dd><p>Logical. <code>NA</code> for
-      <code>proteinIdType == "Metabolite"</code>.</p></dd>
+      <code>proteinIdType == "Metabolite"</code> and for multi-grounded rows.</p></dd>
 
   <dt>IsPhosphatase</dt>
 <dd><p>Logical. <code>NA</code> for
-      <code>proteinIdType == "Metabolite"</code>.</p></dd>
+      <code>proteinIdType == "Metabolite"</code> and for multi-grounded rows.</p></dd>
 
 
 </dl></div>
