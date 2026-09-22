@@ -13,7 +13,9 @@ decomposeSubnetworkByTopic(
   max_iter = 200,
   tol = 1e-04,
   seed = 1,
-  include_ppi = TRUE
+  include_ppi = TRUE,
+  evidence = NULL,
+  abstracts = NULL
 )
 }
 \arguments{
@@ -44,6 +46,16 @@ factorized jointly with the text matrix via a shared basis. If
 \code{FALSE}, NMF is run on the paper-word matrix only and edge-topic
 loadings are derived afterwards by folding edge counts onto the
 text-learned topics, so the PPIs do not influence the topics themselves.}
+
+\item{evidence}{optional pre-fetched evidence data.frame, e.g.
+\code{attr(topics, "corpus")$evidence} from a previous call. It is subset
+to the edges of \code{subnetwork}, so the evidence gathered for a parent
+network can be reused for any of its topic subnetworks. When \code{NULL}
+(default) the evidence is queried from INDRA.}
+
+\item{abstracts}{optional named character vector (or list) mapping PMID to
+abstract text, e.g. \code{attr(topics, "corpus")$abstracts}. Only PMIDs
+missing from it are fetched from PubMed. Default \code{NULL} fetches all.}
 }
 \value{
 A list of length \code{n_topics}, named \code{topic_1} ...
@@ -57,7 +69,10 @@ A list of length \code{n_topics}, named \code{topic_1} ...
     \item{pmids}{PMIDs whose strongest topic loading is this topic.}
   }
   The full factorization (W, H_text, H_edges, etc.) is attached as the
-  \code{"nmf"} attribute of the returned list.
+  \code{"nmf"} attribute of the returned list. The evidence and abstracts
+  used are attached as the \code{"corpus"} attribute (a list with
+  \code{evidence} and \code{abstracts}) so they can be passed back in via
+  the \code{evidence} and \code{abstracts} arguments.
 }
 \description{
 Takes a subnetwork (the output of \code{\link{getSubnetworkFromIndra}}) and
@@ -104,9 +119,17 @@ subnetwork <- getSubnetworkFromIndra(input)
 topics <- decomposeSubnetworkByTopic(subnetwork, n_topics = 5)
 topics$topic_1$topTerms
 exportNetworkToHTML(topics$topic_1$nodes, topics$topic_1$edges)
+
+# Re-decompose a topic without re-querying INDRA / PubMed.
+corpus <- attr(topics, "corpus")
+topics_deeper <- decomposeSubnetworkByTopic(
+    topics$topic_1, n_topics = 5,
+    evidence = corpus$evidence, abstracts = corpus$abstracts
+)
 }
 }
 \seealso{
 \code{\link{getSubnetworkFromIndra}},
-  \code{\link{filterSubnetworkByContext}}
+  \code{\link{filterSubnetworkByContext}},
+  \code{\link{decomposeSubnetworkIntoHierarchicalTopics}}
 }

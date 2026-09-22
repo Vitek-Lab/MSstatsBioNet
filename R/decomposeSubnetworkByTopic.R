@@ -48,6 +48,14 @@
 #'   \code{FALSE}, NMF is run on the paper-word matrix only and edge-topic
 #'   loadings are derived afterwards by folding edge counts onto the
 #'   text-learned topics, so the PPIs do not influence the topics themselves.
+#' @param evidence optional pre-fetched evidence data.frame, e.g.
+#'   \code{attr(topics, "corpus")$evidence} from a previous call. It is subset
+#'   to the edges of \code{subnetwork}, so the evidence gathered for a parent
+#'   network can be reused for any of its topic subnetworks. When \code{NULL}
+#'   (default) the evidence is queried from INDRA.
+#' @param abstracts optional named character vector (or list) mapping PMID to
+#'   abstract text, e.g. \code{attr(topics, "corpus")$abstracts}. Only PMIDs
+#'   missing from it are fetched from PubMed. Default \code{NULL} fetches all.
 #'
 #' @return A list of length \code{n_topics}, named \code{topic_1} ...
 #'   \code{topic_k}. Each element is a topic-specific subnetwork: a list with
@@ -60,10 +68,14 @@
 #'     \item{pmids}{PMIDs whose strongest topic loading is this topic.}
 #'   }
 #'   The full factorization (W, H_text, H_edges, etc.) is attached as the
-#'   \code{"nmf"} attribute of the returned list.
+#'   \code{"nmf"} attribute of the returned list. The evidence and abstracts
+#'   used are attached as the \code{"corpus"} attribute (a list with
+#'   \code{evidence} and \code{abstracts}) so they can be passed back in via
+#'   the \code{evidence} and \code{abstracts} arguments.
 #'
 #' @seealso \code{\link{getSubnetworkFromIndra}},
-#'   \code{\link{filterSubnetworkByContext}}
+#'   \code{\link{filterSubnetworkByContext}},
+#'   \code{\link{decomposeSubnetworkIntoHierarchicalTopics}}
 #'
 #' @export
 #' 
@@ -80,6 +92,13 @@
 #' topics <- decomposeSubnetworkByTopic(subnetwork, n_topics = 5)
 #' topics$topic_1$topTerms
 #' exportNetworkToHTML(topics$topic_1$nodes, topics$topic_1$edges)
+#'
+#' # Re-decompose a topic without re-querying INDRA / PubMed.
+#' corpus <- attr(topics, "corpus")
+#' topics_deeper <- decomposeSubnetworkByTopic(
+#'     topics$topic_1, n_topics = 5,
+#'     evidence = corpus$evidence, abstracts = corpus$abstracts
+#' )
 #' }
 decomposeSubnetworkByTopic <- function(subnetwork,
                                        n_topics = 5,
@@ -89,13 +108,17 @@ decomposeSubnetworkByTopic <- function(subnetwork,
                                        max_iter = 200,
                                        tol = 1e-4,
                                        seed = 1,
-                                       include_ppi = TRUE) {
+                                       include_ppi = TRUE,
+                                       evidence = NULL,
+                                       abstracts = NULL) {
 
     .validateDecomposeSubnetworkByTopicInput(subnetwork, n_topics,
                                              edge_topic_cutoff, include_ppi)
+    .validateTopicCorpusInput(evidence, abstracts)
 
     # 1-3. Build the shared paper-by-word and paper-by-edge matrices.
-    mats <- .buildTopicMatrices(subnetwork, n_topics, min_term_count)
+    mats <- .buildTopicMatrices(subnetwork, n_topics, min_term_count,
+                                evidence = evidence, abstracts = abstracts)
     nodes     <- mats$nodes
     edges     <- mats$edges
     pmids     <- mats$pmids
@@ -155,6 +178,10 @@ decomposeSubnetworkByTopic <- function(subnetwork,
         objective   = model$objective,
         n_iter      = model$n_iter,
         include_ppi = include_ppi
+    )
+    attr(topics, "corpus") <- list(
+        evidence  = mats$evidence,
+        abstracts = mats$abstracts
     )
     return(topics)
 }

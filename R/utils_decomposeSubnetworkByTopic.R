@@ -68,18 +68,26 @@
 #' @param n_topics requested number of topics; reduced (with a warning) when
 #'   fewer papers than topics are available
 #' @param min_term_count minimum corpus term frequency to keep a word
-#' @return list with `nodes`, `edges`, `evidence`, `pmids`, `edge_keys`,
-#'   `X_text`, `X_edges`, and the (possibly reduced) `n_topics`
+#' @param evidence optional pre-fetched evidence data.frame (as returned by
+#'   \code{.extract_evidence_text}); subset to the subnetwork's edges. When
+#'   NULL, evidence is queried from INDRA.
+#' @param abstracts optional named character vector (or list) mapping PMID to
+#'   abstract text. Only PMIDs missing from it are fetched from PubMed.
+#' @return list with `nodes`, `edges`, `evidence`, `abstracts`, `pmids`,
+#'   `edge_keys`, `X_text`, `X_edges`, and the (possibly reduced) `n_topics`
 #' @keywords internal
 #' @noRd
-.buildTopicMatrices <- function(subnetwork, n_topics, min_term_count = 2) {
+.buildTopicMatrices <- function(subnetwork, n_topics, min_term_count = 2,
+                                evidence = NULL, abstracts = NULL) {
     nodes <- subnetwork$nodes
     edges <- subnetwork$edges
     n_topics <- as.integer(n_topics)
 
-    # 1. Evidence (paper <-> edge links) for every edge.
-    evidence <- .extract_evidence_text(edges)
-    evidence <- evidence[!is.na(evidence$pmid) & nchar(evidence$pmid) > 0, ]
+    # 1. Evidence (paper <-> edge links) for every edge and the abstracts of
+    #    the supporting papers, reusing any supplied evidence / abstracts.
+    corpus <- .gatherTopicCorpus(edges, evidence, abstracts)
+    evidence <- corpus$evidence
+    abstracts <- corpus$abstracts
     if (nrow(evidence) == 0) {
         stop("No evidence with PMIDs was found for any edge; ",
              "cannot decompose into topics.")
@@ -98,19 +106,107 @@
     }
 
     # 2. X_text (papers x words) from PubMed abstracts.
-    abstract_list <- .fetch_clean_abstracts_xml(pmids)
-    abstracts <- vapply(pmids, function(p) {
-        a <- abstract_list[[p]]
-        if (is.null(a)) "" else a
-    }, character(1))
     X_text <- .buildTextMatrix(pmids, abstracts, min_term_count)
 
     # 3. X_edges (papers x source_target_interaction) of evidence counts.
     X_edges <- .buildEdgeMatrix(evidence, pmids, edge_keys)
 
     list(nodes = nodes, edges = edges, evidence = evidence,
-         pmids = pmids, edge_keys = edge_keys,
+         abstracts = abstracts, pmids = pmids, edge_keys = edge_keys,
          X_text = X_text, X_edges = X_edges, n_topics = n_topics)
+}
+
+
+#' Gather the INDRA evidence and PubMed abstracts for a set of edges
+#'
+#' Network-bound step shared by \code{\link{decomposeSubnetworkByTopic}} and
+#' \code{\link{decomposeSubnetworkIntoHierarchicalTopics}}. A supplied
+#' `evidence` table is subset to `edges` instead of re-querying INDRA, and only
+#' PMIDs missing from `abstracts` are fetched from PubMed.
+#'
+#' @param edges edges data.frame
+#' @param evidence NULL or pre-fetched evidence data.frame
+#' @param abstracts NULL or named character vector / list of abstracts
+#' @return list with `evidence` (PMID-backed rows only) and `abstracts`
+#'   (named character vector covering every PMID in `evidence`)
+#' @keywords internal
+#' @noRd
+.gatherTopicCorpus <- function(edges, evidence = NULL, abstracts = NULL) {
+    if (is.null(evidence)) {
+        evidence <- .extract_evidence_text(edges)
+    } else {
+        evidence <- .subsetEvidenceToEdges(evidence, edges)
+    }
+    evidence <- evidence[!is.na(evidence$pmid) & nchar(evidence$pmid) > 0, ,
+                         drop = FALSE]
+    pmids <- unique(evidence$pmid)
+
+    abstract_list <- if (is.null(abstracts)) list() else as.list(abstracts)
+    missing_pmids <- setdiff(pmids, names(abstract_list))
+    if (length(missing_pmids) > 0) {
+        abstract_list <- c(abstract_list,
+                           .fetch_clean_abstracts_xml(missing_pmids))
+    }
+    abstracts <- vapply(pmids, function(p) {
+        a <- abstract_list[[p]]
+        if (is.null(a) || is.na(a)) "" else as.character(a)
+    }, character(1))
+
+    list(evidence = evidence, abstracts = abstracts)
+}
+
+
+#' Restrict a pre-fetched evidence table to the edges of a subnetwork
+#'
+#' Matches on the edge key (source, target, interaction) together with the
+#' statement hash, so the result equals what \code{.extract_evidence_text}
+#' would return for \code{edges} without re-querying INDRA.
+#'
+#' @param evidence evidence data.frame with `source`, `target`, `interaction`,
+#'   `stmt_hash`, and `pmid` columns
+#' @param edges edges data.frame with `source`, `target`, `interaction`, and
+#'   `stmt_hash` columns
+#' @return subset of `evidence`
+#' @keywords internal
+#' @noRd
+.subsetEvidenceToEdges <- function(evidence, edges) {
+    ev_id <- paste(.edgeKey(evidence$source, evidence$target,
+                            evidence$interaction),
+                   as.character(evidence$stmt_hash), sep = "##")
+    edge_id <- paste(.edgeKey(edges$source, edges$target, edges$interaction),
+                     as.character(edges$stmt_hash), sep = "##")
+    evidence[ev_id %in% edge_id, , drop = FALSE]
+}
+
+
+#' Validate optional pre-fetched evidence / abstracts inputs
+#' @param evidence NULL or evidence data.frame
+#' @param abstracts NULL or named character vector / list of abstracts
+#' @keywords internal
+#' @noRd
+.validateTopicCorpusInput <- function(evidence, abstracts) {
+    if (!is.null(evidence)) {
+        required_cols <- c("source", "target", "interaction",
+                           "stmt_hash", "pmid")
+        if (!is.data.frame(evidence) ||
+            !all(required_cols %in% names(evidence))) {
+            stop("`evidence` must be a data.frame with columns: ",
+                 paste(required_cols, collapse = ", "),
+                 ", e.g. attr(decomposeSubnetworkByTopic(...), ",
+                 "\"corpus\")$evidence.")
+        }
+    }
+    if (!is.null(abstracts)) {
+        if (!(is.character(abstracts) || is.list(abstracts)) ||
+            (length(abstracts) > 0 && is.null(names(abstracts))) ||
+            (is.list(abstracts) &&
+             any(!vapply(abstracts, function(a) {
+                 is.character(a) && length(a) == 1L
+             }, logical(1))))) {
+            stop("`abstracts` must be a named character vector or list ",
+                 "mapping PMID to abstract text.")
+        }
+    }
 }
 
 
