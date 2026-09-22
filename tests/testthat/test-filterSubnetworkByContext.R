@@ -117,13 +117,16 @@ describe(".fetch_clean_abstracts_xml", {
                 make_pubmed_xml(id)
             }
         )
-        pmids  <- as.character(seq(11111111, 11111115))
+        pmids  <- c("11111111", "11111112", "11111113", "11111114", "11111115")
         result <- suppressMessages(
             .fetch_clean_abstracts_xml(pmids, batch_size = 2)
         )
 
-        expect_length(requested, 3)
-        expect_equal(lengths(requested), c(2, 2, 1))
+        # 5 PMIDs, batch_size 2 -> requested as 2 + 2 + 1
+        expect_equal(
+            requested,
+            list(c("11111111", "11111112"), c("11111113", "11111114"), "11111115")
+        )
         expect_equal(names(result), pmids)
         expect_equal(result[["11111113"]], "Abstract for 11111113.")
     })
