@@ -10,39 +10,24 @@
 #'      may name a protein group -- several identifiers for the same
 #'      quantified analyte joined by \code{";"}, e.g.
 #'      \code{"P13747;P23132"} -- in which case every member is grounded
-#'      independently and the results are pooled onto the row (see
-#'      Details).
+#'      independently and the results are pooled onto the row.
 #' @param proteinIdType A character string specifying the type of analyte
 #'      identifier in the \code{Protein} column. One of
 #'      \code{"Uniprot"}, \code{"Uniprot_Mnemonic"}, \code{"Hgnc_Name"}, or
 #'      \code{"Metabolite"}. The \code{"Metabolite"} value treats inputs as
 #'      metabolite names and grounds them through Gilda, keeping whatever
 #'      namespace Gilda returns (CHEBI / PUBCHEM / CHEMBL / ...).
-#' @details
-#' Protein group members are split on \code{";"}, each member is stripped
-#' of its PTM site suffix and grounded on its own, and the groundings of
-#' all members are concatenated -- in member order, deduplicated on
-#' \code{(EntityNamespace, EntityId)} -- into the semicolon-joined
-#' \code{Entity*} columns. This is the same representation used when a
-#' single input grounds to several candidates, and
-#' \code{\link{getSubnetworkFromIndra}} fans each pair out into its own
-#' query node.
-#'
-#' Because \code{IsTranscriptionFactor} / \code{IsKinase} /
-#' \code{IsPhosphatase} describe one gene, they are left \code{NA}
-#' whenever a row carries more than one grounding. A group whose members
-#' all resolve to the same gene collapses to a single grounding and does
-#' get the flags.
+#'      
 #' @return A data frame with the following columns:
 #' \describe{
 #'   \item{Protein}{Character. The original identifier from the input.}
-#'   \item{GlobalProtein}{Character. The input identifier with the PTM
+#'   \item{GlobalProtein}{Character. The input identifier without the PTM
 #'       site suffix (typically \code{_<amino acid><site number>}, e.g.
 #'       \code{_S148}) stripped from each protein group member, used as
 #'       the grounding key. \code{NA} when the input holds no usable
 #'       identifier.}
 #'   \item{UniprotId}{Character. The Uniprot ID of the protein,
-#'       semicolon-joined over the members of a protein group, or
+#'       semicolon-joined in the case of multiple proteins, or
 #'       \code{NA} for \code{"Hgnc_Name"} and \code{"Metabolite"} inputs.}
 #'   \item{EntityNamespace}{Character. The grounding namespace
 #'       (e.g. \code{"HGNC"}, \code{"CHEBI"}). When a row grounds to
@@ -130,8 +115,9 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 
 #' Strip the PTM site suffix from identifiers
 #'
-#' Removes a trailing \code{_<amino acid><site number>} suffix (e.g.
-#' \code{_S148}) from each element, leaving other identifiers untouched.
+#' Removes 1+ trailing \code{_<amino acid><site number>} suffixes (e.g.
+#' \code{_S148}, \code{_S148_T150}) from each element, 
+#' leaving other identifiers untouched.
 #'
 #' @param x A character vector of identifiers.
 #' @return The character vector with site suffixes removed.
@@ -145,18 +131,16 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 
 #' Populate Uniprot IDs in Data Frame
 #'
-#' Derives \code{GlobalProtein} by stripping the PTM site suffix from each
-#' protein group member, then resolves UniProt IDs per member. For a
-#' protein group the resolved IDs are semicolon-joined in member order.
 #'
 #' @param df A data frame containing protein information.
 #' @param proteinIdType A character string specifying the type of protein ID.
 #' @return A data frame with populated Uniprot IDs.
+#' @noRd
 .populateUniprotIdsInDataFrame <- function(df, proteinIdType) {
         if (!("GlobalProtein" %in% colnames(df))) {
                 df$Protein = as.character(df$Protein)
                 df$GlobalProtein = vapply(df$Protein, function(protein) {
-                        .joinProteinGroup(.stripPtmSite(.splitProteinGroup(protein)))
+                        .stripPtmSite(protein)
                 }, character(1), USE.NAMES = FALSE)
         }
         df$GlobalProtein = as.character(df$GlobalProtein)
@@ -209,14 +193,13 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 #'
 #' Converts each \code{UniprotId} member to an HGNC id via the INDRA cogex
 #' endpoint, then looks up the canonical HGNC name. Sets
-#' \code{EntityNamespace = "HGNC"} for any row whose UniProt resolved. A
-#' protein group contributes one grounding per member that resolved,
-#' deduplicated and semicolon-joined across the three Entity columns.
+#' \code{EntityNamespace = "HGNC"} for any row whose UniProt resolved.
 #'
 #' @param df A data frame with a populated \code{UniprotId} column, whose
 #'        values may be semicolon-joined protein groups.
 #' @return The data frame with EntityNamespace, EntityId, EntityName set
 #'         for resolved rows.
+#' @noRd
 .populateEntityInformationWithIndraCogex <- function(df) {
         groupMembers <- lapply(df$UniprotId, .splitProteinGroup)
         validUniprots <- unique(unlist(groupMembers, use.names = FALSE))
@@ -265,6 +248,7 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 #' @param proteinIdType One of \code{"Hgnc_Name"} or \code{"Metabolite"}.
 #' @return The data frame with EntityNamespace, EntityId, EntityName set
 #'         for resolved rows.
+#' @noRd
 .populateEntityInformationWithGilda <- function(df, proteinIdType) {
         keep_only <- if (proteinIdType == "Hgnc_Name") "HGNC"          else NULL
         organisms <- if (proteinIdType == "Hgnc_Name") list("9606")    else NULL
@@ -315,6 +299,7 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 #' @param proteinIdType The proteinIdType supplied by the caller. Gene-only
 #'        flags are \code{NA} (no API call) when this is \code{"Metabolite"}.
 #' @return A data frame with populated transcription factor information.
+#' @noRd
 .populateTranscriptionFactorInfoInDataFrame <- function(df, proteinIdType) {
         df$IsTranscriptionFactor <- NA
         if (proteinIdType == "Metabolite") {
@@ -344,6 +329,7 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 #' @param proteinIdType The proteinIdType supplied by the caller. Gene-only
 #'        flags are \code{NA} (no API call) when this is \code{"Metabolite"}.
 #' @return A data frame with populated kinase information.
+#' @noRd
 .populateKinaseInfoInDataFrame <- function(df, proteinIdType) {
         df$IsKinase <- NA
         if (proteinIdType == "Metabolite") {
@@ -373,6 +359,7 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 #' @param proteinIdType The proteinIdType supplied by the caller. Gene-only
 #'        flags are \code{NA} (no API call) when this is \code{"Metabolite"}.
 #' @return A data frame with populated phosphatase information.
+#' @noRd
 .populatePhophataseInfoInDataFrame <- function(df, proteinIdType) {
         df$IsPhosphatase <- NA
         if (proteinIdType == "Metabolite") {
