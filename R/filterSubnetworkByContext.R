@@ -252,15 +252,13 @@ filterSubnetworkByContext <- function(nodes,
     n_hashes      <- length(unique_hashes)
     
     cat(sprintf("Processing %d unique statement hashes...\n", n_hashes))
-    
-    for (i in seq_along(unique_hashes)) {
-        stmt_hash <- unique_hashes[i]
-        
-        if (i %% 10 == 0) cat(sprintf("Progress: %d/%d\n", i, n_hashes))
-        
-        evidence_list    <- .query_indra_evidence(stmt_hash)
+
+    evidence_by_hash <- .query_indra_evidence(unique_hashes)
+
+    for (stmt_hash in unique_hashes) {
+        evidence_list    <- evidence_by_hash[[as.character(stmt_hash)]]
         if (is.null(evidence_list) || length(evidence_list) == 0) next
-        
+
         matching_indices <- which(df$stmt_hash == stmt_hash)
         
         for (evidence in evidence_list) {
@@ -298,83 +296,158 @@ filterSubnetworkByContext <- function(nodes,
 }
 
 
-#' Fetch and clean PubMed abstracts via rentrez
-#' @param pmids Character vector of PubMed IDs
+#' Fetch and clean PubMed abstracts via rentrez. 
+#' 
+#' PMIDs that are missing from the response (unknown IDs, or a batch whose 
+#' request failed) are returned with an empty abstract.
+#'
+#' @param pmids      Character vector of PubMed IDs
+#' @param batch_size Number of PMIDs to request per efetch call
 #' @return Named list: pmid -> abstract text
 #' @keywords internal
 #' @noRd
 #' @importFrom rentrez entrez_fetch
-#' @importFrom xml2 read_xml xml_find_all xml_text
-.fetch_clean_abstracts_xml <- function(pmids) {
-    results <- list()
-    total   <- length(pmids)
-    
-    cat(sprintf("Fetching %d abstracts...\n", total))
-    
-    for (i in seq_along(pmids)) {
-        pmid <- pmids[i]
-        
+.fetch_clean_abstracts_xml <- function(pmids, batch_size = 200) {
+    pmids <- as.character(pmids)
+    total <- length(pmids)
+
+    if (total == 0) return(list())
+
+    results        <- as.list(rep("", total))
+    names(results) <- pmids
+
+    batches   <- split(pmids, ceiling(seq_along(pmids) / batch_size))
+    n_batches <- length(batches)
+
+    cat(sprintf("Fetching %d abstracts in %d batch(es) of up to %d...\n",
+                total, n_batches, batch_size))
+
+    for (i in seq_along(batches)) {
+        batch <- batches[[i]]
+
         record <- tryCatch(
-            entrez_fetch(db = "pubmed", id = pmid, rettype = "xml"),
+            entrez_fetch(db = "pubmed", id = batch, rettype = "xml"),
             error = function(e) {
-                cat(sprintf("Error fetching PMID %s at %d/%d: %s\n", pmid, i, total, e$message))
+                cat(sprintf("Error fetching batch %d/%d (%d PMIDs): %s\n",
+                            i, n_batches, length(batch), conditionMessage(e)))
                 NULL
             }
         )
-        
-        if (is.null(record)) {
-            results[[pmid]] <- ""
-            next
+
+        if (!is.null(record)) {
+            fetched <- .parse_pubmed_abstracts(record)
+            matched <- intersect(names(fetched), batch)
+            results[matched] <- fetched[matched]
         }
-        
-        doc <- read_xml(record)
-        abstract_nodes <- xml_find_all(doc, ".//AbstractText")
-        
-        if (length(abstract_nodes) > 0) {
-            results[[pmid]] <- paste(trimws(xml_text(abstract_nodes)), collapse = " ")
-        } else {
-            results[[pmid]] <- ""
-        }
-        
-        if (i %% 10 == 0 || i == total) {
-            cat(sprintf("Progress: %d/%d (%.1f%%)\n", i, total, (i / total) * 100))
-        }
-        
-        Sys.sleep(0.34)
+
+        cat(sprintf("Progress: %d/%d batches (%.1f%%)\n",
+                    i, n_batches, (i / n_batches) * 100))
+
+        # NCBI allows 3 requests/second without an API key
+        if (i < n_batches) Sys.sleep(0.34)
     }
-    
+
     cat("Done fetching abstracts!\n")
     return(results)
 }
 
 
+#' Parse abstracts out of a PubMed efetch XML response
+#' @param record Character string of XML returned by efetch
+#' @return Named list: pmid -> abstract text (empty string when no abstract)
+#' @keywords internal
+#' @noRd
+#' @importFrom xml2 read_xml xml_find_all xml_find_first xml_text
+.parse_pubmed_abstracts <- function(record) {
+    doc      <- read_xml(record)
+    articles <- xml_find_all(doc, ".//PubmedArticle | .//PubmedBookArticle")
+
+    if (length(articles) == 0) return(list())
+
+    pmids <- vapply(
+        articles,
+        function(article) {
+            xml_text(xml_find_first(
+                article, "./MedlineCitation/PMID | ./BookDocument/PMID"
+            ))
+        },
+        character(1)
+    )
+
+    abstracts <- lapply(articles, function(article) {
+        nodes <- xml_find_all(article, ".//Abstract/AbstractText")
+        if (length(nodes) == 0) return("")
+        paste(trimws(xml_text(nodes)), collapse = " ")
+    })
+    names(abstracts) <- pmids
+
+    abstracts[!is.na(pmids) & nzchar(pmids)]
+}
+
+
 #' Query INDRA API for evidence text
-#' @param stmt_hash A statement hash string
-#' @return A list of evidence objects from the API, or NULL if error
+#'
+#' Hashes that are missing from the response (unknown hashes, or a
+#' batch whose request failed) are absent from the returned list.
+#'
+#' @param stmt_hashes Character vector of statement hash strings
+#' @param batch_size  Number of hashes to request per API call
+#' @param sleep       Seconds to pause between API calls
+#' @return Named list: stmt_hash -> list of evidence objects. Empty list when
+#'         no evidence could be retrieved.
 #' @keywords internal
 #' @noRd
 #' @importFrom httr POST status_code content content_type_json
 #' @importFrom jsonlite fromJSON
-.query_indra_evidence <- function(stmt_hash) {
-    url <- "https://discovery.indra.bio/api/get_evidences_for_stmt_hash"
-    
-    tryCatch({
-        response <- POST(
-            url,
-            body   = list(stmt_hash = stmt_hash),
-            encode = "json",
-            content_type_json()
-        )
-        
-        if (status_code(response) != 200) {
-            warning(sprintf("API returned status %d for stmt_hash: %s",
-                            status_code(response), stmt_hash))
+.query_indra_evidence <- function(stmt_hashes, batch_size = 100, sleep = 1) {
+    url <- "https://discovery.indra.bio/api/get_evidences_for_stmt_hashes"
+
+    stmt_hashes <- unique(as.character(stmt_hashes))
+    if (length(stmt_hashes) == 0) return(list())
+
+    batches   <- split(stmt_hashes, ceiling(seq_along(stmt_hashes) / batch_size))
+    n_batches <- length(batches)
+    results   <- list()
+
+    cat(sprintf("Fetching evidence for %d hashes in %d batch(es) of up to %d...\n",
+                length(stmt_hashes), n_batches, batch_size))
+
+    for (i in seq_along(batches)) {
+        batch <- batches[[i]]
+
+        parsed <- tryCatch({
+            response <- POST(
+                url,
+                body   = list(stmt_hashes = I(batch)),
+                encode = "json",
+                content_type_json()
+            )
+
+            if (status_code(response) != 200) {
+                warning(sprintf("API returned status %d for stmt_hashes: %s",
+                                status_code(response),
+                                paste(batch, collapse = ", ")))
+                NULL
+            } else {
+                content(response, as = "parsed")
+            }
+        }, error = function(e) {
+            warning(sprintf("Error querying stmt_hashes %s: %s",
+                            paste(batch, collapse = ", "), e$message))
             return(NULL)
+        })
+
+        cat(sprintf("Progress: %d/%d batches (%.1f%%)\n",
+                    i, n_batches, (i / n_batches) * 100))
+
+        if (!is.null(parsed)) {
+            matched <- intersect(names(parsed), batch)
+            results[matched] <- parsed[matched]
         }
-        
-        content(response, as = "parsed")
-    }, error = function(e) {
-        warning(sprintf("Error querying stmt_hash %s: %s", stmt_hash, e$message))
-        return(NULL)
-    })
+
+        if (i < n_batches) Sys.sleep(sleep)
+    }
+
+    cat("Done fetching evidence!\n")
+    results
 }
