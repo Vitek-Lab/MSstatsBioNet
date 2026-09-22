@@ -393,13 +393,14 @@ filterSubnetworkByContext <- function(nodes,
 #'
 #' @param stmt_hashes Character vector of statement hash strings
 #' @param batch_size  Number of hashes to request per API call
+#' @param sleep       Seconds to pause between API calls
 #' @return Named list: stmt_hash -> list of evidence objects. Empty list when
 #'         no evidence could be retrieved.
 #' @keywords internal
 #' @noRd
 #' @importFrom httr POST status_code content content_type_json
 #' @importFrom jsonlite fromJSON
-.query_indra_evidence <- function(stmt_hashes, batch_size = 100) {
+.query_indra_evidence <- function(stmt_hashes, batch_size = 100, sleep = 1) {
     url <- "https://discovery.indra.bio/api/get_evidences_for_stmt_hashes"
 
     stmt_hashes <- unique(as.character(stmt_hashes))
@@ -441,10 +442,13 @@ filterSubnetworkByContext <- function(nodes,
         cat(sprintf("Progress: %d/%d batches (%.1f%%)\n",
                     i, n_batches, (i / n_batches) * 100))
 
-        if (is.null(parsed)) next
+        if (!is.null(parsed)) {
+            matched <- intersect(names(parsed), batch)
+            results[matched] <- parsed[matched]
+        }
 
-        matched <- intersect(names(parsed), batch)
-        results[matched] <- parsed[matched]
+        # Pause between calls to avoid overloading the INDRA API
+        if (i < n_batches) Sys.sleep(sleep)
     }
 
     cat("Done fetching evidence!\n")
