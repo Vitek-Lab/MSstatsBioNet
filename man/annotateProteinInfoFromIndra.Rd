@@ -9,7 +9,11 @@ annotateProteinInfoFromIndra(df, proteinIdType)
 \arguments{
 \item{df}{output of \code{\link[MSstats]{groupComparison}} function's
 comparisonResult table. Must contain a \code{Protein} column whose
-values are interpreted according to \code{proteinIdType}.}
+values are interpreted according to \code{proteinIdType}. A value
+may name a protein group -- several identifiers for the same
+quantified analyte joined by \code{";"}, e.g.
+\code{"P13747;P23132"} -- in which case every member is grounded
+independently and the results are pooled onto the row.}
 
 \item{proteinIdType}{A character string specifying the type of analyte
 identifier in the \code{Protein} column. One of
@@ -24,24 +28,29 @@ A data frame with the following columns:
   \item{Protein}{Character. The original identifier from the input.}
   \item{GlobalProtein}{Character. The input identifier without the PTM
       site suffix (typically \code{_<amino acid><site number>}, e.g.
-      \code{_S148}) stripped, used as the grounding key.}
-  \item{UniprotId}{Character. The Uniprot ID of the protein, or
+      \code{_S148}) stripped from each protein group member, used as
+      the grounding key. \code{NA} when the input holds no usable
+      identifier.}
+  \item{UniprotId}{Character. The Uniprot ID of the protein,
+      semicolon-joined in the case of multiple proteins, or
       \code{NA} for \code{"Hgnc_Name"} and \code{"Metabolite"} inputs.}
   \item{EntityNamespace}{Character. The grounding namespace
-      (e.g. \code{"HGNC"}, \code{"CHEBI"}). When a single input grounds
-      to multiple candidates, namespaces are semicolon-joined and
+      (e.g. \code{"HGNC"}, \code{"CHEBI"}). When a row grounds to
+      multiple candidates -- whether from a protein group or from an
+      ambiguous single input -- namespaces are semicolon-joined and
       positionally aligned with \code{EntityId} and \code{EntityName}.}
   \item{EntityId}{Character. The bare grounding identifier within its
       namespace (e.g. \code{"1097"} for HGNC, \code{"28748"} for
       CHEBI). Semicolon-joined when multi-grounded.}
   \item{EntityName}{Character. The canonical display name from the
-      grounding source. Semicolon-joined when multi-grounded.}
+      grounding source. Semicolon-joined when multi-grounded, with
+      \code{"NA"} in the positions whose name lookup failed.}
   \item{IsTranscriptionFactor}{Logical. \code{NA} for
-      \code{proteinIdType == "Metabolite"}.}
+      \code{proteinIdType == "Metabolite"} and for multi-grounded rows.}
   \item{IsKinase}{Logical. \code{NA} for
-      \code{proteinIdType == "Metabolite"}.}
+      \code{proteinIdType == "Metabolite"} and for multi-grounded rows.}
   \item{IsPhosphatase}{Logical. \code{NA} for
-      \code{proteinIdType == "Metabolite"}.}
+      \code{proteinIdType == "Metabolite"} and for multi-grounded rows.}
 }
 }
 \description{

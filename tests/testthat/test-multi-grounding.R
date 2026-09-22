@@ -197,7 +197,7 @@ test_that("annotateProteinInfoFromIndra with Metabolite mocks Gilda and skips ge
 # ----- Metabolite E2E test (mocked end-to-end; skipped if real fixture absent) -----
 
 test_that("annotateProteinInfoFromIndra(Metabolite) -> getSubnetworkFromIndra E2E (mocked, real fixture)", {
-    fixture_path <- system.file("extdata/groupComparisonModel_metabolite.csv",
+    fixture_path <- system.file("extdata/groupComparisonModel_compound.csv",
                                 package = "MSstatsBioNet")
     skip_if_not(nzchar(fixture_path) && file.exists(fixture_path),
                 "Metabolite fixture not yet provided (see TODO-MSBio-20260528).")
