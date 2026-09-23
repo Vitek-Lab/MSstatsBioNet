@@ -399,7 +399,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("rejects malformed exclude_keywords", {
-        for (bad in list(1, NA_character_, "", character(0))) {
+        for (bad in list(1, NA_character_, "", "  ", character(0))) {
             expect_error(
                 filterSubnetworkByContext(make_nodes(), make_edges(),
                                           query = "CHEK1",
@@ -407,6 +407,34 @@ describe("filterSubnetworkByContext", {
                 "`exclude_keywords` must be NULL"
             )
         }
+    })
+
+    test_that("rejects whitespace-only query terms", {
+        expect_error(
+            filterSubnetworkByContext(make_nodes(), make_edges(),
+                                      query = c("CHEK1", " ")),
+            "`query` must be a character vector of tags"
+        )
+        expect_error(
+            filterSubnetworkByContext(make_nodes(), make_edges(),
+                                      query = "  ", method = "cosine"),
+            "`query` must be a single character string"
+        )
+    })
+
+    test_that("trims padded query and exclude_keywords terms", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence())
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      make_mock_abstracts())
+
+        result <- filterSubnetworkByContext(
+            make_nodes(), make_edges(), query = " CHEK1 ", cutoff = 0,
+            exclude_keywords = " lipid "
+        )
+
+        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(result$evidence$score, 1L)
     })
 
     test_that("returns empty abstracts when no evidence is found", {

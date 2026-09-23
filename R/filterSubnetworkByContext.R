@@ -93,6 +93,9 @@ filterSubnetworkByContext <- function(nodes,
 
     method <- match.arg(method)
 
+    if (is.character(query)) query <- trimws(query)
+    if (is.character(exclude_keywords)) exclude_keywords <- trimws(exclude_keywords)
+
     if (!is.null(exclude_keywords) &&
         (!is.character(exclude_keywords) || length(exclude_keywords) < 1 ||
          any(is.na(exclude_keywords)) || any(!nzchar(exclude_keywords)))) {
