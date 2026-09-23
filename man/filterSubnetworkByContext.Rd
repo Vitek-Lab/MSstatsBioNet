@@ -7,9 +7,10 @@
 filterSubnetworkByContext(
   nodes,
   edges,
-  query,
+  query = NULL,
   cutoff = NULL,
-  method = c("tag_count", "cosine")
+  method = c("tag_count", "cosine"),
+  exclude_keywords = NULL
 )
 }
 \arguments{
@@ -20,7 +21,10 @@ interaction, site, evidenceLink, stmt_hash.}
 
 \item{query}{For \code{method = "tag_count"}: a character vector of tags,
 e.g. \code{c("CHEK1", "DNA damage", "DNA damage repair")}.
-For \code{method = "cosine"}: a single character string.}
+For \code{method = "cosine"}: a single character string.
+May be \code{NULL} (default) when \code{exclude_keywords} is
+supplied; abstracts are then not scored (\code{score} is
+\code{NA}) and only the keyword exclusion is applied.}
 
 \item{cutoff}{Numeric threshold applied to the chosen scoring method.
 \itemize{
@@ -32,15 +36,27 @@ For \code{method = "cosine"}: a single character string.}
 }}
 
 \item{method}{One of \code{"tag_count"} (default) or \code{"cosine"}.}
+
+\item{exclude_keywords}{Optional character vector of keywords. Abstracts
+containing any of them (case-insensitive substring match) are removed,
+regardless of their score. To exclude by keyword only, omit
+\code{query}. Default \code{NULL} excludes nothing.}
 }
 \value{
-A named list with three elements:
+A named list with four elements:
   \item{nodes}{Filtered nodes dataframe (only nodes present in kept edges)}
   \item{edges}{Filtered edges dataframe}
   \item{evidence}{Dataframe with columns: source, target, interaction, site,
     evidenceLink, stmt_hash, text, pmid, score. The \code{score} column
     contains tag counts (integer) or cosine similarities (numeric) depending
     on the method used.}
+  \item{abstracts}{Named character vector mapping each PMID in
+    \code{evidence} to its abstract text.}
+  The \code{evidence} and \code{abstracts} elements can be passed to the
+  same-named arguments of \code{\link{decomposeSubnetworkByTopic}} or
+  \code{\link{decomposeSubnetworkIntoHierarchicalTopics}}, together with the
+  returned list as \code{subnetwork}, so INDRA and PubMed are not queried
+  again.
 }
 \description{
 Fetches PubMed abstracts for evidence PMIDs, scores each abstract against a
@@ -71,4 +87,19 @@ Two scoring methods are available, controlled by the \code{method} argument:
 \note{
 \strong{Beta feature:} This function is experimental and the API may
   change without notice in future versions.
+}
+\examples{
+\dontrun{
+filtered <- filterSubnetworkByContext(
+    subnetwork$nodes, subnetwork$edges,
+    query = c("DNA damage", "DNA repair"),
+    exclude_keywords = c("review")
+)
+hierarchy <- decomposeSubnetworkIntoHierarchicalTopics(
+    filtered,
+    evidence  = filtered$evidence,
+    abstracts = filtered$abstracts
+)
+}
+
 }

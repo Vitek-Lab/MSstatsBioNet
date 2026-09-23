@@ -30,6 +30,9 @@
 #' @param query  For \code{method = "tag_count"}: a character vector of tags,
 #'               e.g. \code{c("CHEK1", "DNA damage", "DNA damage repair")}.
 #'               For \code{method = "cosine"}: a single character string.
+#'               May be \code{NULL} (default) when \code{exclude_keywords} is
+#'               supplied; abstracts are then not scored (\code{score} is
+#'               \code{NA}) and only the keyword exclusion is applied.
 #' @param cutoff Numeric threshold applied to the chosen scoring method.
 #'               \itemize{
 #'                 \item \code{"tag_count"}: integer >= 0; abstracts must
@@ -39,14 +42,39 @@
 #'                   must score >= this value. Default \code{0.10}.
 #'               }
 #' @param method One of \code{"tag_count"} (default) or \code{"cosine"}.
+#' @param exclude_keywords Optional character vector of keywords. Abstracts
+#'   containing any of them (case-insensitive substring match) are removed,
+#'   regardless of their score. To exclude by keyword only, omit
+#'   \code{query}. Default \code{NULL} excludes nothing.
 #'
-#' @return A named list with three elements:
+#' @return A named list with four elements:
 #'   \item{nodes}{Filtered nodes dataframe (only nodes present in kept edges)}
 #'   \item{edges}{Filtered edges dataframe}
 #'   \item{evidence}{Dataframe with columns: source, target, interaction, site,
 #'     evidenceLink, stmt_hash, text, pmid, score. The \code{score} column
 #'     contains tag counts (integer) or cosine similarities (numeric) depending
 #'     on the method used.}
+#'   \item{abstracts}{Named character vector mapping each PMID in
+#'     \code{evidence} to its abstract text.}
+#'   The \code{evidence} and \code{abstracts} elements can be passed to the
+#'   same-named arguments of \code{\link{decomposeSubnetworkByTopic}} or
+#'   \code{\link{decomposeSubnetworkIntoHierarchicalTopics}}, together with the
+#'   returned list as \code{subnetwork}, so INDRA and PubMed are not queried
+#'   again.
+#'
+#' @examples
+#' \dontrun{
+#' filtered <- filterSubnetworkByContext(
+#'     subnetwork$nodes, subnetwork$edges,
+#'     query = c("DNA damage", "DNA repair"),
+#'     exclude_keywords = c("review")
+#' )
+#' hierarchy <- decomposeSubnetworkIntoHierarchicalTopics(
+#'     filtered,
+#'     evidence  = filtered$evidence,
+#'     abstracts = filtered$abstracts
+#' )
+#' }
 #'
 #' @importFrom text2vec itoken word_tokenizer create_vocabulary prune_vocabulary vocab_vectorizer create_dtm TfIdf fit_transform
 #' @importFrom stopwords stopwords
@@ -55,13 +83,29 @@
 #' @export
 filterSubnetworkByContext <- function(nodes,
                                       edges,
-                                      query,
+                                      query = NULL,
                                       cutoff = NULL,
-                                      method = c("tag_count", "cosine")) {
-    
+                                      method = c("tag_count", "cosine"),
+                                      exclude_keywords = NULL) {
+
     method <- match.arg(method)
 
-    if (method == "tag_count") {
+    if (!is.null(exclude_keywords) &&
+        (!is.character(exclude_keywords) || length(exclude_keywords) < 1 ||
+         any(is.na(exclude_keywords)) || any(!nzchar(exclude_keywords)))) {
+        stop("`exclude_keywords` must be NULL or a character vector of non-empty keywords.")
+    }
+    no_abstracts <- stats::setNames(character(0), character(0))
+
+    if (is.null(query)) {
+        if (is.null(exclude_keywords)) {
+            stop("Supply `query`, `exclude_keywords`, or both.")
+        }
+        if (!is.null(cutoff)) {
+            stop("`cutoff` has no effect without `query`; remove it or supply `query`.")
+        }
+        cat("No query: scoring skipped, filtering by `exclude_keywords` only\n")
+    } else if (method == "tag_count") {
         if (!is.character(query) || length(query) < 1 || 
             any(is.na(query)) || any(!nzchar(query))) {
             stop("`query` must be a character vector of tags when method = 'tag_count'.")
@@ -95,7 +139,8 @@ filterSubnetworkByContext <- function(nodes,
     if (nrow(evidence) == 0) {
         evidence$score <- if (method == "tag_count") integer(0) else numeric(0)
         warning("No evidence text found - returning unfiltered inputs.")
-        return(list(nodes = nodes, edges = edges, evidence = evidence))
+        return(list(nodes = nodes, edges = edges, evidence = evidence,
+                    abstracts = no_abstracts))
     }
     pmids <- unique(evidence$pmid[!is.na(evidence$pmid) & nchar(evidence$pmid) > 0])
     
@@ -106,7 +151,8 @@ filterSubnetworkByContext <- function(nodes,
             rep(NA_real_, nrow(evidence))
         }
         warning("No PMIDs found in evidence - returning unfiltered inputs.")
-        return(list(nodes = nodes, edges = edges, evidence = evidence))
+        return(list(nodes = nodes, edges = edges, evidence = evidence,
+                    abstracts = no_abstracts))
     }
     
     abstract_list <- .fetch_clean_abstracts_xml(pmids)
@@ -116,26 +162,48 @@ filterSubnetworkByContext <- function(nodes,
         stringsAsFactors = FALSE
     )
     
-    if (method == "tag_count") {
-        abstracts_df$score <- .score_by_tag_count(abstracts_df$abstract, query)
+    if (is.null(query)) {
+        abstracts_df$score <- if (method == "tag_count") NA_integer_ else NA_real_
+        passing <- rep(TRUE, nrow(abstracts_df))
     } else {
-        abstracts_df$score <- .score_by_cosine(query, abstracts_df$abstract)
+        if (method == "tag_count") {
+            abstracts_df$score <- .score_by_tag_count(abstracts_df$abstract, query)
+        } else {
+            abstracts_df$score <- .score_by_cosine(query, abstracts_df$abstract)
+        }
+        passing <- abstracts_df$score >= cutoff
     }
-    
-    passing_pmids <- abstracts_df$pmid[abstracts_df$score >= cutoff]
-    
-    cat(sprintf(
-        "\n%d / %d abstracts passed cutoff (score >= %s)\n",
-        length(passing_pmids), nrow(abstracts_df), cutoff
-    ))
-    
+    if (!is.null(exclude_keywords)) {
+        excluded <- .contains_any_keyword(abstracts_df$abstract,
+                                          exclude_keywords)
+        cat(sprintf(
+            "\n%d / %d abstracts excluded by keyword(s): %s\n",
+            sum(excluded), nrow(abstracts_df),
+            paste(exclude_keywords, collapse = ", ")
+        ))
+        passing <- passing & !excluded
+    }
+    passing_pmids <- abstracts_df$pmid[passing]
+
+    if (is.null(query)) {
+        cat(sprintf("\n%d / %d abstracts kept\n",
+                    length(passing_pmids), nrow(abstracts_df)))
+    } else {
+        cat(sprintf(
+            "\n%d / %d abstracts passed cutoff (score >= %s)\n",
+            length(passing_pmids), nrow(abstracts_df), cutoff
+        ))
+    }
+
     evidence_scored <- merge(
         evidence,
         abstracts_df[, c("pmid", "score")],
         by    = "pmid",
         all.x = TRUE
     )
-    evidence_scored$score[is.na(evidence_scored$score)] <- 0
+    if (!is.null(query)) {
+        evidence_scored$score[is.na(evidence_scored$score)] <- 0
+    }
     
     evidence_filtered <- evidence_scored[
         evidence_scored$pmid %in% passing_pmids,
@@ -144,13 +212,13 @@ filterSubnetworkByContext <- function(nodes,
     ]
     
     surviving_hashes <- unique(evidence_filtered$stmt_hash)
-    edges_filtered   <- edges[edges$stmt_hash %in% surviving_hashes, ]
+    edges_filtered   <- edges[edges$stmt_hash %in% surviving_hashes, , drop = FALSE]
     
     surviving_nodes  <- union(edges_filtered$source, edges_filtered$target)
     if (!"id" %in% names(nodes)) {
         stop("`nodes` must contain an `id` column.")
     }
-    nodes_filtered   <- nodes[nodes$id %in% surviving_nodes, ]
+    nodes_filtered   <- nodes[nodes$id %in% surviving_nodes, , drop = FALSE]
     
     cat(sprintf(
         "Retained: %d edges (of %d), %d nodes (of %d), %d evidence rows (of %d)\n",
@@ -159,11 +227,35 @@ filterSubnetworkByContext <- function(nodes,
         nrow(evidence_filtered), nrow(evidence_scored)
     ))
     
+    kept_pmids <- unique(evidence_filtered$pmid)
+    abstracts_kept <- stats::setNames(
+        abstracts_df$abstract[match(kept_pmids, abstracts_df$pmid)],
+        kept_pmids
+    )
+
     return(list(
-        nodes    = nodes_filtered,
-        edges    = edges_filtered,
-        evidence = evidence_filtered
+        nodes     = nodes_filtered,
+        edges     = edges_filtered,
+        evidence  = evidence_filtered,
+        abstracts = abstracts_kept
     ))
+}
+
+
+#' Flag abstracts that contain any of a set of keywords
+#'
+#' @param abstracts Character vector of abstract texts.
+#' @param keywords  Character vector of keywords to search for.
+#' @return Logical vector, same length as \code{abstracts}; \code{TRUE} when
+#'   the abstract contains at least one keyword (case-insensitive substring).
+#' @keywords internal
+#' @noRd
+.contains_any_keyword <- function(abstracts, keywords) {
+    abstracts_lower <- tolower(abstracts)
+    hits <- lapply(tolower(keywords), function(keyword) {
+        grepl(keyword, abstracts_lower, fixed = TRUE)
+    })
+    Reduce(`|`, hits, logical(length(abstracts)))
 }
 
 
