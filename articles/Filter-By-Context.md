@@ -408,6 +408,65 @@ hist(exploratory$evidence$score,
 
 ------------------------------------------------------------------------
 
+## Excluding abstracts by keyword
+
+Use `exclude_keywords` to drop abstracts that mention unwanted terms
+(case-insensitive, whole word or phrase: `"colon"` matches “colon” but
+not “colonize” or “colons”, so list variants explicitly). Exclusion is
+applied after scoring, so an abstract containing an excluded keyword is
+removed even if it passes `cutoff`. It can be combined with `query`:
+
+``` r
+
+filtered_network <- filterSubnetworkByContext(
+  nodes            = subnetwork$nodes,
+  edges            = subnetwork$edges,
+  query            = tags,
+  cutoff           = 2,
+  exclude_keywords = c("leukemia", "lymphoma")
+)
+```
+
+or used on its own by omitting `query`. Abstracts are then not scored
+(the `score` column is `NA`) and every abstract without an excluded
+keyword is kept:
+
+``` r
+
+filtered_network <- filterSubnetworkByContext(
+  nodes            = subnetwork$nodes,
+  edges            = subnetwork$edges,
+  exclude_keywords = c("leukemia", "lymphoma")
+)
+```
+
+------------------------------------------------------------------------
+
+## Decomposing the filtered network into topics
+
+The output also contains `abstracts`, a named character vector mapping
+each PMID in `evidence` to its abstract. Pass `evidence` and `abstracts`
+to
+[`decomposeSubnetworkIntoHierarchicalTopics()`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkIntoHierarchicalTopics.md)
+(or
+[`decomposeSubnetworkByTopic()`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.md))
+so the INDRA evidence and PubMed abstracts are not fetched again:
+
+``` r
+
+hierarchy <- decomposeSubnetworkIntoHierarchicalTopics(
+  filtered_network,
+  evidence  = filtered_network$evidence,
+  abstracts = filtered_network$abstracts
+)
+hierarchy
+```
+
+Only evidence from abstracts that passed the filter is used, so the
+topics reflect the filtered literature.
+
+------------------------------------------------------------------------
+
 ## Session Info
 
 ``` r

@@ -54,9 +54,10 @@ whose abstracts meet the scoring cutoff.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">filterSubnetworkByContext</span><span class="op">(</span></span>
 <span>  <span class="va">nodes</span>,</span>
 <span>  <span class="va">edges</span>,</span>
-<span>  <span class="va">query</span>,</span>
+<span>  query <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tag_count"</span>, <span class="st">"cosine"</span><span class="op">)</span></span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tag_count"</span>, <span class="st">"cosine"</span><span class="op">)</span>,</span>
+<span>  exclude_keywords <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -76,7 +77,10 @@ interaction, site, evidenceLink, stmt_hash.</p></dd>
 <dt id="arg-query">query<a class="anchor" aria-label="anchor" href="#arg-query"></a></dt>
 <dd><p>For <code>method = "tag_count"</code>: a character vector of tags,
 e.g. <code>c("CHEK1", "DNA damage", "DNA damage repair")</code>.
-For <code>method = "cosine"</code>: a single character string.</p></dd>
+For <code>method = "cosine"</code>: a single character string.
+May be <code>NULL</code> (default) when <code>exclude_keywords</code> is
+supplied; abstracts are then not scored (<code>score</code> is
+<code>NA</code>) and only the keyword exclusion is applied.</p></dd>
 
 
 <dt id="arg-cutoff">cutoff<a class="anchor" aria-label="anchor" href="#arg-cutoff"></a></dt>
@@ -91,10 +95,19 @@ For <code>method = "cosine"</code>: a single character string.</p></dd>
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>One of <code>"tag_count"</code> (default) or <code>"cosine"</code>.</p></dd>
 
+
+<dt id="arg-exclude-keywords">exclude_keywords<a class="anchor" aria-label="anchor" href="#arg-exclude-keywords"></a></dt>
+<dd><p>Optional character vector of keywords. Abstracts
+containing any of them as a whole word or phrase (case-insensitive) are
+removed, regardless of their score. For example, <code>"colon"</code> matches
+"colon" and "colon-specific" but not "colonize" or "colons"; list
+variants such as plurals explicitly. To exclude by keyword only, omit
+<code>query</code>. Default <code>NULL</code> excludes nothing.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A named list with three elements:</p>
+    <p>A named list with four elements:</p>
 <dl><dt>nodes</dt>
 <dd><p>Filtered nodes dataframe (only nodes present in kept edges)</p></dd>
 
@@ -107,13 +120,23 @@ For <code>method = "cosine"</code>: a single character string.</p></dd>
     contains tag counts (integer) or cosine similarities (numeric) depending
     on the method used.</p></dd>
 
-</dl></div>
+  <dt>abstracts</dt>
+<dd><p>Named character vector mapping each PMID in
+    <code>evidence</code> to its abstract text.</p></dd>
+
+</dl><p>The <code>evidence</code> and <code>abstracts</code> elements can be passed to the
+  same-named arguments of <code><a href="decomposeSubnetworkByTopic.html">decomposeSubnetworkByTopic</a></code> or
+  <code><a href="decomposeSubnetworkIntoHierarchicalTopics.html">decomposeSubnetworkIntoHierarchicalTopics</a></code>, together with the
+  returned list as <code>subnetwork</code>, so INDRA and PubMed are not queried
+  again.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Two scoring methods are available, controlled by the <code>method</code> argument:</p>
 <dl><dt><code>"tag_count"</code> (default)</dt>
-<dd><p>Counts how many tags from <code>query</code> appear as substrings in the
-    abstract (case-insensitive). The score for each abstract is an integer
+<dd><p>Counts how many tags from <code>query</code> appear as whole words or phrases
+    in the abstract (case-insensitive), so <code>"colon"</code> does not match
+    "colony" or "colonize". The score for each abstract is an integer
     in <code>[0, length(query)]</code>. Set <code>cutoff</code> to the minimum number of
     tags that must appear - e.g. <code>cutoff = 2</code> keeps abstracts that
     mention at least 2 of your tags. <code>query</code> must be a character
@@ -134,6 +157,23 @@ For <code>method = "cosine"</code>: a single character string.</p></dd>
   change without notice in future versions.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="va">filtered</span> <span class="op">&lt;-</span> <span class="fu">filterSubnetworkByContext</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span>,</span></span>
+<span class="r-in"><span>    query <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"DNA damage"</span>, <span class="st">"DNA repair"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    exclude_keywords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"review"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">hierarchy</span> <span class="op">&lt;-</span> <span class="fu"><a href="decomposeSubnetworkIntoHierarchicalTopics.html">decomposeSubnetworkIntoHierarchicalTopics</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="va">filtered</span>,</span></span>
+<span class="r-in"><span>    evidence  <span class="op">=</span> <span class="va">filtered</span><span class="op">$</span><span class="va">evidence</span>,</span></span>
+<span class="r-in"><span>    abstracts <span class="op">=</span> <span class="va">filtered</span><span class="op">$</span><span class="va">abstracts</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

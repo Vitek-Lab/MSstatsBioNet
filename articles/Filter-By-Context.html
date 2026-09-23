@@ -61,7 +61,7 @@
       <h1>Filtering Subnetworks by Biological Context</h1>
                         <h4 data-toc-skip class="author"></h4>
             
-            <h4 data-toc-skip class="date">2026-09-22</h4>
+            <h4 data-toc-skip class="date">2026-09-23</h4>
       
 
       <div class="d-none name"><code>Filter-By-Context.Rmd</code></div>
@@ -518,9 +518,57 @@ the function at a low threshold and inspect the scores:</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="excluding-abstracts-by-keyword">Excluding abstracts by keyword<a class="anchor" aria-label="anchor" href="#excluding-abstracts-by-keyword"></a>
+</h2>
+<p>Use <code>exclude_keywords</code> to drop abstracts that mention
+unwanted terms (case-insensitive, whole word or phrase:
+<code>"colon"</code> matches “colon” but not “colonize” or “colons”, so
+list variants explicitly). Exclusion is applied after scoring, so an
+abstract containing an excluded keyword is removed even if it passes
+<code>cutoff</code>. It can be combined with <code>query</code>:</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">filtered_network</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filterSubnetworkByContext.html">filterSubnetworkByContext</a></span><span class="op">(</span></span>
+<span>  nodes            <span class="op">=</span> <span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>  edges            <span class="op">=</span> <span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>  query            <span class="op">=</span> <span class="va">tags</span>,</span>
+<span>  cutoff           <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  exclude_keywords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leukemia"</span>, <span class="st">"lymphoma"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>or used on its own by omitting <code>query</code>. Abstracts are then
+not scored (the <code>score</code> column is <code>NA</code>) and every
+abstract without an excluded keyword is kept:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">filtered_network</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filterSubnetworkByContext.html">filterSubnetworkByContext</a></span><span class="op">(</span></span>
+<span>  nodes            <span class="op">=</span> <span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span>,</span>
+<span>  edges            <span class="op">=</span> <span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>  exclude_keywords <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"leukemia"</span>, <span class="st">"lymphoma"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<hr>
+</div>
+<div class="section level2">
+<h2 id="decomposing-the-filtered-network-into-topics">Decomposing the filtered network into topics<a class="anchor" aria-label="anchor" href="#decomposing-the-filtered-network-into-topics"></a>
+</h2>
+<p>The output also contains <code>abstracts</code>, a named character
+vector mapping each PMID in <code>evidence</code> to its abstract. Pass
+<code>evidence</code> and <code>abstracts</code> to
+<code><a href="../reference/decomposeSubnetworkIntoHierarchicalTopics.html">decomposeSubnetworkIntoHierarchicalTopics()</a></code> (or
+<code><a href="../reference/decomposeSubnetworkByTopic.html">decomposeSubnetworkByTopic()</a></code>) so the INDRA evidence and
+PubMed abstracts are not fetched again:</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">hierarchy</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/decomposeSubnetworkIntoHierarchicalTopics.html">decomposeSubnetworkIntoHierarchicalTopics</a></span><span class="op">(</span></span>
+<span>  <span class="va">filtered_network</span>,</span>
+<span>  evidence  <span class="op">=</span> <span class="va">filtered_network</span><span class="op">$</span><span class="va">evidence</span>,</span>
+<span>  abstracts <span class="op">=</span> <span class="va">filtered_network</span><span class="op">$</span><span class="va">abstracts</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">hierarchy</span></span></code></pre></div>
+<p>Only evidence from abstracts that passed the filter is used, so the
+topics reflect the filtered literature.</p>
+<hr>
+</div>
+<div class="section level2">
 <h2 id="session-info">Session Info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
