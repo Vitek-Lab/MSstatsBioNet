@@ -18,6 +18,27 @@ make_nodes <- function() {
     )
 }
 
+make_mock_evidence <- function() {
+    data.frame(
+        source       = c("A", "B"),
+        target       = c("B", "C"),
+        interaction  = c("activates", "inhibits"),
+        site         = c("T308", "S473"),
+        evidenceLink = c("https://example.com/1", "https://example.com/2"),
+        stmt_hash    = c("hash1", "hash2"),
+        text         = c("CHEK1 sentence.", "Lipid sentence."),
+        pmid         = c("11111111", "22222222"),
+        stringsAsFactors = FALSE
+    )
+}
+
+make_mock_abstracts <- function() {
+    list(
+        "11111111" = "CHEK1 phosphorylates CDC25A in response to DNA damage.",
+        "22222222" = "Unrelated text about lipid metabolism and glucose uptake."
+    )
+}
+
 make_pubmed_xml <- function(pmids) {
     articles <- vapply(pmids, function(pmid) {
         sprintf(paste0(
@@ -42,7 +63,43 @@ describe(".score_by_tag_count", {
         scores   <- .score_by_tag_count(abstract, c("chek1", "DNA damage", "apoptosis"))
         expect_equal(scores, 2L)
     })
-    
+
+    test_that("does not count tags embedded in longer words", {
+        abstracts <- c("Colony-stimulating factor promotes colonization.",
+                       "Colon cancer cells express ATM.",
+                       "Treatment was given.")
+        expect_equal(.score_by_tag_count(abstracts, c("colon", "ATM")),
+                     c(0L, 2L, 0L))
+    })
+
+    test_that("returns an integer vector for a single abstract and tag", {
+        expect_identical(.score_by_tag_count("colon", "colon"), 1L)
+    })
+
+})
+
+describe(".contains_any_keyword", {
+
+    test_that("matches whole words only, not longer words that contain the keyword", {
+        abstracts <- c(
+            "Tumors of the colon were resected.",
+            "Bacteria colonize the gut; colonization was measured.",
+            "Colon-specific expression was high.",
+            "COLON cancer cohort."
+        )
+        expect_equal(.contains_any_keyword(abstracts, "colon"),
+                     c(TRUE, FALSE, TRUE, TRUE))
+    })
+
+    test_that("matches multi-word phrases and treats regex characters literally", {
+        abstracts <- c("Levels of IL-6 (pg/ml) rose.", "DNA damage repair.",
+                       "ILx6 was absent.")
+        expect_equal(.contains_any_keyword(abstracts, c("il-6", "dna damage")),
+                     c(TRUE, TRUE, FALSE))
+        expect_equal(.contains_any_keyword(abstracts, "(pg/ml)"),
+                     c(TRUE, FALSE, FALSE))
+    })
+
 })
 
 describe(".score_by_cosine", {
@@ -221,7 +278,7 @@ describe("filterSubnetworkByContext", {
         )
         
         # Structure check
-        expect_named(result, c("nodes", "edges", "evidence"))
+        expect_named(result, c("nodes", "edges", "evidence", "abstracts"))
         
         # Only the CHEK1/DNA-damage abstract passed the cutoff
         expect_equal(nrow(result$edges), 1)
@@ -235,5 +292,223 @@ describe("filterSubnetworkByContext", {
         expect_true("score" %in% names(result$evidence))
         expect_true(all(result$evidence$score >= 1))
     })
-    
+
+    test_that("returns the abstracts of the PMIDs in the kept evidence", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence())
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      make_mock_abstracts())
+
+        result <- filterSubnetworkByContext(
+            make_nodes(), make_edges(), query = c("CHEK1", "DNA damage")
+        )
+
+        expect_type(result$abstracts, "character")
+        expect_equal(names(result$abstracts), "11111111")
+        expect_equal(result$abstracts[["11111111"]],
+                     make_mock_abstracts()[["11111111"]])
+    })
+
+    test_that("exclude_keywords drops abstracts containing any keyword", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence())
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      make_mock_abstracts())
+
+        # cutoff = 0 keeps every abstract, so only the exclusion filters.
+        result <- filterSubnetworkByContext(
+            make_nodes(), make_edges(), query = "CHEK1", cutoff = 0,
+            exclude_keywords = c("apoptosis", "LIPID")
+        )
+
+        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(unique(result$evidence$pmid), "11111111")
+        expect_equal(names(result$abstracts), "11111111")
+        expect_false("C" %in% result$nodes$id)
+    })
+
+    test_that("exclude_keywords takes precedence over a passing score", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence())
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      make_mock_abstracts())
+
+        result <- filterSubnetworkByContext(
+            make_nodes(), make_edges(), query = "CHEK1", cutoff = 1,
+            exclude_keywords = "cdc25a"
+        )
+
+        expect_equal(nrow(result$edges), 0)
+        expect_equal(nrow(result$evidence), 0)
+        expect_length(result$abstracts, 0)
+    })
+
+    test_that("exclude_keywords works with the cosine method", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence())
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      make_mock_abstracts())
+
+        result <- filterSubnetworkByContext(
+            make_nodes(), make_edges(), query = "CHEK1 DNA damage",
+            cutoff = 0, method = "cosine", exclude_keywords = "glucose"
+        )
+
+        expect_equal(result$edges$stmt_hash, "hash1")
+    })
+
+    test_that("filters by exclude_keywords alone when query is omitted", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence())
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      make_mock_abstracts())
+
+        result <- filterSubnetworkByContext(
+            make_nodes(), make_edges(), exclude_keywords = "lipid"
+        )
+
+        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(names(result$abstracts), "11111111")
+        expect_true(all(is.na(result$evidence$score)))
+    })
+
+    test_that("keeps every abstract when no exclude keyword matches", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence())
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      make_mock_abstracts())
+
+        result <- filterSubnetworkByContext(
+            make_nodes(), make_edges(), exclude_keywords = "photosynthesis"
+        )
+
+        expect_equal(nrow(result$edges), 2)
+        expect_setequal(names(result$abstracts), c("11111111", "22222222"))
+    })
+
+    test_that("requires query or exclude_keywords, and cutoff needs query", {
+        expect_error(
+            filterSubnetworkByContext(make_nodes(), make_edges()),
+            "Supply `query`, `exclude_keywords`, or both"
+        )
+        expect_error(
+            filterSubnetworkByContext(make_nodes(), make_edges(), cutoff = 1,
+                                      exclude_keywords = "lipid"),
+            "`cutoff` has no effect without `query`"
+        )
+    })
+
+    test_that("rejects malformed exclude_keywords", {
+        for (bad in list(1, NA_character_, "", "  ", character(0))) {
+            expect_error(
+                filterSubnetworkByContext(make_nodes(), make_edges(),
+                                          query = "CHEK1",
+                                          exclude_keywords = bad),
+                "`exclude_keywords` must be NULL"
+            )
+        }
+    })
+
+    test_that("rejects whitespace-only query terms", {
+        expect_error(
+            filterSubnetworkByContext(make_nodes(), make_edges(),
+                                      query = c("CHEK1", " ")),
+            "`query` must be a character vector of tags"
+        )
+        expect_error(
+            filterSubnetworkByContext(make_nodes(), make_edges(),
+                                      query = "  ", method = "cosine"),
+            "`query` must be a single character string"
+        )
+    })
+
+    test_that("trims padded query and exclude_keywords terms", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence())
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      make_mock_abstracts())
+
+        result <- filterSubnetworkByContext(
+            make_nodes(), make_edges(), query = " CHEK1 ", cutoff = 0,
+            exclude_keywords = " lipid "
+        )
+
+        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(result$evidence$score, 1L)
+    })
+
+    test_that("returns empty abstracts when no evidence is found", {
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      make_mock_evidence()[0, ])
+
+        result <- suppressWarnings(filterSubnetworkByContext(
+            make_nodes(), make_edges(), query = "CHEK1"
+        ))
+
+        expect_named(result, c("nodes", "edges", "evidence", "abstracts"))
+        expect_length(result$abstracts, 0)
+    })
+
+    test_that("output can be decomposed without re-querying INDRA or PubMed", {
+        themes <- list(
+            c("kinase", "phosphorylation", "signaling", "cascade", "mapk"),
+            c("dna", "repair", "damage", "checkpoint", "replication"),
+            c("immune", "cytokine", "inflammation", "macrophage", "interferon")
+        )
+        edges <- list()
+        evidence <- list()
+        abstracts <- list()
+        for (th in seq_along(themes)) {
+            pmids <- paste0(th, "000", seq_len(6))
+            for (i in seq_along(pmids)) {
+                abstracts[[pmids[i]]] <- paste(
+                    rep(themes[[th]], times = 2 + i %% 3), collapse = " "
+                )
+            }
+            for (e in seq_len(8)) {
+                edge <- data.frame(
+                    source = paste0("G", th, "_", e),
+                    target = paste0("G", th, "_", e + 1),
+                    interaction = "Activation", site = NA_character_,
+                    evidenceLink = "https://example.com",
+                    stmt_hash = paste0("h", th, "_", e),
+                    stringsAsFactors = FALSE
+                )
+                edges[[length(edges) + 1]] <- edge
+                evidence[[length(evidence) + 1]] <- cbind(
+                    edge, text = "sentence",
+                    pmid = pmids[c(e %% 6 + 1, (e + 2) %% 6 + 1)],
+                    stringsAsFactors = FALSE
+                )
+            }
+        }
+        edges <- do.call(rbind, edges)
+        nodes <- data.frame(id = unique(c(edges$source, edges$target)),
+                            stringsAsFactors = FALSE)
+        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+                      do.call(rbind, evidence))
+        mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
+                      abstracts)
+
+        filtered <- filterSubnetworkByContext(
+            nodes, edges, exclude_keywords = "cytokine"
+        )
+        expect_false(any(grepl("^G3_", filtered$edges$source)))
+
+        testthat::local_mocked_bindings(
+            .extract_evidence_text = function(...) stop("INDRA was queried"),
+            .fetch_clean_abstracts_xml = function(...) stop("PubMed was queried")
+        )
+        hierarchy <- decomposeSubnetworkIntoHierarchicalTopics(
+            filtered, max_edges = 8, n_topics = 2,
+            evidence = filtered$evidence, abstracts = filtered$abstracts
+        )
+
+        expect_s3_class(hierarchy, "topicHierarchy")
+        expect_equal(hierarchy$tree$n_edges[1], nrow(filtered$edges))
+        expect_setequal(names(hierarchy$corpus$abstracts),
+                        unique(filtered$evidence$pmid))
+        expect_true(any(!hierarchy$tree$is_leaf))
+    })
+
 })
