@@ -8,8 +8,9 @@
 #'
 #' \describe{
 #'   \item{\code{"tag_count"} (default)}{
-#'     Counts how many tags from \code{query} appear as substrings in the
-#'     abstract (case-insensitive). The score for each abstract is an integer
+#'     Counts how many tags from \code{query} appear as whole words or phrases
+#'     in the abstract (case-insensitive), so \code{"colon"} does not match
+#'     "colony" or "colonize". The score for each abstract is an integer
 #'     in \code{[0, length(query)]}. Set \code{cutoff} to the minimum number of
 #'     tags that must appear - e.g. \code{cutoff = 2} keeps abstracts that
 #'     mention at least 2 of your tags. \code{query} must be a character
@@ -254,19 +255,33 @@ filterSubnetworkByContext <- function(nodes,
 #' @keywords internal
 #' @noRd
 .contains_any_keyword <- function(abstracts, keywords) {
-    abstracts_lower <- tolower(abstracts)
-    hits <- lapply(tolower(keywords), function(keyword) {
-        escaped <- gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", keyword)
-        pattern <- paste0("(?<![[:alnum:]])", escaped, "(?![[:alnum:]])")
-        grepl(pattern, abstracts_lower, perl = TRUE)
-    })
+    hits <- lapply(keywords, function(keyword) .has_term(abstracts, keyword))
     Reduce(`|`, hits, logical(length(abstracts)))
+}
+
+
+#' Test abstracts for a whole-word, case-insensitive term
+#'
+#' The term must not be flanked by letters or digits, so \code{"colon"}
+#' matches "colon" and "colon-specific" but not "colonize" or "colony".
+#' Regex metacharacters in \code{term} are matched literally.
+#'
+#' @param abstracts Character vector of abstract texts.
+#' @param term      Single word or phrase.
+#' @return Logical vector, same length as \code{abstracts}.
+#' @keywords internal
+#' @noRd
+.has_term <- function(abstracts, term) {
+    escaped <- gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", tolower(term))
+    pattern <- paste0("(?<![[:alnum:]])", escaped, "(?![[:alnum:]])")
+    grepl(pattern, tolower(abstracts), perl = TRUE)
 }
 
 
 #' Score abstracts by tag count
 #'
-#' For each abstract, counts how many tags appear as case-insensitive substrings.
+#' For each abstract, counts how many tags appear as case-insensitive whole
+#' words or phrases.
 #'
 #' @param abstracts Character vector of abstract texts.
 #' @param tags      Character vector of tags to search for.
@@ -274,12 +289,9 @@ filterSubnetworkByContext <- function(nodes,
 #' @keywords internal
 #' @noRd
 .score_by_tag_count <- function(abstracts, tags) {
-    abstracts_lower <- tolower(abstracts)
-    tags_lower      <- tolower(tags)
-    
-    sapply(abstracts_lower, function(abstract) {
-        sum(sapply(tags_lower, function(tag) grepl(tag, abstract, fixed = TRUE)))
-    }, USE.NAMES = FALSE)
+    hits <- vapply(tags, function(tag) .has_term(abstracts, tag),
+                   logical(length(abstracts)))
+    as.integer(rowSums(matrix(hits, nrow = length(abstracts))))
 }
 
 

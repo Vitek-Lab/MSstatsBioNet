@@ -70,8 +70,9 @@ Two scoring methods are available, controlled by the \code{method} argument:
 
 \describe{
   \item{\code{"tag_count"} (default)}{
-    Counts how many tags from \code{query} appear as substrings in the
-    abstract (case-insensitive). The score for each abstract is an integer
+    Counts how many tags from \code{query} appear as whole words or phrases
+    in the abstract (case-insensitive), so \code{"colon"} does not match
+    "colony" or "colonize". The score for each abstract is an integer
     in \code{[0, length(query)]}. Set \code{cutoff} to the minimum number of
     tags that must appear - e.g. \code{cutoff = 2} keeps abstracts that
     mention at least 2 of your tags. \code{query} must be a character

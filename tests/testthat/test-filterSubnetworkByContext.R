@@ -63,7 +63,19 @@ describe(".score_by_tag_count", {
         scores   <- .score_by_tag_count(abstract, c("chek1", "DNA damage", "apoptosis"))
         expect_equal(scores, 2L)
     })
-    
+
+    test_that("does not count tags embedded in longer words", {
+        abstracts <- c("Colony-stimulating factor promotes colonization.",
+                       "Colon cancer cells express ATM.",
+                       "Treatment was given.")
+        expect_equal(.score_by_tag_count(abstracts, c("colon", "ATM")),
+                     c(0L, 2L, 0L))
+    })
+
+    test_that("returns an integer vector for a single abstract and tag", {
+        expect_identical(.score_by_tag_count("colon", "colon"), 1L)
+    })
+
 })
 
 describe(".contains_any_keyword", {
