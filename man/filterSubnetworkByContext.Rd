@@ -38,8 +38,10 @@ supplied; abstracts are then not scored (\code{score} is
 \item{method}{One of \code{"tag_count"} (default) or \code{"cosine"}.}
 
 \item{exclude_keywords}{Optional character vector of keywords. Abstracts
-containing any of them (case-insensitive substring match) are removed,
-regardless of their score. To exclude by keyword only, omit
+containing any of them as a whole word or phrase (case-insensitive) are
+removed, regardless of their score. For example, \code{"colon"} matches
+"colon" and "colon-specific" but not "colonize" or "colons"; list
+variants such as plurals explicitly. To exclude by keyword only, omit
 \code{query}. Default \code{NULL} excludes nothing.}
 }
 \value{

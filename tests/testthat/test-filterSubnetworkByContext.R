@@ -66,6 +66,30 @@ describe(".score_by_tag_count", {
     
 })
 
+describe(".contains_any_keyword", {
+
+    test_that("matches whole words only, not longer words that contain the keyword", {
+        abstracts <- c(
+            "Tumors of the colon were resected.",
+            "Bacteria colonize the gut; colonization was measured.",
+            "Colon-specific expression was high.",
+            "COLON cancer cohort."
+        )
+        expect_equal(.contains_any_keyword(abstracts, "colon"),
+                     c(TRUE, FALSE, TRUE, TRUE))
+    })
+
+    test_that("matches multi-word phrases and treats regex characters literally", {
+        abstracts <- c("Levels of IL-6 (pg/ml) rose.", "DNA damage repair.",
+                       "ILx6 was absent.")
+        expect_equal(.contains_any_keyword(abstracts, c("il-6", "dna damage")),
+                     c(TRUE, TRUE, FALSE))
+        expect_equal(.contains_any_keyword(abstracts, "(pg/ml)"),
+                     c(TRUE, FALSE, FALSE))
+    })
+
+})
+
 describe(".score_by_cosine", {
     
     test_that("returns a numeric vector of the same length as abstracts", {

@@ -43,8 +43,10 @@
 #'               }
 #' @param method One of \code{"tag_count"} (default) or \code{"cosine"}.
 #' @param exclude_keywords Optional character vector of keywords. Abstracts
-#'   containing any of them (case-insensitive substring match) are removed,
-#'   regardless of their score. To exclude by keyword only, omit
+#'   containing any of them as a whole word or phrase (case-insensitive) are
+#'   removed, regardless of their score. For example, \code{"colon"} matches
+#'   "colon" and "colon-specific" but not "colonize" or "colons"; list
+#'   variants such as plurals explicitly. To exclude by keyword only, omit
 #'   \code{query}. Default \code{NULL} excludes nothing.
 #'
 #' @return A named list with four elements:
@@ -247,13 +249,16 @@ filterSubnetworkByContext <- function(nodes,
 #' @param abstracts Character vector of abstract texts.
 #' @param keywords  Character vector of keywords to search for.
 #' @return Logical vector, same length as \code{abstracts}; \code{TRUE} when
-#'   the abstract contains at least one keyword (case-insensitive substring).
+#'   the abstract contains at least one keyword as a whole word or phrase
+#'   (case-insensitive), so \code{"colon"} does not match \code{"colonize"}.
 #' @keywords internal
 #' @noRd
 .contains_any_keyword <- function(abstracts, keywords) {
     abstracts_lower <- tolower(abstracts)
     hits <- lapply(tolower(keywords), function(keyword) {
-        grepl(keyword, abstracts_lower, fixed = TRUE)
+        escaped <- gsub("([][{}()+*^$|\\\\?.])", "\\\\\\1", keyword)
+        pattern <- paste0("(?<![[:alnum:]])", escaped, "(?![[:alnum:]])")
+        grepl(pattern, abstracts_lower, perl = TRUE)
     })
     Reduce(`|`, hits, logical(length(abstracts)))
 }
