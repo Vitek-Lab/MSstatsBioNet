@@ -81,10 +81,10 @@ semicolon-joined and positionally aligned.</p></dd>
 
 
 <dt id="arg-protein-level-data">protein_level_data<a class="anchor" aria-label="anchor" href="#arg-protein-level-data"></a></dt>
-<dd><p>output of the <code><a href="https://rdrr.io/pkg/MSstats/man/dataProcess.html" class="external-link">dataProcess</a></code>
-function's ProteinLevelData table, which contains a list of proteins and
-their corresponding abundances.  Used for annotating correlation information
-and applying correlation cutoffs.</p></dd>
+<dd><p>Deprecated, and will be removed in a future
+release. Output of the <code><a href="https://rdrr.io/pkg/MSstats/man/dataProcess.html" class="external-link">dataProcess</a></code> function's
+ProteinLevelData table, used to annotate edges with correlations and apply
+<code>correlation_cutoff</code>. Supplying it gives a deprecation warning.</p></dd>
 
 
 <dt id="arg-pvaluecutoff">pvalueCutoff<a class="anchor" aria-label="anchor" href="#arg-pvaluecutoff"></a></dt>
@@ -98,7 +98,10 @@ statement type in INDRA.  Default is NULL.</p></dd>
 
 
 <dt id="arg-paper-count-cutoff">paper_count_cutoff<a class="anchor" aria-label="anchor" href="#arg-paper-count-cutoff"></a></dt>
-<dd><p>number of papers to filter on. Default is 1.</p></dd>
+<dd><p>Deprecated, and will be removed in a future
+release. It is ignored: paper counts are not available from INDRA, so this
+filter never had an effect for 1 and removed every edge for larger values.
+Supplying it gives a deprecation warning.</p></dd>
 
 
 <dt id="arg-evidence-count-cutoff">evidence_count_cutoff<a class="anchor" aria-label="anchor" href="#arg-evidence-count-cutoff"></a></dt>
@@ -108,9 +111,10 @@ sentence.  Default is 1.</p></dd>
 
 
 <dt id="arg-correlation-cutoff">correlation_cutoff<a class="anchor" aria-label="anchor" href="#arg-correlation-cutoff"></a></dt>
-<dd><p>if protein_level_abundance is not NULL, apply a
-cutoff for edges with correlation less than a specified cutoff.  Default is
-0.3</p></dd>
+<dd><p>Deprecated, and will be removed in a future
+release. If <code>protein_level_data</code> is not NULL, remove edges whose
+absolute correlation is below this cutoff. Default is 0.3. Supplying it
+gives a deprecation warning.</p></dd>
 
 
 <dt id="arg-sources-filter">sources_filter<a class="anchor" aria-label="anchor" href="#arg-sources-filter"></a></dt>

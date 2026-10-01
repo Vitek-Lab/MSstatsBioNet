@@ -39,11 +39,11 @@ getSubnetworkFromIndra(
 
 - protein_level_data:
 
-  output of the
+  Deprecated, and will be removed in a future release. Output of the
   [`dataProcess`](https://rdrr.io/pkg/MSstats/man/dataProcess.html)
-  function's ProteinLevelData table, which contains a list of proteins
-  and their corresponding abundances. Used for annotating correlation
-  information and applying correlation cutoffs.
+  function's ProteinLevelData table, used to annotate edges with
+  correlations and apply `correlation_cutoff`. Supplying it gives a
+  deprecation warning.
 
 - pvalueCutoff:
 
@@ -56,7 +56,10 @@ getSubnetworkFromIndra(
 
 - paper_count_cutoff:
 
-  number of papers to filter on. Default is 1.
+  Deprecated, and will be removed in a future release. It is ignored:
+  paper counts are not available from INDRA, so this filter never had an
+  effect for 1 and removed every edge for larger values. Supplying it
+  gives a deprecation warning.
 
 - evidence_count_cutoff:
 
@@ -66,8 +69,10 @@ getSubnetworkFromIndra(
 
 - correlation_cutoff:
 
-  if protein_level_abundance is not NULL, apply a cutoff for edges with
-  correlation less than a specified cutoff. Default is 0.3
+  Deprecated, and will be removed in a future release. If
+  `protein_level_data` is not NULL, remove edges whose absolute
+  correlation is below this cutoff. Default is 0.3. Supplying it gives a
+  deprecation warning.
 
 - sources_filter:
 

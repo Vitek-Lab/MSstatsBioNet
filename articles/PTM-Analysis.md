@@ -187,7 +187,7 @@ sessionInfo()
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1      viridisLite_0.4.3     dplyr_1.2.1          
 #>  [4] farver_2.1.2          S7_0.2.2              bitops_1.1-0         
-#>  [7] fastmap_1.2.0         XML_3.99-0.24         digest_0.6.39        
+#>  [7] fastmap_1.2.0         XML_3.99-0.25         digest_0.6.39        
 #> [10] lifecycle_1.0.5       survival_3.8-6        statmod_1.5.2        
 #> [13] magrittr_2.0.5        compiler_4.6.1        r2r_0.1.2            
 #> [16] rlang_1.3.0           sass_0.4.10           tools_4.6.1          
