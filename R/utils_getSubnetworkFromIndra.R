@@ -6,7 +6,7 @@
 #' network.
 #' @keywords internal
 #' @noRd
-.validateGetSubnetworkFromIndraInput <- function(input, protein_level_data, sources_filter, force_include_other) {
+.validateGetSubnetworkFromIndraInput <- function(input, protein_level_data = NULL, sources_filter, force_include_other) {
     required_cols <- c("Protein", "log2FC", "adj.pvalue",
                        "EntityNamespace", "EntityId", "EntityName")
     missing_cols <- setdiff(required_cols, colnames(input))
@@ -467,16 +467,12 @@
 
 #' Filter Edges Data Frame
 #' @param edges response from INDRA
-#' @param paper_count_cutoff cutoff for number of papers
 #' @param correlation_cutoff if protein_level_abundance is not NULL, apply a 
 #' cutoff for edges with correlation less than a specified cutoff.
 #' @return filtered edges data frame
 #' @keywords internal
 #' @noRd
-.filterEdgesDataFrame <- function(edges, 
-                                  paper_count_cutoff,
-                                  correlation_cutoff) {
-    edges <- edges[which(edges$paperCount >= paper_count_cutoff), ]
+.filterEdgesDataFrame <- function(edges, correlation_cutoff) {
     if ("correlation" %in% colnames(edges)) {
         edges <- edges[which(abs(edges$correlation) >= correlation_cutoff), ]
     }
