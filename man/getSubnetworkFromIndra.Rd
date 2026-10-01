@@ -30,10 +30,10 @@ comparisionResult table, annotated by
 grounds to multiple candidates the three \code{Entity*} columns are
 semicolon-joined and positionally aligned.}
 
-\item{protein_level_data}{output of the \code{\link[MSstats]{dataProcess}} 
-function's ProteinLevelData table, which contains a list of proteins and 
-their corresponding abundances.  Used for annotating correlation information 
-and applying correlation cutoffs.}
+\item{protein_level_data}{Deprecated, and will be removed in a future
+release. Output of the \code{\link[MSstats]{dataProcess}} function's
+ProteinLevelData table, used to annotate edges with correlations and apply
+\code{correlation_cutoff}. Supplying it gives a deprecation warning.}
 
 \item{pvalueCutoff}{p-value cutoff for filtering. Default is NULL, i.e. no
 filtering}
@@ -41,15 +41,19 @@ filtering}
 \item{statement_types}{list of interaction types to filter on.  Equivalent to
 statement type in INDRA.  Default is NULL.}
 
-\item{paper_count_cutoff}{number of papers to filter on. Default is 1.}
+\item{paper_count_cutoff}{Deprecated, and will be removed in a future
+release. It is ignored: paper counts are not available from INDRA, so this
+filter never had an effect for 1 and removed every edge for larger values.
+Supplying it gives a deprecation warning.}
 
 \item{evidence_count_cutoff}{number of evidence to filter on for each
 paper. E.g. A paper may have 5 sentences describing the same interaction vs 1
 sentence.  Default is 1.}
 
-\item{correlation_cutoff}{if protein_level_abundance is not NULL, apply a 
-cutoff for edges with correlation less than a specified cutoff.  Default is
-0.3}
+\item{correlation_cutoff}{Deprecated, and will be removed in a future
+release. If \code{protein_level_data} is not NULL, remove edges whose
+absolute correlation is below this cutoff. Default is 0.3. Supplying it
+gives a deprecation warning.}
 
 \item{sources_filter}{filtering only on specific sources.  Default is no filter, i.e. NULL.
 Otherwise, should be a list, e.g. c('reach', 'medscan').}

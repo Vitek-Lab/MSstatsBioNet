@@ -10,21 +10,25 @@
 #' \code{EntityName}, \code{log2FC}, \code{adj.pvalue}). When an analyte
 #' grounds to multiple candidates the three \code{Entity*} columns are
 #' semicolon-joined and positionally aligned.
-#' @param protein_level_data output of the \code{\link[MSstats]{dataProcess}} 
-#' function's ProteinLevelData table, which contains a list of proteins and 
-#' their corresponding abundances.  Used for annotating correlation information 
-#' and applying correlation cutoffs.
+#' @param protein_level_data Deprecated, and will be removed in a future
+#' release. Output of the \code{\link[MSstats]{dataProcess}} function's
+#' ProteinLevelData table, used to annotate edges with correlations and apply
+#' \code{correlation_cutoff}. Supplying it gives a deprecation warning.
 #' @param pvalueCutoff p-value cutoff for filtering. Default is NULL, i.e. no
 #' filtering
 #' @param statement_types list of interaction types to filter on.  Equivalent to
 #' statement type in INDRA.  Default is NULL.
-#' @param paper_count_cutoff number of papers to filter on. Default is 1.
+#' @param paper_count_cutoff Deprecated, and will be removed in a future
+#' release. It is ignored: paper counts are not available from INDRA, so this
+#' filter never had an effect for 1 and removed every edge for larger values.
+#' Supplying it gives a deprecation warning.
 #' @param evidence_count_cutoff number of evidence to filter on for each
 #' paper. E.g. A paper may have 5 sentences describing the same interaction vs 1
 #' sentence.  Default is 1.
-#' @param correlation_cutoff if protein_level_abundance is not NULL, apply a 
-#' cutoff for edges with correlation less than a specified cutoff.  Default is
-#' 0.3
+#' @param correlation_cutoff Deprecated, and will be removed in a future
+#' release. If \code{protein_level_data} is not NULL, remove edges whose
+#' absolute correlation is below this cutoff. Default is 0.3. Supplying it
+#' gives a deprecation warning.
 #' @param sources_filter filtering only on specific sources.  Default is no filter, i.e. NULL.
 #' Otherwise, should be a list, e.g. c('reach', 'medscan').
 #' @param logfc_cutoff absolute log fold change cutoff for filtering proteins. 
@@ -73,12 +77,21 @@ getSubnetworkFromIndra <- function(input,
                                    include_infinite_fc = FALSE,
                                    direction = c("both", "up", "down")) {
     direction = match.arg(direction)
+    if (!missing(paper_count_cutoff)) {
+        .warn_deprecated_arg("paper_count_cutoff", "It is ignored.")
+    }
+    if (!missing(correlation_cutoff)) {
+        .warn_deprecated_arg("correlation_cutoff")
+    }
+    if (!is.null(protein_level_data)) {
+        .warn_deprecated_arg("protein_level_data")
+    }
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other, include_infinite_fc, direction)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
     res <- .callIndraCogexApi(input$EntityNamespace, input$EntityId, force_include_other)
     res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)
     edges <- .constructEdgesDataFrame(res, input, protein_level_data)
-    edges <- .filterEdgesDataFrame(edges, paper_count_cutoff, correlation_cutoff)
+    edges <- .filterEdgesDataFrame(edges, correlation_cutoff)
     nodes <- .constructNodesDataFrame(input, edges)
     subnetwork = .filterByPtmSite(nodes, edges, filter_by_ptm_site)
     subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, evidence_count_cutoff, filter_by_curation)
@@ -90,4 +103,19 @@ getSubnetworkFromIndra <- function(input,
         See the LICENSE file for more details."
     )
     return(subnetwork)
+}
+
+#' Warn that an argument of getSubnetworkFromIndra is deprecated
+#' @param arg name of the deprecated argument
+#' @param detail optional extra sentence describing current behavior
+#' @keywords internal
+#' @noRd
+.warn_deprecated_arg <- function(arg, detail = NULL) {
+    warning(
+        "Argument '", arg, "' of getSubnetworkFromIndra() is deprecated ",
+        "and will be removed in a future release. ",
+        if (!is.null(detail)) paste0(detail, " "),
+        "See NEWS.md for details.",
+        call. = FALSE
+    )
 }

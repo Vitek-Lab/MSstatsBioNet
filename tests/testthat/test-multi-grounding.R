@@ -132,7 +132,7 @@ test_that(".validateGetSubnetworkFromIndraInput counts unique (ns, id) pairs AFT
     )
     expect_error(
         MSstatsBioNet:::.validateGetSubnetworkFromIndraInput(
-            input_over, protein_level_data = NULL,
+            input_over,
             sources_filter = NULL, force_include_other = NULL
         ),
         "less than 400 proteins"
@@ -150,7 +150,7 @@ test_that(".validateGetSubnetworkFromIndraInput counts unique (ns, id) pairs AFT
     )
     expect_silent(
         MSstatsBioNet:::.validateGetSubnetworkFromIndraInput(
-            input_under, protein_level_data = NULL,
+            input_under,
             sources_filter = NULL, force_include_other = NULL
         )
     )

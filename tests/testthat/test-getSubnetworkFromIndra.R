@@ -51,3 +51,66 @@ test_that("Exception is thrown for missing columns in input", {
         "Invalid Input Error: input is missing required column\\(s\\): log2FC, EntityNamespace, EntityId, EntityName\\."
     )
 })
+
+# ----- Deprecated arguments (Phase 0 of the API refactor) -----
+
+.run_deprecation_case <- function(...) {
+    input <- data.table::fread(
+        system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
+    )
+    local_mocked_bindings(
+        .callIndraCogexApi = function(ns, ids, fio) {
+            readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet"))
+        },
+        .env = parent.frame()
+    )
+    getSubnetworkFromIndra(input, statement_types = c("Complex"), ...)
+}
+
+test_that("paper_count_cutoff warns as deprecated and is ignored", {
+    suppressWarnings(baseline <- .run_deprecation_case())
+    suppressWarnings(expect_warning(
+        subnetwork <- .run_deprecation_case(paper_count_cutoff = 1),
+        "'paper_count_cutoff'.*deprecated"
+    ))
+    expect_equal(subnetwork, baseline)
+    # Values >= 2 used to remove every edge and error; now they are ignored
+    suppressWarnings(expect_warning(
+        subnetwork <- .run_deprecation_case(paper_count_cutoff = 2),
+        "'paper_count_cutoff'.*deprecated"
+    ))
+    expect_equal(subnetwork, baseline)
+})
+
+test_that("correlation_cutoff warns as deprecated", {
+    suppressWarnings(expect_warning(
+        .run_deprecation_case(correlation_cutoff = 0.5),
+        "'correlation_cutoff'.*deprecated"
+    ))
+})
+
+test_that("protein_level_data warns as deprecated and still adds correlations", {
+    input <- data.table::fread(
+        system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
+    )
+    proteins <- unique(input$Protein)
+    protein_level_data <- data.frame(
+        Protein        = rep(proteins, each = 3),
+        originalRUN    = rep(paste0("run", 1:3), times = length(proteins)),
+        LogIntensities = sin(seq_len(3 * length(proteins)))
+    )
+    suppressWarnings(expect_warning(
+        subnetwork <- .run_deprecation_case(
+            protein_level_data = protein_level_data, correlation_cutoff = 0
+        ),
+        "'protein_level_data'.*deprecated"
+    ))
+    expect_true("correlation" %in% colnames(subnetwork$edges))
+})
+
+test_that("default and explicit NULL arguments give no deprecation warning", {
+    warns <- capture_warnings(.run_deprecation_case())
+    expect_false(any(grepl("deprecated", warns)))
+    warns <- capture_warnings(.run_deprecation_case(protein_level_data = NULL))
+    expect_false(any(grepl("deprecated", warns)))
+})
