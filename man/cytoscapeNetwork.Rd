@@ -17,17 +17,19 @@ cytoscapeNetwork(
 }
 \arguments{
 \item{nodes}{Data frame with at minimum an \code{id} column.  Optional
-columns: \code{logFC} (numeric), \code{entityName}
+columns: \code{log2FC} (numeric), \code{entity_name}
 (character; may be semicolon-joined for multi-grounded
-rows), \code{entityId} (character), \code{Site}
+rows), \code{entity_id} (character), \code{site}
 (character, underscore-separated PTM site list).}
 
 \item{edges}{Data frame with columns \code{source}, \code{target},
 \code{interaction}.  Optional: \code{site},
 \code{evidence_url}, opened when an edge is clicked.}
 
-\item{displayLabelType}{\code{"id"} (default) or \code{"entityName"} –
-controls which column is used as the visible node label.}
+\item{displayLabelType}{\code{"id"} (default) or \code{"entity_name"}:
+which column is used as the visible node label.
+\code{"entityName"} is deprecated and is treated as
+\code{"entity_name"} with a warning.}
 
 \item{nodeFontSize}{Font size (px) for node labels.  Default \code{12}.}
 
@@ -45,7 +47,7 @@ An \code{htmlwidget} object that renders in R Markdown, Shiny, or
 }
 \description{
 Creates an interactive network diagram powered by Cytoscape.js and the dagre
-layout algorithm.  Nodes can carry log fold-change (logFC) values which are
+layout algorithm.  Nodes can carry log fold-change (log2FC) values which are
 mapped to a blue-grey-red colour gradient.  PTM (post-translational
 modification) site information is shown as small satellite nodes and edge
 overlaps are surfaced as hover tooltips.
@@ -54,7 +56,7 @@ overlaps are surfaced as hover tooltips.
 \dontrun{
 nodes <- data.frame(
   id    = c("TP53", "MDM2", "CDKN1A"),
-  logFC = c(1.5, -0.8, 2.1),
+  log2FC = c(1.5, -0.8, 2.1),
   stringsAsFactors = FALSE
 )
 edges <- data.frame(

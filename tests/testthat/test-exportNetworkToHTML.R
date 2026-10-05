@@ -3,7 +3,7 @@ library(mockery)
 make_nodes <- function() {
     data.frame(
         id    = c("P53_HUMAN", "MDM2_HUMAN"),
-        logFC = c(1.5, -1.0),
+        log2FC = c(1.5, -1.0),
         stringsAsFactors = FALSE
     )
 }
@@ -68,11 +68,11 @@ test_that("exportNetworkToHTML passes displayLabelType through to the widget", {
     stub(exportNetworkToHTML, "htmlwidgets::saveWidget", save_widget_mock)
 
     nodes_entity <- make_nodes()
-    nodes_entity$entityName <- c("TP53", "MDM2")
+    nodes_entity$entity_name <- c("TP53", "MDM2")
 
     exportNetworkToHTML(nodes_entity, make_edges(),
                         filename         = tempfile(fileext = ".html"),
-                        displayLabelType = "entityName")
+                        displayLabelType = "entity_name")
 
     widget_arg   <- mock_args(save_widget_mock)[[1]][[1]]
     protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
@@ -152,13 +152,13 @@ test_that("previewNetworkInBrowser passes nodeFontSize and displayLabelType thro
     stub(previewNetworkInBrowser, "interactive",         mock(FALSE))
 
     nodes_entity            <- make_nodes()
-    nodes_entity$entityName <- c("TP53", "MDM2")
+    nodes_entity$entity_name <- c("TP53", "MDM2")
 
     previewNetworkInBrowser(nodes_entity, make_edges(),
-                            displayLabelType = "entityName",
+                            displayLabelType = "entity_name",
                             nodeFontSize     = 16)
 
     call_args <- mock_args(export_mock)[[1]]
-    expect_equal(call_args$displayLabelType, "entityName")
+    expect_equal(call_args$displayLabelType, "entity_name")
     expect_equal(call_args$nodeFontSize,     16)
 })

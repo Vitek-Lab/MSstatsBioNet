@@ -27,12 +27,12 @@ edges_min <- data.frame(
 # Renders in RStudio Viewer / R Markdown / browser
 cytoscapeNetwork(nodes_min, edges_min)
 
-# ── Example 2 · logFC colour gradient ───────────────────────────────────────
+# ── Example 2 · log2FC colour gradient ──────────────────────────────────────
 # Nodes coloured on a blue (down) → grey (neutral) → red (up) scale.
 
 nodes_fc <- data.frame(
-    id    = c("TP53",  "MDM2",  "CDKN1A", "BCL2",  "BAX"),
-    logFC = c( 1.5,    -0.8,     2.1,     -1.9,     0.3),
+    id     = c("TP53",  "MDM2",  "CDKN1A", "BCL2",  "BAX"),
+    log2FC = c( 1.5,    -0.8,     2.1,     -1.9,     0.3),
     stringsAsFactors = FALSE
 )
 
@@ -47,14 +47,14 @@ cytoscapeNetwork(nodes_fc, edges_fc)
 
 
 # ── Example 3 · PTM satellite nodes ─────────────────────────────────────────
-# The `Site` column (underscore-separated) creates small circle child-nodes
+# The `site` column (underscore-separated) creates small circle child-nodes
 # clustered around the parent protein.  Hover over edges to see overlap
 # information when an edge target shares a PTM site with node data.
 
 nodes_ptm <- data.frame(
-    id    = c("EGFR",         "SRC",        "AKT1"),
-    logFC = c( 1.2,            0.5,         -0.3),
-    Site  = c("Y1068_Y1173",  "Y416",       NA),
+    id     = c("EGFR",         "SRC",        "AKT1"),
+    log2FC = c( 1.2,           0.5,         -0.3),
+    site   = c("Y1068_Y1173",  "Y416",       NA),
     stringsAsFactors = FALSE
 )
 
@@ -72,9 +72,9 @@ cytoscapeNetwork(nodes_ptm, edges_ptm, nodeFontSize = 14)
 # ── Example 4 · Entity labels + left-to-right layout ───────────────────────
 
 nodes_entity <- data.frame(
-    id         = c("ENSG001", "ENSG002", "ENSG003"),
-    entityName = c("TP53",    "MDM2",    "CDKN1A"),
-    logFC      = c( 1.0,      -0.5,       2.0),
+    id          = c("ENSG001", "ENSG002", "ENSG003"),
+    entity_name = c("TP53",    "MDM2",    "CDKN1A"),
+    log2FC      = c( 1.0,      -0.5,       2.0),
     stringsAsFactors = FALSE
 )
 
@@ -87,7 +87,7 @@ edges_entity <- data.frame(
 
 cytoscapeNetwork(
     nodes_entity, edges_entity,
-    displayLabelType = "entityName",
+    displayLabelType = "entity_name",
     layoutOptions    = list(rankDir = "LR", rankSep = 120)
 )
 
@@ -96,10 +96,10 @@ cytoscapeNetwork(
 # Click an edge to open the evidence URL in a new tab.
 
 edges_ev <- data.frame(
-    source        = c("TP53", "MDM2"),
-    target        = c("MDM2", "TP53"),
-    interaction   = c("Activation", "Inhibition"),
-    evidence_url  = c(
+    source         = c("TP53", "MDM2"),
+    target         = c("MDM2", "TP53"),
+    interaction    = c("Activation", "Inhibition"),
+    evidence_url   = c(
         "https://www.ncbi.nlm.nih.gov/pubmed/10490031",
         "https://www.ncbi.nlm.nih.gov/pubmed/16474400"
     ),

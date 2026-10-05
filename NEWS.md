@@ -24,9 +24,27 @@ must use `statement_id` and `evidence_url`.
 `evidenceLink` listed every statement between the two agents.
 * The `cytoscapeNetwork()` widget's `_edge_clicked` Shiny input reports
 `evidence_url` in place of `evidenceLink`.
+* The nodes returned by `getSubnetworkFromIndra()` follow the node contract.
+Columns are renamed, with no aliases: `entityName` to `entity_name`,
+`entityId` to `entity_id`, `Site` to `site`, and `logFC` to `log2FC`
+(matching the MSstats column it comes from). New column: `namespace`, the
+grounding namespace(s) aligned with `entity_id`. The ID columns are always
+character, even when every grounded ID is numeric.
+* `getSubnetworkFromIndra()` calls `validate_network()` on its result, so it
+stops with an error instead of returning a network that breaks the contract.
+* `cytoscapeNetwork()`, `exportNetworkToHTML()`, and
+`previewNetworkInBrowser()` read the new node column names (`log2FC`,
+`entity_name`, `site`). Nodes built by hand for them must use these names.
+The widget legend reads "Node color (log2FC)".
+* `cytoscapeNetwork()` now errors when `displayLabelType` is not `"id"` or
+`"entity_name"`. Other values used to fall back to `"id"` silently.
 
 ## Deprecated
 
+* `cytoscapeNetwork(displayLabelType = "entityName")` (and the same argument
+of `exportNetworkToHTML()` and `previewNetworkInBrowser()`) is deprecated. It
+gives a warning and is treated as `"entity_name"`, the renamed nodes column.
+It will become defunct in the next Bioconductor release.
 * In `getSubnetworkFromIndra()`, the arguments `paper_count_cutoff`,
 `correlation_cutoff`, and `protein_level_data` are deprecated. Supplying any
 of them gives a warning. They will become defunct in the next Bioconductor

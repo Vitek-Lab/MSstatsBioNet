@@ -13,17 +13,19 @@ previewNetworkInBrowser(
 }
 \arguments{
 \item{nodes}{Data frame with at minimum an \code{id} column.  Optional
-columns: \code{logFC} (numeric), \code{entityName}
+columns: \code{log2FC} (numeric), \code{entity_name}
 (character; may be semicolon-joined for multi-grounded
-rows), \code{entityId} (character), \code{Site}
+rows), \code{entity_id} (character), \code{site}
 (character, underscore-separated PTM site list).}
 
 \item{edges}{Data frame with columns \code{source}, \code{target},
 \code{interaction}.  Optional: \code{site},
 \code{evidence_url}, opened when an edge is clicked.}
 
-\item{displayLabelType}{\code{"id"} (default) or \code{"entityName"} –
-controls which column is used as the visible node label.}
+\item{displayLabelType}{\code{"id"} (default) or \code{"entity_name"}:
+which column is used as the visible node label.
+\code{"entityName"} is deprecated and is treated as
+\code{"entity_name"} with a warning.}
 
 \item{nodeFontSize}{Font size (px) for node labels.  Default \code{12}.}
 }

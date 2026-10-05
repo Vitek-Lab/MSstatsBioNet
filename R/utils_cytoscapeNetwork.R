@@ -1,4 +1,4 @@
-#' Map logFC values to a blue-grey-red colour palette
+#' Map log2FC values to a blue-grey-red colour palette
 #' @importFrom grDevices colorRamp rgb
 #' @keywords internal
 #' @noRd
@@ -123,7 +123,7 @@
     list(color = color, style = p$style, arrow = arrow, width = p$width)
 }
 
-#' Aggregate PTM overlap between edge targets and node Site columns
+#' Aggregate PTM overlap between edge targets and node site columns
 #' @keywords internal
 #' @importFrom stats setNames
 #' @noRd
@@ -142,11 +142,11 @@
             e <- sub_edges[i, ]
             if (!is.na(e$target) && "site" %in% names(e) && !is.na(e$site)) {
                 tnodes <- nodes[nodes$id == e$target, ]
-                if (nrow(tnodes) > 0 && "Site" %in% names(tnodes)) {
+                if (nrow(tnodes) > 0 && "site" %in% names(tnodes)) {
                     edge_sites <- trimws(unlist(strsplit(as.character(e$site), "[,;|]")))
                     for (j in seq_len(nrow(tnodes))) {
-                        if (!is.na(tnodes$Site[j])) {
-                            node_sites   <- trimws(unlist(strsplit(as.character(tnodes$Site[j]), "_")))
+                        if (!is.na(tnodes$site[j])) {
+                            node_sites   <- trimws(unlist(strsplit(as.character(tnodes$site[j]), "_")))
                             overlap      <- intersect(edge_sites, node_sites)
                             overlap      <- overlap[overlap != "" & !is.na(overlap)]
                             all_sites    <- c(all_sites, overlap)
@@ -232,17 +232,17 @@
 #' @noRd
 .buildElements <- function(nodes, edges, display_label_type = "id") {
     # ── node colours ──────────────────────────────────────────────────────
-    node_colors <- if ("logFC" %in% names(nodes)) {
-        .mapLogFCToColor(nodes$logFC)
+    node_colors <- if ("log2FC" %in% names(nodes)) {
+        .mapLogFCToColor(nodes$log2FC)
     } else {
         rep("#D3D3D3", nrow(nodes))
     }
     
-    label_col <- if (display_label_type == "entityName" &&
-                     "entityName" %in% names(nodes)) "entityName" else "id"
+    label_col <- if (display_label_type == "entity_name" &&
+                     "entity_name" %in% names(nodes)) "entity_name" else "id"
 
-    has_ptm_sites <- if ("Site" %in% names(nodes)) {
-        unique(nodes$id[!is.na(nodes$Site) & trimws(nodes$Site) != ""])
+    has_ptm_sites <- if ("site" %in% names(nodes)) {
+        unique(nodes$id[!is.na(nodes$site) & trimws(nodes$site) != ""])
     } else {
         character(0)
     }
@@ -256,12 +256,12 @@
     for (i in seq_len(nrow(nodes))) {
         row       <- nodes[i, , drop = FALSE]
         color     <- node_colors[i]
-        has_site  <- "Site" %in% names(nodes) &&
-            !is.na(row$Site) && trimws(row$Site) != ""
+        has_site  <- "site" %in% names(nodes) &&
+            !is.na(row$site) && trimws(row$site) != ""
 
-        display_label <- if (label_col == "entityName" &&
-                             !is.na(row$entityName) && row$entityName != "")
-            row$entityName else row$id
+        display_label <- if (label_col == "entity_name" &&
+                             !is.na(row$entity_name) && row$entity_name != "")
+            row$entity_name else row$id
 
         needs_compound <- row$id %in% has_ptm_sites
         compound_id    <- paste0(row$id, "__compound__")
@@ -290,7 +290,7 @@
         
         # PTM child nodes + attachment edges
         if (has_site) {
-            sites <- unique(trimws(unlist(strsplit(as.character(row$Site), "[_,;|]"))))
+            sites <- unique(trimws(unlist(strsplit(as.character(row$site), "[_,;|]"))))
             sites <- sites[sites != ""]
             
             for (site in sites) {
@@ -359,4 +359,25 @@
     }
     
     elements
+}
+
+#' Resolve the displayLabelType argument of cytoscapeNetwork()
+#'
+#' Accepts the deprecated value "entityName" as "entity_name", with a warning.
+#' @param display_label_type value passed by the caller
+#' @return "id" or "entity_name"
+#' @keywords internal
+#' @noRd
+.resolve_display_label_type <- function(display_label_type) {
+    if (identical(display_label_type, "entityName")) {
+        warning("displayLabelType = \"entityName\" is deprecated and will be ",
+                "removed in a future release. Use \"entity_name\", which ",
+                "matches the renamed nodes column.", call. = FALSE)
+        return("entity_name")
+    }
+    if (!is.character(display_label_type) || length(display_label_type) != 1 ||
+        !display_label_type %in% c("id", "entity_name")) {
+        stop("displayLabelType must be \"id\" or \"entity_name\".")
+    }
+    display_label_type
 }

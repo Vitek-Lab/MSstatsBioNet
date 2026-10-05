@@ -116,9 +116,9 @@ test_that("default and explicit NULL arguments give no deprecation warning", {
     expect_false(any(grepl("deprecated", warns)))
 })
 
-# ----- Edge contract (Phase 1b of the API refactor) -----
+# ----- Edge and node contract (Phase 1 of the API refactor) -----
 
-test_that("getSubnetworkFromIndra returns edges that meet the contract", {
+test_that("getSubnetworkFromIndra returns edges and nodes that meet the contract", {
     suppressWarnings(subnetwork <- .run_mocked_subnetwork())
     expect_silent(validate_network(subnetwork))
     expect_equal(
@@ -126,6 +126,11 @@ test_that("getSubnetworkFromIndra returns edges that meet the contract", {
         c("source", "target", "interaction", "directed", "site", "confidence",
           "evidence_count", "evidence_url", "statement_id", "backend_database",
           "query_type", "evidence_sources", "paperCount")
+    )
+    expect_equal(
+        colnames(subnetwork$nodes),
+        c("id", "entity_name", "namespace", "entity_id", "site", "log2FC",
+          "adj.pvalue")
     )
 })
 
@@ -164,4 +169,20 @@ test_that("getSubnetworkFromIndra marks only symmetric statement types undirecte
         statement_types = c("Activation", "IncreaseAmount", "DecreaseAmount")
     ))
     expect_true(all(subnetwork$edges$directed))
+})
+
+test_that("getSubnetworkFromIndra returns character node IDs when fread reads them as integers", {
+    suppressWarnings(subnetwork <- .run_mocked_subnetwork())
+    expect_type(subnetwork$nodes$entity_id, "character")
+})
+
+# ----- Golden output (pinned after Phase 1 of the API refactor) -----
+
+# Phase 2 moves the INDRA code behind a backend object and must reproduce
+# this output exactly. Regenerate the fixture with
+# _fixtures/make_golden_subnetwork.R only when a change is intended.
+test_that("getSubnetworkFromIndra reproduces the pinned golden output", {
+    suppressWarnings(subnetwork <- .run_mocked_subnetwork(statement_types = NULL))
+    golden <- readRDS(test_path("_fixtures", "golden_subnetwork.rds"))
+    expect_identical(subnetwork, golden)
 })

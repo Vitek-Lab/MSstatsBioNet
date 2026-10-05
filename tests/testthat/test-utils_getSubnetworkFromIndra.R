@@ -2,8 +2,8 @@ describe(".filterByPtmSite", {
     make_nodes <- function() {
         data.frame(
             id       = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN"),
-            logFC    = c(1.5, -1.0, 0.5),
-            Site     = c("S15_S20", "T68",  NA),
+            log2FC    = c(1.5, -1.0, 0.5),
+            site     = c("S15_S20", "T68",  NA),
             stringsAsFactors = FALSE
         )
     }
@@ -29,9 +29,9 @@ describe(".filterByPtmSite", {
         expect_equal(result$edges, edges)
     })
     
-    test_that(".filterByPtmSite returns input unchanged when no nodes have Site data", {
+    test_that(".filterByPtmSite returns input unchanged when no nodes have site data", {
         nodes       <- make_nodes()
-        nodes$Site  <- NA   # wipe all sites
+        nodes$site  <- NA   # wipe all sites
         edges       <- make_edges()
         
         result <- MSstatsBioNet:::.filterByPtmSite(nodes, edges, filter_by_ptm_site = TRUE)
@@ -50,7 +50,7 @@ describe(".filterByPtmSite", {
         expect_equal(result$edges$site,        "S15")
     })
     
-    test_that(".filterByPtmSite drops edges where edge site does not overlap node Site", {
+    test_that(".filterByPtmSite drops edges where edge site does not overlap node site", {
         result <- MSstatsBioNet:::.filterByPtmSite(make_nodes(), make_edges(),
                                                    filter_by_ptm_site = TRUE)
         # ATM→MDM2 with site=T999 should be gone (T999 not in MDM2's T68)
@@ -59,7 +59,7 @@ describe(".filterByPtmSite", {
         expect_equal(nrow(dropped), 0)
     })
     
-    test_that(".filterByPtmSite drops edges with NA edge site even if node has Site data", {
+    test_that(".filterByPtmSite drops edges with NA edge site even if node has site data", {
         result <- MSstatsBioNet:::.filterByPtmSite(make_nodes(), make_edges(),
                                                    filter_by_ptm_site = TRUE)
         # P53→MDM2 has site=NA so must be dropped
@@ -68,10 +68,10 @@ describe(".filterByPtmSite", {
         expect_equal(nrow(dropped), 0)
     })
     
-    test_that(".filterByPtmSite drops edges where target node has no Site data", {
+    test_that(".filterByPtmSite drops edges where target node has no site data", {
         result <- MSstatsBioNet:::.filterByPtmSite(make_nodes(), make_edges(),
                                                    filter_by_ptm_site = TRUE)
-        # P53→ATM: ATM node Site is NA so no overlap possible
+        # P53->ATM: ATM node site is NA so no overlap possible
         dropped <- result$edges[result$edges$source == "P53_HUMAN" &
                                     result$edges$target == "ATM_HUMAN", ]
         expect_equal(nrow(dropped), 0)
@@ -88,23 +88,23 @@ describe(".filterByPtmSite", {
     test_that(".filterByPtmSite preserves all node columns after pruning", {
         result <- MSstatsBioNet:::.filterByPtmSite(make_nodes(), make_edges(),
                                                    filter_by_ptm_site = TRUE)
-        expect_true(all(c("id", "logFC", "Site") %in% names(result$nodes)))
+        expect_true(all(c("id", "log2FC", "site") %in% names(result$nodes)))
     })
     
     test_that(".filterByPtmSite keeps edge when site matches any of multiple node sites", {
         nodes <- data.frame(
             id   = c("A", "B"),
-            Site = c("S15_S20_T68", NA),
+            site = c("S15_S20_T68", NA),
             stringsAsFactors = FALSE
         )
         edges <- data.frame(
             source      = "A",
             target      = "B",
             interaction = "Phosphorylation",
-            site        = "S20",    # matches second site in A's Site string
+            site        = "S20",    # matches second site in A's site string
             stringsAsFactors = FALSE
         )
-        # Note: filter checks target node — B has no Site, so this should drop.
+        # Note: filter checks target node - B has no site, so this should drop.
         # Swap so A is the target to test multi-site matching.
         edges2 <- data.frame(
             source      = "B",
@@ -134,11 +134,11 @@ describe(".filterByPtmSite", {
     
     test_that(".filterByPtmSite handles empty nodes gracefully", {
         empty_nodes <- data.frame(
-            id = character(0), Site = character(0),
+            id = character(0), site = character(0),
             stringsAsFactors = FALSE
         )
         edges <- make_edges()
-        # No nodes have Site data so passthrough expected
+        # No nodes have site data so passthrough expected
         result <- MSstatsBioNet:::.filterByPtmSite(empty_nodes, edges,
                                                    filter_by_ptm_site = TRUE)
         expect_equal(nrow(result$edges), nrow(edges))
