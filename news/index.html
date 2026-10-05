@@ -50,10 +50,19 @@
 <li>
 <code>evidence_url</code> links to the INDRA page for that one statement. The old <code>evidenceLink</code> listed every statement between the two agents.</li>
 <li>The <code><a href="../reference/cytoscapeNetwork.html">cytoscapeNetwork()</a></code> widget’s <code>_edge_clicked</code> Shiny input reports <code>evidence_url</code> in place of <code>evidenceLink</code>.</li>
+<li>The nodes returned by <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> follow the node contract. Columns are renamed, with no aliases: <code>entityName</code> to <code>entity_name</code>, <code>entityId</code> to <code>entity_id</code>, <code>Site</code> to <code>site</code>, and <code>logFC</code> to <code>log2FC</code> (matching the MSstats column it comes from). New column: <code>namespace</code>, the grounding namespace(s) aligned with <code>entity_id</code>. The ID columns are always character, even when every grounded ID is numeric.</li>
+<li>
+<code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> calls <code><a href="../reference/validate_network.html">validate_network()</a></code> on its result, so it stops with an error instead of returning a network that breaks the contract.</li>
+<li>
+<code><a href="../reference/cytoscapeNetwork.html">cytoscapeNetwork()</a></code>, <code><a href="../reference/exportNetworkToHTML.html">exportNetworkToHTML()</a></code>, and <code><a href="../reference/previewNetworkInBrowser.html">previewNetworkInBrowser()</a></code> read the new node column names (<code>log2FC</code>, <code>entity_name</code>, <code>site</code>). Nodes built by hand for them must use these names. The widget legend reads “Node color (log2FC)”.</li>
+<li>
+<code><a href="../reference/cytoscapeNetwork.html">cytoscapeNetwork()</a></code> now errors when <code>displayLabelType</code> is not <code>"id"</code> or <code>"entity_name"</code>. Other values used to fall back to <code>"id"</code> silently.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="deprecated-development-version">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-development-version"></a></h3>
-<ul><li>In <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code>, the arguments <code>paper_count_cutoff</code>, <code>correlation_cutoff</code>, and <code>protein_level_data</code> are deprecated. Supplying any of them gives a warning. They will become defunct in the next Bioconductor release and be removed in the one after.
+<ul><li>
+<code>cytoscapeNetwork(displayLabelType = "entityName")</code> (and the same argument of <code><a href="../reference/exportNetworkToHTML.html">exportNetworkToHTML()</a></code> and <code><a href="../reference/previewNetworkInBrowser.html">previewNetworkInBrowser()</a></code>) is deprecated. It gives a warning and is treated as <code>"entity_name"</code>, the renamed nodes column. It will become defunct in the next Bioconductor release.</li>
+<li>In <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code>, the arguments <code>paper_count_cutoff</code>, <code>correlation_cutoff</code>, and <code>protein_level_data</code> are deprecated. Supplying any of them gives a warning. They will become defunct in the next Bioconductor release and be removed in the one after.
 <ul><li>
 <code>paper_count_cutoff</code> is now ignored. INDRA does not return paper counts (the <code>paperCount</code> column is always 1), so the default had no effect and values of 2 or more removed every edge and raised an error.</li>
 <li>

@@ -35,9 +35,40 @@
   [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
   widget’s `_edge_clicked` Shiny input reports `evidence_url` in place
   of `evidenceLink`.
+- The nodes returned by
+  [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
+  follow the node contract. Columns are renamed, with no aliases:
+  `entityName` to `entity_name`, `entityId` to `entity_id`, `Site` to
+  `site`, and `logFC` to `log2FC` (matching the MSstats column it comes
+  from). New column: `namespace`, the grounding namespace(s) aligned
+  with `entity_id`. The ID columns are always character, even when every
+  grounded ID is numeric.
+- [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
+  calls
+  [`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md)
+  on its result, so it stops with an error instead of returning a
+  network that breaks the contract.
+- [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md),
+  [`exportNetworkToHTML()`](https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.md),
+  and
+  [`previewNetworkInBrowser()`](https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.md)
+  read the new node column names (`log2FC`, `entity_name`, `site`).
+  Nodes built by hand for them must use these names. The widget legend
+  reads “Node color (log2FC)”.
+- [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
+  now errors when `displayLabelType` is not `"id"` or `"entity_name"`.
+  Other values used to fall back to `"id"` silently.
 
 ### Deprecated
 
+- `cytoscapeNetwork(displayLabelType = "entityName")` (and the same
+  argument of
+  [`exportNetworkToHTML()`](https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.md)
+  and
+  [`previewNetworkInBrowser()`](https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.md))
+  is deprecated. It gives a warning and is treated as `"entity_name"`,
+  the renamed nodes column. It will become defunct in the next
+  Bioconductor release.
 - In
   [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md),
   the arguments `paper_count_cutoff`, `correlation_cutoff`, and

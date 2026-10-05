@@ -1,7 +1,7 @@
 # Render a Cytoscape network visualisation
 
 Creates an interactive network diagram powered by Cytoscape.js and the
-dagre layout algorithm. Nodes can carry log fold-change (logFC) values
+dagre layout algorithm. Nodes can carry log fold-change (log2FC) values
 which are mapped to a blue-grey-red colour gradient. PTM
 (post-translational modification) site information is shown as small
 satellite nodes and edge overlaps are surfaced as hover tooltips.
@@ -25,9 +25,9 @@ cytoscapeNetwork(
 
 - nodes:
 
-  Data frame with at minimum an `id` column. Optional columns: `logFC`
-  (numeric), `entityName` (character; may be semicolon-joined for
-  multi-grounded rows), `entityId` (character), `Site` (character,
+  Data frame with at minimum an `id` column. Optional columns: `log2FC`
+  (numeric), `entity_name` (character; may be semicolon-joined for
+  multi-grounded rows), `entity_id` (character), `site` (character,
   underscore-separated PTM site list).
 
 - edges:
@@ -37,8 +37,9 @@ cytoscapeNetwork(
 
 - displayLabelType:
 
-  `"id"` (default) or `"entityName"` – controls which column is used as
-  the visible node label.
+  `"id"` (default) or `"entity_name"`: which column is used as the
+  visible node label. `"entityName"` is deprecated and is treated as
+  `"entity_name"` with a warning.
 
 - nodeFontSize:
 
@@ -69,7 +70,7 @@ Viewer pane.
 if (FALSE) { # \dontrun{
 nodes <- data.frame(
   id    = c("TP53", "MDM2", "CDKN1A"),
-  logFC = c(1.5, -0.8, 2.1),
+  log2FC = c(1.5, -0.8, 2.1),
   stringsAsFactors = FALSE
 )
 edges <- data.frame(

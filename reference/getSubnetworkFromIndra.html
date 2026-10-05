@@ -159,7 +159,8 @@ or <code>"down"</code> (downregulated only).</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>list of 2 data.frames, <code>nodes</code> and <code>edges</code>.</p>
+    <p>list of 2 data.frames, <code>nodes</code> and <code>edges</code>, that meets
+the contract checked by <code><a href="validate_network.html">validate_network</a></code>.</p>
 <p><code>edges</code> has one row per INDRA statement: <code>source</code>,
 <code>target</code>, <code>interaction</code> (INDRA statement type),
 <code>directed</code> (<code>FALSE</code> for symmetric types such as
@@ -171,6 +172,9 @@ or <code>"down"</code> (downregulated only).</p></dd>
 <code>evidence_sources</code> (evidence count per source, as JSON), and the
 deprecated <code>paperCount</code> (and <code>correlation</code> when
 <code>protein_level_data</code> is given).</p>
+<p><code>nodes</code> has one row per analyte: <code>id</code>, <code>entity_name</code>,
+<code>namespace</code>, <code>entity_id</code>, <code>site</code>, <code>log2FC</code>, and
+<code>adj.pvalue</code>.</p>
     </div>
 
     <div class="section level2">
@@ -186,14 +190,14 @@ deprecated <code>paperCount</code> (and <code>correlation</code> when
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         package or utilizing the results based on this package.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         See the LICENSE file for more details.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        id entityName entityId   Site     logFC  adj.pvalue</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;char&gt;     &lt;char&gt;    &lt;int&gt; &lt;char&gt;     &lt;num&gt;       &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: O00217     NDUFS8     7715   &lt;NA&gt; 2.0285031 0.013821932</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: O60313       OPA1     8140   &lt;NA&gt; 0.9299641 0.019584180</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: O75306     NDUFS2     7708   &lt;NA&gt; 2.4745040 0.004457034</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: P05023     ATP1A1      799   &lt;NA&gt; 1.8391155 0.003251073</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: P05067        APP      620   &lt;NA&gt; 0.7360012 0.020306662</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: P05090       APOD      612   &lt;NA&gt; 0.5683951 0.013715050</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        id entity_name namespace entity_id   site    log2FC  adj.pvalue</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;char&gt;      &lt;char&gt;    &lt;char&gt;    &lt;char&gt; &lt;char&gt;     &lt;num&gt;       &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1: O00217      NDUFS8      HGNC      7715   &lt;NA&gt; 2.0285031 0.013821932</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2: O60313        OPA1      HGNC      8140   &lt;NA&gt; 0.9299641 0.019584180</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3: O75306      NDUFS2      HGNC      7708   &lt;NA&gt; 2.4745040 0.004457034</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4: P05023      ATP1A1      HGNC       799   &lt;NA&gt; 1.8391155 0.003251073</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5: P05067         APP      HGNC       620   &lt;NA&gt; 0.7360012 0.020306662</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6: P05090        APOD      HGNC       612   &lt;NA&gt; 0.5683951 0.013715050</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   source target interaction directed site confidence evidence_count</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 O75306 P08574     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>

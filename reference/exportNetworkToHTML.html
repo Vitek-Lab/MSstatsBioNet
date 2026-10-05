@@ -64,9 +64,9 @@ both the configuration and HTML export in one step.</p>
 
 <dl><dt id="arg-nodes">nodes<a class="anchor" aria-label="anchor" href="#arg-nodes"></a></dt>
 <dd><p>Data frame with at minimum an <code>id</code> column.  Optional
-columns: <code>logFC</code> (numeric), <code>entityName</code>
+columns: <code>log2FC</code> (numeric), <code>entity_name</code>
 (character; may be semicolon-joined for multi-grounded
-rows), <code>entityId</code> (character), <code>Site</code>
+rows), <code>entity_id</code> (character), <code>site</code>
 (character, underscore-separated PTM site list).</p></dd>
 
 
@@ -81,8 +81,10 @@ rows), <code>entityId</code> (character), <code>Site</code>
 
 
 <dt id="arg-displaylabeltype">displayLabelType<a class="anchor" aria-label="anchor" href="#arg-displaylabeltype"></a></dt>
-<dd><p><code>"id"</code> (default) or <code>"entityName"</code> –
-controls which column is used as the visible node label.</p></dd>
+<dd><p><code>"id"</code> (default) or <code>"entity_name"</code>:
+which column is used as the visible node label.
+<code>"entityName"</code> is deprecated and is treated as
+<code>"entity_name"</code> with a warning.</p></dd>
 
 
 <dt id="arg-nodefontsize">nodeFontSize<a class="anchor" aria-label="anchor" href="#arg-nodefontsize"></a></dt>

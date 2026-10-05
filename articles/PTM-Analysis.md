@@ -108,14 +108,14 @@ subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statemen
 #>         package or utilizing the results based on this package.
 #>         See the LICENSE file for more details.
 head(subnetwork$nodes)
-#>        id entityName entityId        Site      logFC adj.pvalue
-#>    <char>     <char>   <char>      <char>      <num>      <num>
-#> 1: P00533       EGFR     3236 S1039_S1042 -0.3200363 0.28024590
-#> 2: P00533       EGFR     3236       S1064  0.3566531 0.06863598
-#> 3: P00533       EGFR     3236   S991_S995 -0.1229037 0.57907374
-#> 4: P00533       EGFR     3236        T693 -0.0233444 0.96083634
-#> 5: P00533       EGFR     3236   T693_S695 -0.1659957 0.58809108
-#> 6: P00533       EGFR     3236       Y1110  0.2106324 0.25258914
+#>        id entity_name namespace entity_id        site     log2FC adj.pvalue
+#>    <char>      <char>    <char>    <char>      <char>      <num>      <num>
+#> 1: P00533        EGFR      HGNC      3236 S1039_S1042 -0.3200363 0.28024590
+#> 2: P00533        EGFR      HGNC      3236       S1064  0.3566531 0.06863598
+#> 3: P00533        EGFR      HGNC      3236   S991_S995 -0.1229037 0.57907374
+#> 4: P00533        EGFR      HGNC      3236        T693 -0.0233444 0.96083634
+#> 5: P00533        EGFR      HGNC      3236   T693_S695 -0.1659957 0.58809108
+#> 6: P00533        EGFR      HGNC      3236       Y1110  0.2106324 0.25258914
 head(subnetwork$edges)
 #>   source target     interaction directed site confidence evidence_count
 #> 1 Q13480 P00533 Phosphorylation     TRUE <NA>  0.5517375              2
@@ -153,7 +153,7 @@ Visualize the subnetwork on your browser
 
 ``` r
 
-previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "entityName")
+previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "entity_name")
 ```
 
 ## Session info

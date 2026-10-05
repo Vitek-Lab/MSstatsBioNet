@@ -18,9 +18,9 @@ previewNetworkInBrowser(
 
 - nodes:
 
-  Data frame with at minimum an `id` column. Optional columns: `logFC`
-  (numeric), `entityName` (character; may be semicolon-joined for
-  multi-grounded rows), `entityId` (character), `Site` (character,
+  Data frame with at minimum an `id` column. Optional columns: `log2FC`
+  (numeric), `entity_name` (character; may be semicolon-joined for
+  multi-grounded rows), `entity_id` (character), `site` (character,
   underscore-separated PTM site list).
 
 - edges:
@@ -30,8 +30,9 @@ previewNetworkInBrowser(
 
 - displayLabelType:
 
-  `"id"` (default) or `"entityName"` – controls which column is used as
-  the visible node label.
+  `"id"` (default) or `"entity_name"`: which column is used as the
+  visible node label. `"entityName"` is deprecated and is treated as
+  `"entity_name"` with a warning.
 
 - nodeFontSize:
 

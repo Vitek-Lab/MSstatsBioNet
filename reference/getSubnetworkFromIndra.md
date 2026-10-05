@@ -116,7 +116,9 @@ getSubnetworkFromIndra(
 
 ## Value
 
-list of 2 data.frames, `nodes` and `edges`.
+list of 2 data.frames, `nodes` and `edges`, that meets the contract
+checked by
+[`validate_network`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md).
 
 `edges` has one row per INDRA statement: `source`, `target`,
 `interaction` (INDRA statement type), `directed` (`FALSE` for symmetric
@@ -127,6 +129,9 @@ as character), `backend_database` (`"INDRA"`), `query_type`
 (`"subnetwork"`), `evidence_sources` (evidence count per source, as
 JSON), and the deprecated `paperCount` (and `correlation` when
 `protein_level_data` is given).
+
+`nodes` has one row per analyte: `id`, `entity_name`, `namespace`,
+`entity_id`, `site`, `log2FC`, and `adj.pvalue`.
 
 ## Examples
 
@@ -142,14 +147,14 @@ subnetwork <- getSubnetworkFromIndra(input)
 #>         package or utilizing the results based on this package.
 #>         See the LICENSE file for more details.
 head(subnetwork$nodes)
-#>        id entityName entityId   Site     logFC  adj.pvalue
-#>    <char>     <char>    <int> <char>     <num>       <num>
-#> 1: O00217     NDUFS8     7715   <NA> 2.0285031 0.013821932
-#> 2: O60313       OPA1     8140   <NA> 0.9299641 0.019584180
-#> 3: O75306     NDUFS2     7708   <NA> 2.4745040 0.004457034
-#> 4: P05023     ATP1A1      799   <NA> 1.8391155 0.003251073
-#> 5: P05067        APP      620   <NA> 0.7360012 0.020306662
-#> 6: P05090       APOD      612   <NA> 0.5683951 0.013715050
+#>        id entity_name namespace entity_id   site    log2FC  adj.pvalue
+#>    <char>      <char>    <char>    <char> <char>     <num>       <num>
+#> 1: O00217      NDUFS8      HGNC      7715   <NA> 2.0285031 0.013821932
+#> 2: O60313        OPA1      HGNC      8140   <NA> 0.9299641 0.019584180
+#> 3: O75306      NDUFS2      HGNC      7708   <NA> 2.4745040 0.004457034
+#> 4: P05023      ATP1A1      HGNC       799   <NA> 1.8391155 0.003251073
+#> 5: P05067         APP      HGNC       620   <NA> 0.7360012 0.020306662
+#> 6: P05090        APOD      HGNC       612   <NA> 0.5683951 0.013715050
 head(subnetwork$edges)
 #>   source target interaction directed site confidence evidence_count
 #> 1 O75306 P08574     Complex    FALSE <NA>  0.8302067              1
