@@ -266,7 +266,9 @@ validate_network <- function(network) {
     }
     if ("evidence_count" %in% colnames(edges)) {
         evidence_count <- edges$evidence_count
-        if (anyNA(evidence_count) || any(is.infinite(evidence_count))) {
+        # is.infinite() errors on list columns; .check_columns() reports those
+        if (anyNA(evidence_count) ||
+            (is.numeric(evidence_count) && any(is.infinite(evidence_count)))) {
             problems <- c(problems,
                           "edges$evidence_count must not be NA or infinite")
         }

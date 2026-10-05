@@ -133,6 +133,11 @@ test_that("validate_network rejects NA or infinite evidence_count", {
                     error = function(e) conditionMessage(e))
     expect_match(err, "edges\\$evidence_count must be integer")
     expect_match(err, "evidence_count must not be NA or infinite")
+
+    # A list column is reported as a type problem, not an R error
+    network$edges$evidence_count <- list(12L, 1L)
+    expect_error(validate_network(network),
+                 "edges\\$evidence_count must be integer")
 })
 
 test_that("validate_network requires directed == FALSE for symmetric types", {
