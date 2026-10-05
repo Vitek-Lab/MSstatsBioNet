@@ -36,6 +36,13 @@ importFrom(jsonlite,
   fromJSON,
   toJSON
 )
+importFrom(methods,
+  new,
+  setClass,
+  setGeneric,
+  setMethod,
+  setValidity
+)
 importFrom(r2r,
   hashmap,
   keys,

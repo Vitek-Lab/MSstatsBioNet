@@ -105,12 +105,18 @@ getSubnetworkFromIndra <- function(input,
     }
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other, include_infinite_fc, direction)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
-    res <- .callIndraCogexApi(input$EntityNamespace, input$EntityId, force_include_other)
-    res <- .filterIndraResponse(res, statement_types, evidence_count_cutoff, sources_filter)
-    edges <- .constructEdgesDataFrame(res, input, protein_level_data)
-    edges <- .filterEdgesDataFrame(edges, correlation_cutoff)
-    nodes <- .constructNodesDataFrame(input, edges)
-    subnetwork = .filterByPtmSite(nodes, edges, filter_by_ptm_site)
+    subnetwork <- get_network(indra_backend(), input, subnetwork_query(),
+                              statement_types = statement_types,
+                              min_evidence = evidence_count_cutoff,
+                              sources = sources_filter,
+                              include_entities = force_include_other)
+    if (!is.null(protein_level_data)) {
+        edges <- .addCorrelationToEdges(subnetwork$edges, protein_level_data)
+        edges <- .filterEdgesDataFrame(edges, correlation_cutoff)
+        subnetwork <- list(nodes = .constructNodesDataFrame(input, edges),
+                           edges = edges)
+    }
+    subnetwork = .filterByPtmSite(subnetwork$nodes, subnetwork$edges, filter_by_ptm_site)
     subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, evidence_count_cutoff, filter_by_curation)
     validate_network(subnetwork)
     warning(

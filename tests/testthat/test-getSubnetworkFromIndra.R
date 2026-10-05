@@ -2,7 +2,7 @@ test_that("getSubnetworkFromIndra works correctly", {
     input <- data.table::fread(
         system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
     )
-    local_mocked_bindings(.callIndraCogexApi = function(ns, ids, fio) {
+    local_mocked_bindings(.callIndraCogexApi = function(ns, ids, fio, cogex_url) {
         return(readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet")))
     })
     suppressWarnings(subnetwork <- getSubnetworkFromIndra(input, statement_types = c("Activation", "Phosphorylation")))
@@ -14,7 +14,7 @@ test_that("getSubnetworkFromIndra with different statement type works correctly"
     input <- data.table::fread(
         system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
     )
-    local_mocked_bindings(.callIndraCogexApi = function(ns, ids, fio) {
+    local_mocked_bindings(.callIndraCogexApi = function(ns, ids, fio, cogex_url) {
         return(readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet")))
     })
     suppressWarnings(
@@ -58,7 +58,7 @@ test_that("Exception is thrown for missing columns in input", {
         system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
     )
     local_mocked_bindings(
-        .callIndraCogexApi = function(ns, ids, fio) {
+        .callIndraCogexApi = function(ns, ids, fio, cogex_url) {
             readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet"))
         },
         .env = parent.frame()
@@ -174,6 +174,21 @@ test_that("getSubnetworkFromIndra marks only symmetric statement types undirecte
 test_that("getSubnetworkFromIndra returns character node IDs when fread reads them as integers", {
     suppressWarnings(subnetwork <- .run_mocked_subnetwork())
     expect_type(subnetwork$nodes$entity_id, "character")
+})
+
+test_that("getSubnetworkFromIndra subtracts incorrect curations when filter_by_curation = TRUE", {
+    local_mocked_bindings(.get_incorrect_curation_count = function(stmt_hash) 1)
+    suppressWarnings({
+        uncurated <- .run_mocked_subnetwork(statement_types = "Activation")
+        curated <- .run_mocked_subnetwork(statement_types = "Activation",
+                                          filter_by_curation = TRUE)
+    })
+    kept <- uncurated$edges$evidence_count - 1L >= 1L
+    expect_equal(curated$edges$statement_id, uncurated$edges$statement_id[kept])
+    expect_equal(curated$edges$evidence_count,
+                 uncurated$edges$evidence_count[kept] - 1L)
+    expect_true(all(curated$nodes$id %in%
+                    c(curated$edges$source, curated$edges$target)))
 })
 
 # ----- Golden output (pinned after Phase 1 of the API refactor) -----

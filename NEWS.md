@@ -56,6 +56,13 @@ release and be removed in the one after.
     deprecation period. The `paperCount` and `correlation` columns of the
     returned edges will be removed when the arguments become defunct.
 
+## Internal changes
+
+* `getSubnetworkFromIndra()` now runs through an internal INDRA backend
+object and the S4 generic `get_network()`, the first step toward supporting
+network databases other than INDRA. Its output is unchanged. The new
+functions are not exported yet.
+
 # MSstatsBioNet 0.99.0
 
 * Added function `getSubnetworkFromIndra` to extract biomolecular subnetworks 

@@ -9,7 +9,7 @@ input <- data.table::fread(
     system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
 )
 testthat::local_mocked_bindings(
-    .callIndraCogexApi = function(ns, ids, fio) {
+    .callIndraCogexApi = function(ns, ids, fio, cogex_url) {
         readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet"))
     }
 )

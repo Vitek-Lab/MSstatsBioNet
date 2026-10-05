@@ -217,7 +217,7 @@ test_that("annotateProteinInfoFromIndra(Metabolite) -> getSubnetworkFromIndra E2
             }
             result
         },
-        .callIndraCogexApi = function(ns, ids, fio) list()
+        .callIndraCogexApi = function(ns, ids, fio, cogex_url) list()
     )
 
     annotated <- annotateProteinInfoFromIndra(df, "Metabolite")

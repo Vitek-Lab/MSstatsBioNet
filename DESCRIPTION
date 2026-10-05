@@ -29,7 +29,8 @@ Imports:
     text2vec,
     stopwords,
     xml2,
-    rentrez
+    rentrez,
+    methods
 Suggests: 
     data.table,
     BiocStyle,
