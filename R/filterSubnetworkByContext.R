@@ -27,7 +27,7 @@
 #'
 #' @param nodes  A dataframe of network nodes.
 #' @param edges  A dataframe of network edges with columns: source, target,
-#'               interaction, site, evidenceLink, stmt_hash.
+#'               interaction, site, evidence_url, statement_id.
 #' @param query  For \code{method = "tag_count"}: a character vector of tags,
 #'               e.g. \code{c("CHEK1", "DNA damage", "DNA damage repair")}.
 #'               For \code{method = "cosine"}: a single character string.
@@ -54,7 +54,7 @@
 #'   \item{nodes}{Filtered nodes dataframe (only nodes present in kept edges)}
 #'   \item{edges}{Filtered edges dataframe}
 #'   \item{evidence}{Dataframe with columns: source, target, interaction, site,
-#'     evidenceLink, stmt_hash, text, pmid, score. The \code{score} column
+#'     evidence_url, statement_id, text, pmid, score. The \code{score} column
 #'     contains tag counts (integer) or cosine similarities (numeric) depending
 #'     on the method used.}
 #'   \item{abstracts}{Named character vector mapping each PMID in
@@ -214,11 +214,11 @@ filterSubnetworkByContext <- function(nodes,
     evidence_filtered <- evidence_scored[
         evidence_scored$pmid %in% passing_pmids,
         c("source", "target", "interaction", "site",
-          "evidenceLink", "stmt_hash", "text", "pmid", "score")
+          "evidence_url", "statement_id", "text", "pmid", "score")
     ]
     
-    surviving_hashes <- unique(evidence_filtered$stmt_hash)
-    edges_filtered   <- edges[edges$stmt_hash %in% surviving_hashes, , drop = FALSE]
+    surviving_hashes <- unique(evidence_filtered$statement_id)
+    edges_filtered   <- edges[edges$statement_id %in% surviving_hashes, , drop = FALSE]
     
     surviving_nodes  <- union(edges_filtered$source, edges_filtered$target)
     if (!"id" %in% names(nodes)) {
@@ -346,13 +346,13 @@ filterSubnetworkByContext <- function(nodes,
 
 #' Extract evidence text from edges dataframe via INDRA API
 #' @param df Edges dataframe with columns: source, target, interaction, site,
-#'           evidenceLink, stmt_hash
+#'           evidence_url, statement_id
 #' @return Dataframe with additional columns: text, pmid
 #' @keywords internal
 #' @noRd
 .extract_evidence_text <- function(df) {
     
-    required_cols <- c("source", "target", "interaction", "site", "evidenceLink", "stmt_hash")
+    required_cols <- c("source", "target", "interaction", "site", "evidence_url", "statement_id")
     missing_cols  <- setdiff(required_cols, names(df))
     if (length(missing_cols) > 0) {
         stop(sprintf("Missing required columns: %s", paste(missing_cols, collapse = ", ")))
@@ -360,18 +360,18 @@ filterSubnetworkByContext <- function(nodes,
     
     results_list  <- list()
     result_count  <- 0
-    unique_hashes <- unique(df$stmt_hash)
+    unique_hashes <- unique(df$statement_id)
     n_hashes      <- length(unique_hashes)
     
     cat(sprintf("Processing %d unique statement hashes...\n", n_hashes))
 
     evidence_by_hash <- .query_indra_evidence(unique_hashes)
 
-    for (stmt_hash in unique_hashes) {
-        evidence_list    <- evidence_by_hash[[as.character(stmt_hash)]]
+    for (hash in unique_hashes) {
+        evidence_list    <- evidence_by_hash[[as.character(hash)]]
         if (is.null(evidence_list) || length(evidence_list) == 0) next
 
-        matching_indices <- which(df$stmt_hash == stmt_hash)
+        matching_indices <- which(df$statement_id == hash)
         
         for (evidence in evidence_list) {
             if (!is.null(evidence[["text"]]) && nchar(evidence[["text"]]) > 0) {
@@ -382,8 +382,8 @@ filterSubnetworkByContext <- function(nodes,
                         target       = df$target[idx],
                         interaction  = df$interaction[idx],
                         site         = df$site[idx],
-                        evidenceLink = df$evidenceLink[idx],
-                        stmt_hash    = df$stmt_hash[idx],
+                        evidence_url = df$evidence_url[idx],
+                        statement_id = df$statement_id[idx],
                         text         = evidence[["text"]],
                         pmid         = if (is.null(evidence[["pmid"]])) "" else evidence[["pmid"]],
                         stringsAsFactors = FALSE
@@ -397,7 +397,7 @@ filterSubnetworkByContext <- function(nodes,
         warning("No evidence text found for any statement hash")
         return(data.frame(
             source = character(), target = character(), interaction = character(),
-            site = character(), evidenceLink = character(), stmt_hash = character(),
+            site = character(), evidence_url = character(), statement_id = character(),
             text = character(), pmid = character(), stringsAsFactors = FALSE
         ))
     }
@@ -505,7 +505,7 @@ filterSubnetworkByContext <- function(nodes,
 #' @param stmt_hashes Character vector of statement hash strings
 #' @param batch_size  Number of hashes to request per API call
 #' @param sleep       Seconds to pause between API calls
-#' @return Named list: stmt_hash -> list of evidence objects. Empty list when
+#' @return Named list: statement_id -> list of evidence objects. Empty list when
 #'         no evidence could be retrieved.
 #' @keywords internal
 #' @noRd

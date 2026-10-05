@@ -22,7 +22,7 @@ rows), \code{entityId} (character), \code{Site}
 
 \item{edges}{Data frame with columns \code{source}, \code{target},
 \code{interaction}.  Optional: \code{site},
-\code{evidenceLink}.}
+\code{evidence_url}, opened when an edge is clicked.}
 
 \item{filename}{Output HTML filename}
 

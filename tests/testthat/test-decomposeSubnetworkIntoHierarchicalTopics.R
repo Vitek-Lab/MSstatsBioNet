@@ -22,15 +22,15 @@ make_theme_corpus <- function(edges_per_theme = 15, papers_per_theme = 8) {
             hash <- paste0("h", th, "_", e)
             edges[[length(edges) + 1]] <- data.frame(
                 source = src, target = tgt, interaction = "Activation",
-                site = NA_character_, evidenceLink = "https://example.com",
-                stmt_hash = hash, stringsAsFactors = FALSE
+                site = NA_character_, evidence_url = "https://example.com",
+                statement_id = hash, stringsAsFactors = FALSE
             )
             ev_pmids <- pmids[c(e %% papers_per_theme + 1,
                                 (e + 3) %% papers_per_theme + 1)]
             evidence[[length(evidence) + 1]] <- data.frame(
                 source = src, target = tgt, interaction = "Activation",
-                site = NA_character_, evidenceLink = "https://example.com",
-                stmt_hash = hash, text = "sentence", pmid = ev_pmids,
+                site = NA_character_, evidence_url = "https://example.com",
+                statement_id = hash, text = "sentence", pmid = ev_pmids,
                 stringsAsFactors = FALSE
             )
         }
@@ -80,7 +80,7 @@ describe("decomposeSubnetworkByTopic with a supplied corpus", {
         )
         # Evidence is restricted to the parent topic's edges.
         sub_used <- attr(deeper, "corpus")$evidence
-        expect_true(all(sub_used$stmt_hash %in% topics$topic_1$edges$stmt_hash))
+        expect_true(all(sub_used$statement_id %in% topics$topic_1$edges$statement_id))
     })
 
     test_that("only PMIDs missing from `abstracts` are fetched", {
@@ -156,7 +156,7 @@ describe("decomposeSubnetworkIntoHierarchicalTopics", {
         for (i in which(!is.na(tree$parent_id))) {
             child <- h$subnetworks[[tree$id[i]]]$edges
             parent <- h$subnetworks[[tree$parent_id[i]]]$edges
-            expect_true(all(child$stmt_hash %in% parent$stmt_hash))
+            expect_true(all(child$statement_id %in% parent$statement_id))
             expect_lt(nrow(child), nrow(parent))
         }
 

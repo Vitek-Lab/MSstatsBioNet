@@ -316,33 +316,38 @@
 #' @keywords internal
 #' @noRd
 .addAdditionalMetadataToIndraEdge <- function(edge, input) {
-    edge$evidence_list <- paste(
-        "https://db.indra.bio/statements/from_agents?subject=",
-        edge$source_id, "@", edge$source_ns, "&object=",
-        edge$target_id, "@", edge$target_ns, "&format=html",
-        sep = ""
-    )
+    edge$evidence_url <- .indraStatementUrl(edge$statement_id)
 
     # Map the grounded INDRA endpoint back to the original Protein value.
     # Membership-test against each row's semicolon-split (namespace, id)
     # pairs, using INDRA's source_ns/target_ns for namespace-aware disambiguation.
     matched_rows_source <- input[.rowMatchesEndpoint(input, edge$source_ns, edge$source_id), ]
-    uniprot_ids_source <- unique(matched_rows_source$Protein)
-    if (length(uniprot_ids_source) != 1) {
-        edge$source_uniprot_id <- edge$source_name
+    node_ids_source <- unique(matched_rows_source$Protein)
+    if (length(node_ids_source) != 1) {
+        edge$source_node_id <- edge$source_name
     } else {
-        edge$source_uniprot_id <- uniprot_ids_source
+        edge$source_node_id <- node_ids_source
     }
 
     matched_rows_target <- input[.rowMatchesEndpoint(input, edge$target_ns, edge$target_id), ]
-    uniprot_ids_target = unique(matched_rows_target$Protein)
-    if (length(uniprot_ids_target) != 1) {
-        edge$target_uniprot_id <- edge$target_name
+    node_ids_target <- unique(matched_rows_target$Protein)
+    if (length(node_ids_target) != 1) {
+        edge$target_node_id <- edge$target_name
     } else {
-        edge$target_uniprot_id <- uniprot_ids_target
+        edge$target_node_id <- node_ids_target
     }
 
     return(edge)
+}
+
+#' Build the INDRA DB page URL for one statement
+#' @param statement_id INDRA statement hash, as character
+#' @return character URL
+#' @keywords internal
+#' @noRd
+.indraStatementUrl <- function(statement_id) {
+    paste0("https://db.indra.bio/statements/from_hash/", statement_id,
+           "?format=html")
 }
 
 
@@ -360,6 +365,9 @@
     for (edge in res) {
         key <- paste(edge$source_id, edge$target_id, edge$data$stmt_type, sep = "_")
         json_object <- fromJSON(edge$data$stmt_json)
+        # matches_hash is a JSON string, so it keeps full precision. The
+        # numeric data$stmt_hash does not: hashes exceed 2^53.
+        edge$statement_id <- as.character(json_object$matches_hash)
         if (!is.null(json_object$residue) && !is.null(json_object$position)) {
             edge$site = paste0(json_object$residue, json_object$position)
             key <- paste(key, edge$site, sep = "_")
@@ -388,35 +396,28 @@
 #' @noRd
 .constructEdgesDataFrame <- function(res, input, protein_level_data) {
     res <- .collapseDuplicateEdgesIntoEdgeToMetadataMapping(res, input)
+    statements <- lapply(keys(res), function(x) query(res, x))
+    interaction <- vapply(statements, function(x) x$data$stmt_type, "")
     edges <- data.frame(
-        source = vapply(keys(res), function(x) {
-            query(res, x)$source_uniprot_id
-        }, ""),
-        target = vapply(keys(res), function(x) {
-            query(res, x)$target_uniprot_id
-        }, ""),
-        site = vapply(keys(res), function(x) {
-            query(res, x)$site
-        }, ""),
-        interaction = vapply(keys(res), function(x) {
-            query(res, x)$data$stmt_type
-        }, ""),
-        evidenceCount = vapply(keys(res), function(x) {
-            query(res, x)$data$evidence_count
+        source = vapply(statements, function(x) x$source_node_id, ""),
+        target = vapply(statements, function(x) x$target_node_id, ""),
+        interaction = interaction,
+        directed = !interaction %in% UNDIRECTED_STATEMENT_TYPES,
+        site = vapply(statements, function(x) x$site, ""),
+        confidence = vapply(statements, function(x) {
+            if (is.null(x$data$belief)) NA_real_ else as.numeric(x$data$belief)
         }, 1),
-        paperCount = vapply(keys(res), function(x) {
-            query(res, x)$data$paper_count
-        }, 1),
-        evidenceLink = vapply(keys(res), function(x) {
-            query(res, x)$evidence_list
+        evidence_count = vapply(statements, function(x) {
+            as.integer(x$data$evidence_count)
+        }, 1L),
+        evidence_url = vapply(statements, function(x) x$evidence_url, ""),
+        statement_id = vapply(statements, function(x) x$statement_id, ""),
+        backend_database = rep("INDRA", length(statements)),
+        query_type = rep("subnetwork", length(statements)),
+        evidence_sources = vapply(statements, function(x) {
+            x$data$source_counts
         }, ""),
-        sourceCounts = vapply(keys(res), function(x) {
-            query(res, x)$data$source_counts
-        }, ""),
-        stmt_hash = vapply(keys(res), function(x) {
-            stmt_json <- fromJSON(query(res, x)$data$stmt_json)
-            stmt_json$matches_hash
-        }, ""),
+        paperCount = vapply(statements, function(x) x$data$paper_count, 1),
         stringsAsFactors = FALSE
     )
     # add correlation - maybe create a separate function
@@ -486,11 +487,11 @@
     if (filter_by_curation) {
         incorrect_counts <- numeric(nrow(edges))
         for (i in seq_len(nrow(edges))) {
-            incorrect_counts[i] <- .get_incorrect_curation_count(edges$stmt_hash[i])
+            incorrect_counts[i] <- .get_incorrect_curation_count(edges$statement_id[i])
             Sys.sleep(0.1)
         }
-        edges$evidenceCount <- edges$evidenceCount - incorrect_counts
-        edges <- edges[edges$evidenceCount >= evidence_count_cutoff, ]
+        edges$evidence_count <- as.integer(edges$evidence_count - incorrect_counts)
+        edges <- edges[edges$evidence_count >= evidence_count_cutoff, ]
         nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
     }
     return(list(nodes = nodes, edges = edges))

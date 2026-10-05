@@ -13,7 +13,7 @@
 #'                    (character, underscore-separated PTM site list).
 #' @param edges       Data frame with columns \code{source}, \code{target},
 #'                    \code{interaction}.  Optional: \code{site},
-#'                    \code{evidenceLink}.
+#'                    \code{evidence_url}, opened when an edge is clicked.
 #' @param displayLabelType \code{"id"} (default) or \code{"entityName"} –
 #'                    controls which column is used as the visible node label.
 #' @param nodeFontSize Font size (px) for node labels.  Default \code{12}.

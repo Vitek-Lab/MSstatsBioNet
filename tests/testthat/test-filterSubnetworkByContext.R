@@ -4,8 +4,8 @@ make_edges <- function() {
         target       = c("B", "C"),
         interaction  = c("activates", "inhibits"),
         site         = c("T308", "S473"),
-        evidenceLink = c("https://example.com/1", "https://example.com/2"),
-        stmt_hash    = c("hash1", "hash2"),
+        evidence_url = c("https://example.com/1", "https://example.com/2"),
+        statement_id = c("hash1", "hash2"),
         stringsAsFactors = FALSE
     )
 }
@@ -24,8 +24,8 @@ make_mock_evidence <- function() {
         target       = c("B", "C"),
         interaction  = c("activates", "inhibits"),
         site         = c("T308", "S473"),
-        evidenceLink = c("https://example.com/1", "https://example.com/2"),
-        stmt_hash    = c("hash1", "hash2"),
+        evidence_url = c("https://example.com/1", "https://example.com/2"),
+        statement_id = c("hash1", "hash2"),
         text         = c("CHEK1 sentence.", "Lipid sentence."),
         pmid         = c("11111111", "22222222"),
         stringsAsFactors = FALSE
@@ -139,7 +139,7 @@ describe(".extract_evidence_text", {
         result <- suppressWarnings(.extract_evidence_text(edges))
         expect_s3_class(result, "data.frame")
         expect_true(all(c("source", "target", "interaction", "site",
-                          "evidenceLink", "stmt_hash", "text", "pmid") %in% names(result)))
+                          "evidence_url", "statement_id", "text", "pmid") %in% names(result)))
         expect_equal(nrow(result), 0)
     })
     
@@ -251,8 +251,8 @@ describe("filterSubnetworkByContext", {
             target       = c("B", "C"),
             interaction  = c("activates", "inhibits"),
             site         = c("T308", "S473"),
-            evidenceLink = c("https://example.com/1", "https://example.com/2"),
-            stmt_hash    = c("hash1", "hash2"),
+            evidence_url = c("https://example.com/1", "https://example.com/2"),
+            statement_id = c("hash1", "hash2"),
             text         = c(
                 "CHEK1 phosphorylates CDC25A in response to DNA damage.",
                 "Unrelated text about lipid metabolism and glucose uptake."
@@ -282,7 +282,7 @@ describe("filterSubnetworkByContext", {
         
         # Only the CHEK1/DNA-damage abstract passed the cutoff
         expect_equal(nrow(result$edges), 1)
-        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(result$edges$statement_id, "hash1")
         
         # Nodes should only contain those referenced by surviving edges
         expect_true(all(result$nodes$id %in% c("A", "B", "C")))
@@ -321,7 +321,7 @@ describe("filterSubnetworkByContext", {
             exclude_keywords = c("apoptosis", "LIPID")
         )
 
-        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(result$edges$statement_id, "hash1")
         expect_equal(unique(result$evidence$pmid), "11111111")
         expect_equal(names(result$abstracts), "11111111")
         expect_false("C" %in% result$nodes$id)
@@ -354,7 +354,7 @@ describe("filterSubnetworkByContext", {
             cutoff = 0, method = "cosine", exclude_keywords = "glucose"
         )
 
-        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(result$edges$statement_id, "hash1")
     })
 
     test_that("filters by exclude_keywords alone when query is omitted", {
@@ -367,7 +367,7 @@ describe("filterSubnetworkByContext", {
             make_nodes(), make_edges(), exclude_keywords = "lipid"
         )
 
-        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(result$edges$statement_id, "hash1")
         expect_equal(names(result$abstracts), "11111111")
         expect_true(all(is.na(result$evidence$score)))
     })
@@ -433,7 +433,7 @@ describe("filterSubnetworkByContext", {
             exclude_keywords = " lipid "
         )
 
-        expect_equal(result$edges$stmt_hash, "hash1")
+        expect_equal(result$edges$statement_id, "hash1")
         expect_equal(result$evidence$score, 1L)
     })
 
@@ -470,8 +470,8 @@ describe("filterSubnetworkByContext", {
                     source = paste0("G", th, "_", e),
                     target = paste0("G", th, "_", e + 1),
                     interaction = "Activation", site = NA_character_,
-                    evidenceLink = "https://example.com",
-                    stmt_hash = paste0("h", th, "_", e),
+                    evidence_url = "https://example.com",
+                    statement_id = paste0("h", th, "_", e),
                     stringsAsFactors = FALSE
                 )
                 edges[[length(edges) + 1]] <- edge

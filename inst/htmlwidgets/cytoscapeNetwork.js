@@ -12,7 +12,7 @@
      nodes        : [ { id, label, color, node_type, parent?, parent_protein? }, … ],
      edges        : [ { source, target, id, interaction, edge_type, category,
                         color, line_style, arrow_shape, width, tooltip,
-                        evidenceLink? }, … ],
+                        evidence_url? }, … ],
      layout       : { name, rankDir, … },          // dagre options
      container_id : "network-cy",                  // ignored – we use el
      node_font_size : 12
@@ -460,7 +460,7 @@ HTMLWidgets.widget({
           }
 
           // Plain click → open evidence link
-          openSafe(edge.data("evidenceLink"));
+          openSafe(edge.data("evidence_url"));
           if (window.Shiny) {
             Shiny.setInputValue(el.id + "_edge_clicked", {
               source:       edge.data("source"),
@@ -468,7 +468,7 @@ HTMLWidgets.widget({
               interaction:  edge.data("interaction"),
               edge_type:    edge.data("edge_type"),
               category:     edge.data("category"),
-              evidenceLink: edge.data("evidenceLink")
+              evidence_url: edge.data("evidence_url")
             });
           }
         });

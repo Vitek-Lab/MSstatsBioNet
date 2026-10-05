@@ -336,8 +336,8 @@
             row  <- con[i, ]
             sty  <- .edgeStyle(row$interaction, row$category, row$edge_type)
             eid  <- paste(row$source, row$target, row$interaction, sep = "-")
-            elink <- if ("evidenceLink" %in% names(row)) {
-                ev <- row$evidenceLink
+            elink <- if ("evidence_url" %in% names(row)) {
+                ev <- row$evidence_url
                 if (is.na(ev) || ev == "NA") "" else as.character(ev)
             } else ""
             
@@ -348,7 +348,7 @@
                 interaction = row$interaction,
                 edge_type   = row$edge_type,
                 category    = row$category,
-                evidenceLink = elink,
+                evidence_url = elink,
                 color       = sty$color,
                 line_style  = sty$style,
                 arrow_shape = sty$arrow,

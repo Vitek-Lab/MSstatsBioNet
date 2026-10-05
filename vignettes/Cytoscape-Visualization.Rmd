@@ -99,7 +99,7 @@ edges_ev <- data.frame(
     source        = c("TP53", "MDM2"),
     target        = c("MDM2", "TP53"),
     interaction   = c("Activation", "Inhibition"),
-    evidenceLink  = c(
+    evidence_url  = c(
         "https://www.ncbi.nlm.nih.gov/pubmed/10490031",
         "https://www.ncbi.nlm.nih.gov/pubmed/16474400"
     ),

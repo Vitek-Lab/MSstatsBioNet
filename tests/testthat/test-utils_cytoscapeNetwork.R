@@ -27,7 +27,7 @@ create_mock_edges <- function() {
         source      = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "P53_HUMAN", "BRCA1_HUMAN"),
         target      = c("MDM2_HUMAN", "P53_HUMAN",  "P53_HUMAN", "BRCA1_HUMAN", "P53_HUMAN"),
         interaction = c("Inhibition", "Inhibition", "Phosphorylation", "Complex", "Complex"),
-        evidenceLink = c("link1", "link2", "link3", "link4", "link5"),
+        evidence_url = c("link1", "link2", "link3", "link4", "link5"),
         stringsAsFactors = FALSE
     )
 }
@@ -322,4 +322,18 @@ test_that("cytoscapeNetwork() errors when nodes has no id column", {
 
 test_that("cytoscapeNetwork() errors when nodes is not a data frame", {
     expect_error(cytoscapeNetwork(list(id = "A")), "id column|data frame")
+})
+
+# ----- Edge contract columns (Phase 1b of the API refactor) -----
+
+test_that(".buildElements passes evidence_url through to the widget edges", {
+    nodes <- data.frame(id = c("A", "B"), stringsAsFactors = FALSE)
+    edges <- data.frame(source = "A", target = "B", interaction = "Activation",
+                        evidence_url = "https://db.indra.bio/statements/from_hash/1?format=html",
+                        stringsAsFactors = FALSE)
+    elements <- MSstatsBioNet:::.buildElements(nodes, edges)
+    edge_data <- Filter(function(el) !is.null(el$data$source), elements)[[1]]$data
+    expect_equal(edge_data$evidence_url,
+                 "https://db.indra.bio/statements/from_hash/1?format=html")
+    expect_null(edge_data$evidenceLink)
 })
