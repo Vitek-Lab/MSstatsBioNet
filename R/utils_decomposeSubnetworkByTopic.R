@@ -18,7 +18,7 @@
         stop("`subnetwork$nodes` must be a data.frame with an `id` column.")
     }
     required_edge_cols <- c("source", "target", "interaction",
-                            "site", "evidenceLink", "stmt_hash")
+                            "site", "evidence_url", "statement_id")
     missing_cols <- setdiff(required_edge_cols, names(subnetwork$edges))
     if (!is.data.frame(subnetwork$edges) || length(missing_cols) > 0) {
         stop(sprintf(
@@ -163,18 +163,18 @@
 #' would return for \code{edges} without re-querying INDRA.
 #'
 #' @param evidence evidence data.frame with `source`, `target`, `interaction`,
-#'   `stmt_hash`, and `pmid` columns
+#'   `statement_id`, and `pmid` columns
 #' @param edges edges data.frame with `source`, `target`, `interaction`, and
-#'   `stmt_hash` columns
+#'   `statement_id` columns
 #' @return subset of `evidence`
 #' @keywords internal
 #' @noRd
 .subsetEvidenceToEdges <- function(evidence, edges) {
     ev_id <- paste(.edgeKey(evidence$source, evidence$target,
                             evidence$interaction),
-                   as.character(evidence$stmt_hash), sep = "##")
+                   as.character(evidence$statement_id), sep = "##")
     edge_id <- paste(.edgeKey(edges$source, edges$target, edges$interaction),
-                     as.character(edges$stmt_hash), sep = "##")
+                     as.character(edges$statement_id), sep = "##")
     evidence[ev_id %in% edge_id, , drop = FALSE]
 }
 
@@ -187,7 +187,7 @@
 .validateTopicCorpusInput <- function(evidence, abstracts) {
     if (!is.null(evidence)) {
         required_cols <- c("source", "target", "interaction",
-                           "stmt_hash", "pmid")
+                           "statement_id", "pmid")
         if (!is.data.frame(evidence) ||
             !all(required_cols %in% names(evidence))) {
             stop("`evidence` must be a data.frame with columns: ",

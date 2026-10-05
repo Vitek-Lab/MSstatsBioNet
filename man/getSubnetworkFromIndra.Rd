@@ -82,7 +82,19 @@ include. One of \code{"both"} (default), \code{"up"} (upregulated only),
 or \code{"down"} (downregulated only).}
 }
 \value{
-list of 2 data.frames, nodes and edges
+list of 2 data.frames, \code{nodes} and \code{edges}.
+
+\code{edges} has one row per INDRA statement: \code{source},
+\code{target}, \code{interaction} (INDRA statement type),
+\code{directed} (\code{FALSE} for symmetric types such as
+\code{Complex}), \code{site} (PTM site on the target, or \code{NA}),
+\code{confidence} (INDRA belief score), \code{evidence_count},
+\code{evidence_url} (INDRA page for this statement), \code{statement_id}
+(INDRA statement hash, as character), \code{backend_database}
+(\code{"INDRA"}), \code{query_type} (\code{"subnetwork"}),
+\code{evidence_sources} (evidence count per source, as JSON), and the
+deprecated \code{paperCount} (and \code{correlation} when
+\code{protein_level_data} is given).
 }
 \description{
 Using differential abundance results from MSstats, this function retrieves

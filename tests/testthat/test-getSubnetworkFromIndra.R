@@ -52,9 +52,8 @@ test_that("Exception is thrown for missing columns in input", {
     )
 })
 
-# ----- Deprecated arguments (Phase 0 of the API refactor) -----
-
-.run_deprecation_case <- function(...) {
+# Build a subnetwork from the saved INDRA response, with the API call mocked
+.run_mocked_subnetwork <- function(..., statement_types = c("Complex")) {
     input <- data.table::fread(
         system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
     )
@@ -64,19 +63,21 @@ test_that("Exception is thrown for missing columns in input", {
         },
         .env = parent.frame()
     )
-    getSubnetworkFromIndra(input, statement_types = c("Complex"), ...)
+    getSubnetworkFromIndra(input, statement_types = statement_types, ...)
 }
 
+# ----- Deprecated arguments (Phase 0 of the API refactor) -----
+
 test_that("paper_count_cutoff warns as deprecated and is ignored", {
-    suppressWarnings(baseline <- .run_deprecation_case())
+    suppressWarnings(baseline <- .run_mocked_subnetwork())
     suppressWarnings(expect_warning(
-        subnetwork <- .run_deprecation_case(paper_count_cutoff = 1),
+        subnetwork <- .run_mocked_subnetwork(paper_count_cutoff = 1),
         "'paper_count_cutoff'.*deprecated"
     ))
     expect_equal(subnetwork, baseline)
     # Values >= 2 used to remove every edge and error; now they are ignored
     suppressWarnings(expect_warning(
-        subnetwork <- .run_deprecation_case(paper_count_cutoff = 2),
+        subnetwork <- .run_mocked_subnetwork(paper_count_cutoff = 2),
         "'paper_count_cutoff'.*deprecated"
     ))
     expect_equal(subnetwork, baseline)
@@ -84,7 +85,7 @@ test_that("paper_count_cutoff warns as deprecated and is ignored", {
 
 test_that("correlation_cutoff warns as deprecated", {
     suppressWarnings(expect_warning(
-        .run_deprecation_case(correlation_cutoff = 0.5),
+        .run_mocked_subnetwork(correlation_cutoff = 0.5),
         "'correlation_cutoff'.*deprecated"
     ))
 })
@@ -100,7 +101,7 @@ test_that("protein_level_data warns as deprecated and still adds correlations", 
         LogIntensities = sin(seq_len(3 * length(proteins)))
     )
     suppressWarnings(expect_warning(
-        subnetwork <- .run_deprecation_case(
+        subnetwork <- .run_mocked_subnetwork(
             protein_level_data = protein_level_data, correlation_cutoff = 0
         ),
         "'protein_level_data'.*deprecated"
@@ -109,8 +110,58 @@ test_that("protein_level_data warns as deprecated and still adds correlations", 
 })
 
 test_that("default and explicit NULL arguments give no deprecation warning", {
-    warns <- capture_warnings(.run_deprecation_case())
+    warns <- capture_warnings(.run_mocked_subnetwork())
     expect_false(any(grepl("deprecated", warns)))
-    warns <- capture_warnings(.run_deprecation_case(protein_level_data = NULL))
+    warns <- capture_warnings(.run_mocked_subnetwork(protein_level_data = NULL))
     expect_false(any(grepl("deprecated", warns)))
+})
+
+# ----- Edge contract (Phase 1b of the API refactor) -----
+
+test_that("getSubnetworkFromIndra returns edges that meet the contract", {
+    suppressWarnings(subnetwork <- .run_mocked_subnetwork())
+    expect_silent(validate_network(subnetwork))
+    expect_equal(
+        colnames(subnetwork$edges),
+        c("source", "target", "interaction", "directed", "site", "confidence",
+          "evidence_count", "evidence_url", "statement_id", "backend_database",
+          "query_type", "evidence_sources", "paperCount")
+    )
+})
+
+test_that("getSubnetworkFromIndra maps INDRA fields onto the contract columns", {
+    res <- readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet"))
+    suppressWarnings(subnetwork <- .run_mocked_subnetwork())
+    edges <- subnetwork$edges
+
+    expect_true(all(edges$interaction == "Complex"))
+    expect_true(all(!edges$directed))
+    expect_true(all(edges$backend_database == "INDRA"))
+    expect_true(all(edges$query_type == "subnetwork"))
+    expect_type(edges$evidence_count, "integer")
+    expect_type(edges$statement_id, "character")
+
+    # statement_id comes from stmt_json$matches_hash, which keeps full
+    # precision, and confidence from data$belief
+    by_hash <- lapply(res, function(stmt) {
+        list(hash = jsonlite::fromJSON(stmt$data$stmt_json)$matches_hash,
+             belief = stmt$data$belief)
+    })
+    hashes <- vapply(by_hash, function(x) x$hash, "")
+    beliefs <- vapply(by_hash, function(x) x$belief, 1)
+    expect_true(all(edges$statement_id %in% hashes))
+    expect_equal(edges$confidence, unname(beliefs[match(edges$statement_id, hashes)]))
+
+    expect_equal(
+        edges$evidence_url,
+        paste0("https://db.indra.bio/statements/from_hash/",
+               edges$statement_id, "?format=html")
+    )
+})
+
+test_that("getSubnetworkFromIndra marks only symmetric statement types undirected", {
+    suppressWarnings(subnetwork <- .run_mocked_subnetwork(
+        statement_types = c("Activation", "IncreaseAmount", "DecreaseAmount")
+    ))
+    expect_true(all(subnetwork$edges$directed))
 })

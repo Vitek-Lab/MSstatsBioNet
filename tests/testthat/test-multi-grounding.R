@@ -90,8 +90,8 @@ test_that(".addAdditionalMetadataToIndraEdge recovers original Protein from a mu
         target_id = "1097",  target_ns = "HGNC",  target_name = "A1BG"
     )
     out <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(edge, input)
-    expect_equal(out$source_uniprot_id, "FOO")   # not "17234" or "glucose"
-    expect_equal(out$target_uniprot_id, "BAR")   # not "1097" or "A1BG"
+    expect_equal(out$source_node_id, "FOO") # not "17234" or "glucose"
+    expect_equal(out$target_node_id, "BAR") # not "1097" or "A1BG"
 })
 
 # ----- .constructNodesDataFrame carries entityName + entityId -----

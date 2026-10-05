@@ -17,7 +17,7 @@ filterSubnetworkByContext(
 \item{nodes}{A dataframe of network nodes.}
 
 \item{edges}{A dataframe of network edges with columns: source, target,
-interaction, site, evidenceLink, stmt_hash.}
+interaction, site, evidence_url, statement_id.}
 
 \item{query}{For \code{method = "tag_count"}: a character vector of tags,
 e.g. \code{c("CHEK1", "DNA damage", "DNA damage repair")}.
@@ -49,7 +49,7 @@ A named list with four elements:
   \item{nodes}{Filtered nodes dataframe (only nodes present in kept edges)}
   \item{edges}{Filtered edges dataframe}
   \item{evidence}{Dataframe with columns: source, target, interaction, site,
-    evidenceLink, stmt_hash, text, pmid, score. The \code{score} column
+    evidence_url, statement_id, text, pmid, score. The \code{score} column
     contains tag counts (integer) or cosine similarities (numeric) depending
     on the method used.}
   \item{abstracts}{Named character vector mapping each PMID in
