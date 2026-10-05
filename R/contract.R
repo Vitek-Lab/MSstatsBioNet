@@ -104,8 +104,10 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' \code{site} (PTM site on the target such as \code{"S148"}, \code{;}-joined
 #' when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 #' \code{NA} when the source provides no score), \code{evidence_count}
-#' (whole number, at least 1), \code{provenance_url}, \code{statement_id}
-#' (character), \code{source_db}, and \code{query_type}.
+#' (whole number, at least 1, not \code{NA}), \code{provenance_url},
+#' \code{statement_id} (character), \code{source_db}, and \code{query_type}.
+#' Edges of the symmetric statement types \code{"Complex"} and
+#' \code{"Association"} must have \code{directed = FALSE}.
 #'
 #' Required node column: \code{id}. An \code{id} can repeat, once per PTM
 #' site row of the same protein. When present, \code{entity_type},
@@ -239,16 +241,33 @@ validate_network <- function(network) {
             problems <- c(problems, paste0("edges$", col, " must not be NA"))
         }
     }
+    if (all(c("interaction", "directed") %in% colnames(edges)) &&
+        is.logical(edges$directed)) {
+        symmetric_directed <- edges$interaction %in% UNDIRECTED_STATEMENT_TYPES &
+            edges$directed %in% TRUE
+        if (any(symmetric_directed)) {
+            problems <- c(problems, paste0(
+                "edges$directed must be FALSE for symmetric statement types (",
+                paste(UNDIRECTED_STATEMENT_TYPES, collapse = ", "), "); ",
+                sum(symmetric_directed), " row(s) have directed == TRUE"))
+        }
+    }
     if ("confidence" %in% colnames(edges) && is.numeric(edges$confidence)) {
         conf <- edges$confidence[!is.na(edges$confidence)]
         if (any(conf < 0 | conf > 1)) {
             problems <- c(problems, "edges$confidence must be in [0, 1] or NA")
         }
     }
-    if ("evidence_count" %in% colnames(edges) &&
-        is.numeric(edges$evidence_count) &&
-        any(is.na(edges$evidence_count) | edges$evidence_count < 1)) {
-        problems <- c(problems, "edges$evidence_count must be at least 1")
+    if ("evidence_count" %in% colnames(edges)) {
+        evidence_count <- edges$evidence_count
+        if (anyNA(evidence_count) || any(is.infinite(evidence_count))) {
+            problems <- c(problems,
+                          "edges$evidence_count must not be NA or infinite")
+        }
+        if (is.numeric(evidence_count) &&
+            any(evidence_count[is.finite(evidence_count)] < 1)) {
+            problems <- c(problems, "edges$evidence_count must be at least 1")
+        }
     }
     if ("site" %in% colnames(edges) && is.character(edges$site)) {
         sites <- edges$site[!is.na(edges$site)]
@@ -284,7 +303,8 @@ validate_network <- function(network) {
                 paste(unknown, collapse = ", ")))
         }
     }
-    if ("measured" %in% colnames(nodes)) {
+    # A non-logical measured column is reported by .check_columns()
+    if ("measured" %in% colnames(nodes) && is.logical(nodes$measured)) {
         latent <- !is.na(nodes$measured) & !nodes$measured
         for (col in intersect(c("log2FC", "adj.pvalue"), colnames(nodes))) {
             if (any(latent & !is.na(nodes[[col]]))) {

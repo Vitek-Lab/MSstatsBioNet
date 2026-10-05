@@ -112,6 +112,54 @@ test_that("validate_network checks confidence and evidence_count ranges", {
     expect_error(validate_network(network), "evidence_count must be at least 1")
 })
 
+test_that("validate_network rejects NA or infinite evidence_count", {
+    network <- .valid_network()
+    network$edges$evidence_count <- c(12, NA)
+    expect_error(validate_network(network),
+                 "evidence_count must not be NA or infinite")
+
+    network$edges$evidence_count <- c(12, Inf)
+    expect_error(validate_network(network),
+                 "evidence_count must not be NA or infinite")
+
+    # An all-NA logical column passes the type check, but not the NA check
+    network$edges$evidence_count <- NA
+    expect_error(validate_network(network),
+                 "evidence_count must not be NA or infinite")
+
+    # A character column gets both the type error and the NA error
+    network$edges$evidence_count <- c("12", NA)
+    err <- tryCatch(validate_network(network),
+                    error = function(e) conditionMessage(e))
+    expect_match(err, "edges\\$evidence_count must be integer")
+    expect_match(err, "evidence_count must not be NA or infinite")
+})
+
+test_that("validate_network requires directed == FALSE for symmetric types", {
+    network <- .valid_network()
+    network$edges$directed[2] <- TRUE   # the Complex edge
+    expect_error(validate_network(network),
+                 "directed must be FALSE for symmetric statement types")
+
+    network <- .valid_network()
+    network$edges$interaction[2] <- "Association"
+    network$edges$directed[2] <- TRUE
+    expect_error(validate_network(network), "1 row\\(s\\) have directed == TRUE")
+
+    # Other statement types may be undirected
+    network <- .valid_network()
+    network$edges$directed[1] <- FALSE   # the Phosphorylation edge
+    expect_silent(validate_network(network))
+
+    # NA directed is reported by the NA check only
+    network <- .valid_network()
+    network$edges$directed[2] <- NA
+    err <- tryCatch(validate_network(network),
+                    error = function(e) conditionMessage(e))
+    expect_match(err, "edges\\$directed must not be NA")
+    expect_no_match(err, "symmetric statement types")
+})
+
 test_that("validate_network checks the site format", {
     network <- .valid_network()
     network$edges$site[1] <- "S76;T80"
@@ -163,6 +211,16 @@ test_that("validate_network requires NA statistics on latent nodes", {
                  "nodes\\$log2FC must be NA for nodes with measured == FALSE")
     expect_error(validate_network(network),
                  "nodes\\$adj.pvalue must be NA for nodes with measured == FALSE")
+})
+
+test_that("validate_network reports a non-logical measured column", {
+    network <- .valid_network()
+    network$nodes$measured <- c("yes", "yes", "no")
+    network$nodes$log2FC[3] <- 0
+    err <- tryCatch(validate_network(network),
+                    error = function(e) conditionMessage(e))
+    expect_match(err, "nodes\\$measured must be logical")
+    expect_no_match(err, "must be NA for nodes with measured == FALSE")
 })
 
 test_that("validate_network lists every problem in one error", {

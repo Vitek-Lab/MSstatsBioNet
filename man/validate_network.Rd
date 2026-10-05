@@ -25,8 +25,10 @@ Required edge columns: \code{source}, \code{target} (both matching
 \code{site} (PTM site on the target such as \code{"S148"}, \code{;}-joined
 when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 \code{NA} when the source provides no score), \code{evidence_count}
-(whole number, at least 1), \code{provenance_url}, \code{statement_id}
-(character), \code{source_db}, and \code{query_type}.
+(whole number, at least 1, not \code{NA}), \code{provenance_url},
+\code{statement_id} (character), \code{source_db}, and \code{query_type}.
+Edges of the symmetric statement types \code{"Complex"} and
+\code{"Association"} must have \code{directed = FALSE}.
 
 Required node column: \code{id}. An \code{id} can repeat, once per PTM
 site row of the same protein. When present, \code{entity_type},
