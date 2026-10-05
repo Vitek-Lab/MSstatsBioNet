@@ -54,14 +54,18 @@ test_that("get_network() passes the arguments on to the old filters", {
     .mock_indra_response()
     input <- .selected_input()
     network <- get_network(indra_backend(), input,
-                           statement_types = "Complex", min_evidence = 2)
+                           interaction_types = "Complex", min_evidence = 2)
     expect_true(all(network$edges$interaction == "Complex"))
     expect_true(all(network$edges$evidence_count >= 2))
 
     network <- get_network(indra_backend(), input,
-                           statement_types = c("Activation", "Phosphorylation"))
+                           interaction_types = c("Activation", "Phosphorylation"))
     expect_equal(nrow(network$nodes), 3)
     expect_equal(nrow(network$edges), 2)
+
+    network <- get_network(indra_backend(), input, evidence_sources = "signor")
+    expect_gt(nrow(network$edges), 0)
+    expect_true(all(grepl('"signor"', network$edges$evidence_sources)))
 })
 
 test_that("get_network() sends the backend's cogex_url", {
@@ -115,6 +119,9 @@ test_that("get_network() validates its input before calling INDRA", {
     no_entity_id$EntityId <- NULL
     expect_error(get_network(indra_backend(), no_entity_id),
                  "missing required column\\(s\\): EntityId")
-    expect_error(get_network(indra_backend(), input, sources = 1),
-                 "sources_filter must be a character vector")
+    expect_error(get_network(indra_backend(), input, evidence_sources = 1),
+                 "evidence_sources must be a character vector")
+    # The old function's sources_filter is passed on as evidence_sources
+    expect_error(getSubnetworkFromIndra(input, sources_filter = 1),
+                 "evidence_sources must be a character vector")
 })

@@ -19,14 +19,15 @@ indra_backend <- function(cogex_url = INDRA_API_URL) {
 #' @keywords internal
 #' @noRd
 setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
-    function(backend, entities, query, statement_types = NULL,
-             min_evidence = 1, sources = NULL, include_entities = NULL,
-             ...) {
-        .validateIndraSubnetworkInput(entities, sources, include_entities)
+    function(backend, entities, query, interaction_types = NULL,
+             min_evidence = 1, evidence_sources = NULL,
+             include_entities = NULL, ...) {
+        .validateIndraSubnetworkInput(entities, evidence_sources,
+                                      include_entities)
         res <- .callIndraCogexApi(entities$EntityNamespace, entities$EntityId,
                                   include_entities, backend@cogex_url)
-        res <- .filterIndraResponse(res, statement_types, min_evidence,
-                                    sources)
+        res <- .filterIndraResponse(res, interaction_types, min_evidence,
+                                    evidence_sources)
         edges <- .constructEdgesDataFrame(res, entities)
         edges <- .filterEdgesDataFrame(edges)
         network <- list(nodes = .constructNodesDataFrame(entities, edges),
@@ -37,12 +38,12 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
 
 #' Validate the input of the INDRA subnetwork query
 #' @param input annotated groupComparison table of the selected rows
-#' @param sources_filter sources filter
+#' @param evidence_sources evidence sources filter
 #' @param force_include_other character vector of identifiers to include in
 #' the network
 #' @keywords internal
 #' @noRd
-.validateIndraSubnetworkInput <- function(input, sources_filter, force_include_other) {
+.validateIndraSubnetworkInput <- function(input, evidence_sources, force_include_other) {
     required_cols <- c("Protein", "log2FC", "adj.pvalue",
                        "EntityNamespace", "EntityId", "EntityName")
     missing_cols <- setdiff(required_cols, colnames(input))
@@ -61,9 +62,9 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
     if (nrow(input) == 0) {
         stop("Invalid Input Error: Input must contain at least one protein after filtering.")
     }
-    if (!is.null(sources_filter)) {
-        if (!is.character(sources_filter)) {
-            stop("sources_filter must be a character vector")
+    if (!is.null(evidence_sources)) {
+        if (!is.character(evidence_sources)) {
+            stop("evidence_sources must be a character vector")
         }
     }
 }

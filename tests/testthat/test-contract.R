@@ -242,7 +242,7 @@ test_that("validate_network lists every problem in one error", {
     expect_match(err, "confidence must be in")
 })
 
-test_that("UNDIRECTED_STATEMENT_TYPES are part of the statement vocabulary", {
-    expect_true(all(MSstatsBioNet:::UNDIRECTED_STATEMENT_TYPES %in%
-                        MSstatsBioNet:::STATEMENT_TYPES))
+test_that("UNDIRECTED_INTERACTION_TYPES are part of the interaction vocabulary", {
+    expect_true(all(MSstatsBioNet:::UNDIRECTED_INTERACTION_TYPES %in%
+                        MSstatsBioNet:::INTERACTION_TYPES))
 })

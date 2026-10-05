@@ -106,9 +106,9 @@ getSubnetworkFromIndra <- function(input,
     input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other, include_infinite_fc, direction)
     .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
     subnetwork <- get_network(indra_backend(), input, subnetwork_query(),
-                              statement_types = statement_types,
+                              interaction_types = statement_types,
                               min_evidence = evidence_count_cutoff,
-                              sources = sources_filter,
+                              evidence_sources = sources_filter,
                               include_entities = force_include_other)
     if (!is.null(protein_level_data)) {
         edges <- .addCorrelationToEdges(subnetwork$edges, protein_level_data)

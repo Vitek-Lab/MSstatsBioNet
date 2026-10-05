@@ -9,7 +9,7 @@ EDGE_CONTRACT_VERSION <- "1.0"
 #' relation labels onto it.
 #' @keywords internal
 #' @noRd
-STATEMENT_TYPES <- c(
+INTERACTION_TYPES <- c(
     # Regulation of activity or amount
     "Activation", "Inhibition", "IncreaseAmount", "DecreaseAmount",
     "Regulation", "Influence", "Gef", "Gap", "GtpActivation",
@@ -35,7 +35,7 @@ STATEMENT_TYPES <- c(
 #' Statement types whose edges are symmetric (directed = FALSE)
 #' @keywords internal
 #' @noRd
-UNDIRECTED_STATEMENT_TYPES <- c("Complex", "Association")
+UNDIRECTED_INTERACTION_TYPES <- c("Complex", "Association")
 
 #' Entity-type vocabulary for nodes$entity_type
 #' @keywords internal
@@ -230,7 +230,7 @@ validate_network <- function(network) {
         return(problems)
     }
     if ("interaction" %in% colnames(edges)) {
-        unknown <- setdiff(unique(edges$interaction), STATEMENT_TYPES)
+        unknown <- setdiff(unique(edges$interaction), INTERACTION_TYPES)
         if (length(unknown) > 0) {
             problems <- c(problems, paste0(
                 "edges$interaction has value(s) outside the statement-type ",
@@ -248,12 +248,12 @@ validate_network <- function(network) {
     if (all(c("interaction", "directed") %in% colnames(edges)) &&
         is.logical(edges$directed)) {
         directed_symmetric_edges <-
-            edges$interaction %in% UNDIRECTED_STATEMENT_TYPES &
+            edges$interaction %in% UNDIRECTED_INTERACTION_TYPES &
             edges$directed %in% TRUE
         if (any(directed_symmetric_edges)) {
             problems <- c(problems, paste0(
                 "edges$directed must be FALSE for symmetric statement types (",
-                paste(UNDIRECTED_STATEMENT_TYPES, collapse = ", "), "); ",
+                paste(UNDIRECTED_INTERACTION_TYPES, collapse = ", "), "); ",
                 sum(directed_symmetric_edges),
                 " row(s) have directed == TRUE"))
         }

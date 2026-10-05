@@ -221,7 +221,7 @@
         source = vapply(statements, function(x) x$source_node_id, ""),
         target = vapply(statements, function(x) x$target_node_id, ""),
         interaction = interaction,
-        directed = !interaction %in% UNDIRECTED_STATEMENT_TYPES,
+        directed = !interaction %in% UNDIRECTED_INTERACTION_TYPES,
         site = vapply(statements, function(x) x$site, ""),
         confidence = vapply(statements, function(x) {
             if (is.null(x$data$belief)) NA_real_ else as.numeric(x$data$belief)

@@ -11,10 +11,11 @@
 #' @param backend a \code{NetworkBackend}, e.g. from \code{indra_backend()}
 #' @param entities annotated groupComparison table of the selected rows
 #' @param query a \code{NetworkQuery}, e.g. from \code{subnetwork_query()}
-#' @param statement_types statement types to keep. \code{NULL} keeps all.
+#' @param interaction_types values of \code{edges$interaction} to keep
+#' (INDRA statement types, e.g. \code{"Activation"}). \code{NULL} keeps all.
 #' @param min_evidence minimum evidence count per edge
-#' @param sources evidence sources to keep, e.g. \code{c("reach")}.
-#' \code{NULL} keeps all.
+#' @param evidence_sources keeps edges with evidence from at least one of
+#' these sources, e.g. \code{c("reach")}. \code{NULL} keeps all.
 #' @param include_entities \code{"namespace:identifier"} strings to add to
 #' the query, e.g. \code{"HGNC:1234"}
 #' @param ... passed to methods
@@ -25,8 +26,8 @@
 #' @noRd
 setGeneric("get_network",
     function(backend, entities, query = subnetwork_query(),
-             statement_types = NULL, min_evidence = 1, sources = NULL,
-             include_entities = NULL, ...)
+             interaction_types = NULL, min_evidence = 1,
+             evidence_sources = NULL, include_entities = NULL, ...)
         standardGeneric("get_network"),
     signature = c("backend", "query"))
 
@@ -34,12 +35,13 @@ setGeneric("get_network",
 # The shared arguments are generic formals, so they don't reach `...` and
 # must be passed on by name.
 setMethod("get_network", signature("NetworkBackend", "missing"),
-    function(backend, entities, query, statement_types = NULL,
-             min_evidence = 1, sources = NULL, include_entities = NULL,
-             ...) {
+    function(backend, entities, query, interaction_types = NULL,
+             min_evidence = 1, evidence_sources = NULL,
+             include_entities = NULL, ...) {
         get_network(backend, entities, subnetwork_query(),
-                    statement_types = statement_types,
-                    min_evidence = min_evidence, sources = sources,
+                    interaction_types = interaction_types,
+                    min_evidence = min_evidence,
+                    evidence_sources = evidence_sources,
                     include_entities = include_entities, ...)
     })
 
