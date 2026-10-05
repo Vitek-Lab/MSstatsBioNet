@@ -176,27 +176,27 @@ validate_network <- function(network) {
 }
 
 #' Check column presence and type
-#' @param df data.frame to check
-#' @param spec named character vector, column name -> type
+#' @param input_dataframe data.frame to check
+#' @param column_types named character vector, column name -> type
 #' @param label "edges" or "nodes", used in messages
 #' @param required logical, whether missing columns are a problem
 #' @return character vector of problems
 #' @keywords internal
 #' @noRd
-.check_columns <- function(df, spec, label, required) {
-    missing_cols <- setdiff(names(spec), colnames(df))
+.check_columns <- function(input_dataframe, column_types, label, required) {
+    missing_columns <- setdiff(names(column_types), colnames(input_dataframe))
     problems <- character(0)
-    if (required && length(missing_cols) > 0) {
+    if (required && length(missing_columns) > 0) {
         problems <- paste0(label, " is missing required column(s): ",
-                          paste(missing_cols, collapse = ", "))
+                          paste(missing_columns, collapse = ", "))
     }
-    present <- intersect(names(spec), colnames(df))
-    wrong_type <- present[!vapply(present, function(col) {
-        .has_type(df[[col]], spec[[col]])
+    present_columns <- intersect(names(column_types), colnames(input_dataframe))
+    wrong_type <- present_columns[!vapply(present_columns, function(column) {
+        .has_type(input_dataframe[[column]], column_types[[column]])
     }, logical(1))]
     if (length(wrong_type) > 0) {
         problems <- c(problems, paste0(
-            label, "$", wrong_type, " must be ", spec[wrong_type]
+            label, "$", wrong_type, " must be ", column_types[wrong_type]
         ))
     }
     problems
@@ -208,16 +208,16 @@ validate_network <- function(network) {
 #' data.frame() makes from a column of NA.
 #' @keywords internal
 #' @noRd
-.has_type <- function(x, type) {
-    if (is.logical(x) && all(is.na(x))) {
+.has_type <- function(values, type) {
+    if (is.logical(values) && all(is.na(values))) {
         return(TRUE)
     }
     switch(type,
-           character = is.character(x),
-           logical   = is.logical(x),
-           numeric   = is.numeric(x),
-           integer   = is.numeric(x) &&
-               all(is.na(x) | x == round(x)),
+           character = is.character(values),
+           logical   = is.logical(values),
+           numeric   = is.numeric(values),
+           integer   = is.numeric(values) &&
+               all(is.na(values) | values == round(values)),
            FALSE)
 }
 
@@ -237,28 +237,30 @@ validate_network <- function(network) {
                 "vocabulary: ", paste(unknown, collapse = ", ")))
         }
     }
-    for (col in c("source", "target", "interaction", "directed",
-                  "statement_id", "evidence_url", "backend_database",
-                  "query_type")) {
-        if (col %in% colnames(edges) && anyNA(edges[[col]])) {
-            problems <- c(problems, paste0("edges$", col, " must not be NA"))
+    for (column in c("source", "target", "interaction", "directed",
+                     "statement_id", "evidence_url", "backend_database",
+                     "query_type")) {
+        if (column %in% colnames(edges) && anyNA(edges[[column]])) {
+            problems <- c(problems,
+                          paste0("edges$", column, " must not be NA"))
         }
     }
     if (all(c("interaction", "directed") %in% colnames(edges)) &&
         is.logical(edges$directed)) {
-        symmetric_directed <-
+        directed_symmetric_edges <-
             edges$interaction %in% UNDIRECTED_STATEMENT_TYPES &
             edges$directed %in% TRUE
-        if (any(symmetric_directed)) {
+        if (any(directed_symmetric_edges)) {
             problems <- c(problems, paste0(
                 "edges$directed must be FALSE for symmetric statement types (",
                 paste(UNDIRECTED_STATEMENT_TYPES, collapse = ", "), "); ",
-                sum(symmetric_directed), " row(s) have directed == TRUE"))
+                sum(directed_symmetric_edges),
+                " row(s) have directed == TRUE"))
         }
     }
     if ("confidence" %in% colnames(edges) && is.numeric(edges$confidence)) {
-        conf <- edges$confidence[!is.na(edges$confidence)]
-        if (any(conf < 0 | conf > 1)) {
+        confidence <- edges$confidence[!is.na(edges$confidence)]
+        if (any(confidence < 0 | confidence > 1)) {
             problems <- c(problems, "edges$confidence must be in [0, 1] or NA")
         }
     }
@@ -275,11 +277,12 @@ validate_network <- function(network) {
     }
     if ("site" %in% colnames(edges) && is.character(edges$site)) {
         sites <- edges$site[!is.na(edges$site)]
-        bad <- sites[!grepl("^[A-Z][0-9]+(;[A-Z][0-9]+)*$", sites)]
-        if (length(bad) > 0) {
+        badly_formatted_sites <-
+            sites[!grepl("^[A-Z][0-9]+(;[A-Z][0-9]+)*$", sites)]
+        if (length(badly_formatted_sites) > 0) {
             problems <- c(problems, paste0(
                 "edges$site must look like 'S148' (';'-joined if several): ",
-                paste(unique(bad), collapse = ", ")))
+                paste(unique(badly_formatted_sites), collapse = ", ")))
         }
     }
     problems
@@ -298,22 +301,23 @@ validate_network <- function(network) {
         problems <- c(problems, "nodes$id must not be NA")
     }
     vocabularies <- list(entity_type = ENTITY_TYPES, node_role = NODE_ROLES)
-    for (col in intersect(names(vocabularies), colnames(nodes))) {
-        values <- nodes[[col]][!is.na(nodes[[col]])]
-        unknown <- setdiff(unique(values), vocabularies[[col]])
+    for (column in intersect(names(vocabularies), colnames(nodes))) {
+        values <- nodes[[column]][!is.na(nodes[[column]])]
+        unknown <- setdiff(unique(values), vocabularies[[column]])
         if (length(unknown) > 0) {
             problems <- c(problems, paste0(
-                "nodes$", col, " has value(s) outside the vocabulary: ",
+                "nodes$", column, " has value(s) outside the vocabulary: ",
                 paste(unknown, collapse = ", ")))
         }
     }
     # A non-logical measured column is reported by .check_columns()
     if ("measured" %in% colnames(nodes) && is.logical(nodes$measured)) {
         latent <- !is.na(nodes$measured) & !nodes$measured
-        for (col in intersect(c("log2FC", "adj.pvalue"), colnames(nodes))) {
-            if (any(latent & !is.na(nodes[[col]]))) {
+        statistics <- intersect(c("log2FC", "adj.pvalue"), colnames(nodes))
+        for (column in statistics) {
+            if (any(latent & !is.na(nodes[[column]]))) {
                 problems <- c(problems, paste0(
-                    "nodes$", col, " must be NA for nodes with ",
+                    "nodes$", column, " must be NA for nodes with ",
                     "measured == FALSE"))
             }
         }
@@ -329,10 +333,11 @@ validate_network <- function(network) {
         !"id" %in% colnames(nodes)) {
         return(character(0))
     }
-    dangling <- setdiff(unique(c(edges$source, edges$target)), nodes$id)
-    if (length(dangling) == 0) {
+    missing_endpoints <- setdiff(unique(c(edges$source, edges$target)),
+                                 nodes$id)
+    if (length(missing_endpoints) == 0) {
         return(character(0))
     }
     paste0("edge endpoint(s) not found in nodes$id: ",
-           paste(dangling, collapse = ", "))
+           paste(missing_endpoints, collapse = ", "))
 }
