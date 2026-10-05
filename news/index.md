@@ -84,6 +84,18 @@
     the returned edges will be removed when the arguments become
     defunct.
 
+### Internal changes
+
+- [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
+  now runs through an internal INDRA backend object and the S4 generic
+  `get_network()`, the first step toward supporting network databases
+  other than INDRA. Its output is unchanged. The new functions are not
+  exported yet.
+- The error for a non-character `sources_filter` in
+  [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
+  now reads “evidence_sources must be a character vector”, the name of
+  the argument in the new API.
+
 ## MSstatsBioNet 0.99.0
 
 - Added function `getSubnetworkFromIndra` to extract biomolecular

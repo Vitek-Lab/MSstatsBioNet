@@ -69,6 +69,12 @@
 <code>correlation_cutoff</code> and <code>protein_level_data</code> still work during the deprecation period. The <code>paperCount</code> and <code>correlation</code> columns of the returned edges will be removed when the arguments become defunct.</li>
 </ul></li>
 </ul></div>
+<div class="section level3">
+<h3 id="internal-changes-development-version">Internal changes<a class="anchor" aria-label="anchor" href="#internal-changes-development-version"></a></h3>
+<ul><li>
+<code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> now runs through an internal INDRA backend object and the S4 generic <code>get_network()</code>, the first step toward supporting network databases other than INDRA. Its output is unchanged. The new functions are not exported yet.</li>
+<li>The error for a non-character <code>sources_filter</code> in <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> now reads “evidence_sources must be a character vector”, the name of the argument in the new API.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.99.0" id="msstatsbionet-0990">MSstatsBioNet 0.99.0<a class="anchor" aria-label="anchor" href="#msstatsbionet-0990"></a></h2>
