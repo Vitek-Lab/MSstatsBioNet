@@ -25,8 +25,9 @@ Required edge columns: \code{source}, \code{target} (both matching
 \code{site} (PTM site on the target such as \code{"S148"}, \code{;}-joined
 when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 \code{NA} when the source provides no score), \code{evidence_count}
-(whole number, at least 1, not \code{NA}), \code{provenance_url},
-\code{statement_id} (character), \code{source_db}, and \code{query_type}.
+(whole number, at least 1, not \code{NA}), \code{evidence_url},
+\code{statement_id} (character), \code{source_database}, and
+\code{query_type}.
 Edges of the symmetric statement types \code{"Complex"} and
 \code{"Association"} must have \code{directed = FALSE}.
 
@@ -37,8 +38,8 @@ site row of the same protein. When present, \code{entity_type},
 \code{node_role}, and \code{has_measured_sites} are type-checked.
 Nodes with \code{measured == FALSE} must have \code{NA} statistics.
 
-Confidence values are comparable within one \code{source_db}, not across
-sources.
+Confidence values are comparable within one \code{source_database}, not
+across sources.
 }
 \examples{
 network <- list(
@@ -51,10 +52,10 @@ network <- list(
         site = "S76",
         confidence = 0.99,
         evidence_count = 12L,
-        provenance_url = paste0("https://db.indra.bio/statements/",
+        evidence_url = paste0("https://db.indra.bio/statements/",
                                 "from_hash/-1234?format=html"),
         statement_id = "-1234",
-        source_db = "INDRA",
+        source_database = "INDRA",
         query_type = "subnetwork"
     )
 )
