@@ -26,7 +26,7 @@ filterSubnetworkByContext(
 - edges:
 
   A dataframe of network edges with columns: source, target,
-  interaction, site, evidenceLink, stmt_hash.
+  interaction, site, evidence_url, statement_id.
 
 - query:
 
@@ -74,7 +74,7 @@ A named list with four elements:
 - evidence:
 
   Dataframe with columns: source, target, interaction, site,
-  evidenceLink, stmt_hash, text, pmid, score. The `score` column
+  evidence_url, statement_id, text, pmid, score. The `score` column
   contains tag counts (integer) or cosine similarities (numeric)
   depending on the method used.
 

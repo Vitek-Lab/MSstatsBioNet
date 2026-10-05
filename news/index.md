@@ -12,6 +12,30 @@
   nodes, and that every edge endpoint is a node. It stops with an error
   listing every problem found.
 
+### Breaking changes
+
+- The edges returned by
+  [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
+  follow the edge contract. Columns are renamed, with no aliases:
+  `stmt_hash` to `statement_id` (now always character, taken from
+  INDRA’s full-precision `matches_hash`), `evidenceLink` to
+  `evidence_url`, `evidenceCount` to `evidence_count` (now integer), and
+  `sourceCounts` to `evidence_sources`. New columns: `directed` (`FALSE`
+  for symmetric types such as `Complex`), `confidence` (INDRA belief
+  score), `backend_database` (`"INDRA"`), and `query_type`
+  (`"subnetwork"`).
+  [`filterSubnetworkByContext()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.md),
+  the topic-model functions, and
+  [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
+  read the new names, so edges built by hand for them must use
+  `statement_id` and `evidence_url`.
+- `evidence_url` links to the INDRA page for that one statement. The old
+  `evidenceLink` listed every statement between the two agents.
+- The
+  [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
+  widget’s `_edge_clicked` Shiny input reports `evidence_url` in place
+  of `evidenceLink`.
+
 ### Deprecated
 
 - In

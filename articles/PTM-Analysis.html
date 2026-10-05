@@ -177,34 +177,34 @@ off target subnetworks.</p>
 <span><span class="co">#&gt; 5: P00533       EGFR     3236   T693_S695 -0.1659957 0.58809108</span></span>
 <span><span class="co">#&gt; 6: P00533       EGFR     3236       Y1110  0.2106324 0.25258914</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   source target site     interaction evidenceCount paperCount</span></span>
-<span><span class="co">#&gt; 1 Q13480 P00533 &lt;NA&gt; Phosphorylation             2          1</span></span>
-<span><span class="co">#&gt; 2 P00533 P28482 &lt;NA&gt; Phosphorylation             6          1</span></span>
-<span><span class="co">#&gt; 3 P00533 Q13480 Y317 Phosphorylation             1          1</span></span>
-<span><span class="co">#&gt; 4 P00533 Q13480 &lt;NA&gt; Phosphorylation            24          1</span></span>
-<span><span class="co">#&gt; 5 P00533 Q13480 Y659 Phosphorylation            12          1</span></span>
-<span><span class="co">#&gt; 6 P28482 Q13480 S454 Phosphorylation             3          1</span></span>
-<span><span class="co">#&gt;                                                                                 evidenceLink</span></span>
-<span><span class="co">#&gt; 1 https://db.indra.bio/statements/from_agents?subject=4066@HGNC&amp;object=3236@HGNC&amp;format=html</span></span>
-<span><span class="co">#&gt; 2 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&amp;object=6871@HGNC&amp;format=html</span></span>
-<span><span class="co">#&gt; 3 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&amp;object=4066@HGNC&amp;format=html</span></span>
-<span><span class="co">#&gt; 4 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&amp;object=4066@HGNC&amp;format=html</span></span>
-<span><span class="co">#&gt; 5 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&amp;object=4066@HGNC&amp;format=html</span></span>
-<span><span class="co">#&gt; 6 https://db.indra.bio/statements/from_agents?subject=6871@HGNC&amp;object=4066@HGNC&amp;format=html</span></span>
-<span><span class="co">#&gt;                                                        sourceCounts</span></span>
-<span><span class="co">#&gt; 1                                        {"sparser": 1, "reach": 1}</span></span>
-<span><span class="co">#&gt; 2                           {"sparser": 2, "reach": 3, "rlimsp": 1}</span></span>
-<span><span class="co">#&gt; 3                                                     {"rlimsp": 1}</span></span>
-<span><span class="co">#&gt; 4 {"reach": 14, "sparser": 5, "trips": 1, "bel_lc": 1, "rlimsp": 3}</span></span>
-<span><span class="co">#&gt; 5              {"pc": 1, "pe": 1, "hprd": 8, "psp": 1, "signor": 1}</span></span>
-<span><span class="co">#&gt; 6                                          {"hprd": 2, "signor": 1}</span></span>
-<span><span class="co">#&gt;            stmt_hash</span></span>
-<span><span class="co">#&gt; 1 -16511170354231919</span></span>
-<span><span class="co">#&gt; 2   4046712837468004</span></span>
-<span><span class="co">#&gt; 3  16300905780198239</span></span>
-<span><span class="co">#&gt; 4 -27721131241182418</span></span>
-<span><span class="co">#&gt; 5  28792790420132101</span></span>
-<span><span class="co">#&gt; 6   7148668566491587</span></span></code></pre></div>
+<span><span class="co">#&gt;   source target     interaction directed site confidence evidence_count</span></span>
+<span><span class="co">#&gt; 1 Q13480 P00533 Phosphorylation     TRUE &lt;NA&gt;  0.5517375              2</span></span>
+<span><span class="co">#&gt; 2 P00533 P28482 Phosphorylation     TRUE &lt;NA&gt;  0.7432122              6</span></span>
+<span><span class="co">#&gt; 3 P00533 Q13480 Phosphorylation     TRUE Y317  0.5316003              1</span></span>
+<span><span class="co">#&gt; 4 P00533 Q13480 Phosphorylation     TRUE &lt;NA&gt;  0.8859041             24</span></span>
+<span><span class="co">#&gt; 5 P00533 Q13480 Phosphorylation     TRUE Y659  0.8030378             12</span></span>
+<span><span class="co">#&gt; 6 P28482 Q13480 Phosphorylation     TRUE S454  0.6590674              3</span></span>
+<span><span class="co">#&gt;                                                               evidence_url</span></span>
+<span><span class="co">#&gt; 1 https://db.indra.bio/statements/from_hash/-16511170354231919?format=html</span></span>
+<span><span class="co">#&gt; 2   https://db.indra.bio/statements/from_hash/4046712837468004?format=html</span></span>
+<span><span class="co">#&gt; 3  https://db.indra.bio/statements/from_hash/16300905780198239?format=html</span></span>
+<span><span class="co">#&gt; 4 https://db.indra.bio/statements/from_hash/-27721131241182418?format=html</span></span>
+<span><span class="co">#&gt; 5  https://db.indra.bio/statements/from_hash/28792790420132101?format=html</span></span>
+<span><span class="co">#&gt; 6   https://db.indra.bio/statements/from_hash/7148668566491587?format=html</span></span>
+<span><span class="co">#&gt;         statement_id backend_database query_type</span></span>
+<span><span class="co">#&gt; 1 -16511170354231919            INDRA subnetwork</span></span>
+<span><span class="co">#&gt; 2   4046712837468004            INDRA subnetwork</span></span>
+<span><span class="co">#&gt; 3  16300905780198239            INDRA subnetwork</span></span>
+<span><span class="co">#&gt; 4 -27721131241182418            INDRA subnetwork</span></span>
+<span><span class="co">#&gt; 5  28792790420132101            INDRA subnetwork</span></span>
+<span><span class="co">#&gt; 6   7148668566491587            INDRA subnetwork</span></span>
+<span><span class="co">#&gt;                                                    evidence_sources paperCount</span></span>
+<span><span class="co">#&gt; 1                                        {"sparser": 1, "reach": 1}          1</span></span>
+<span><span class="co">#&gt; 2                           {"sparser": 2, "reach": 3, "rlimsp": 1}          1</span></span>
+<span><span class="co">#&gt; 3                                                     {"rlimsp": 1}          1</span></span>
+<span><span class="co">#&gt; 4 {"reach": 14, "sparser": 5, "trips": 1, "bel_lc": 1, "rlimsp": 3}          1</span></span>
+<span><span class="co">#&gt; 5              {"pc": 1, "pe": 1, "hprd": 8, "psp": 1, "signor": 1}          1</span></span>
+<span><span class="co">#&gt; 6                                          {"hprd": 2, "signor": 1}          1</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="network-visualization">Network Visualization<a class="anchor" aria-label="anchor" href="#network-visualization"></a>

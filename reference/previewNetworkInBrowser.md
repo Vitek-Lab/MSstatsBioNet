@@ -26,7 +26,7 @@ previewNetworkInBrowser(
 - edges:
 
   Data frame with columns `source`, `target`, `interaction`. Optional:
-  `site`, `evidenceLink`.
+  `site`, `evidence_url`, opened when an edge is clicked.
 
 - displayLabelType:
 

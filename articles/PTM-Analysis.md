@@ -117,34 +117,34 @@ head(subnetwork$nodes)
 #> 5: P00533       EGFR     3236   T693_S695 -0.1659957 0.58809108
 #> 6: P00533       EGFR     3236       Y1110  0.2106324 0.25258914
 head(subnetwork$edges)
-#>   source target site     interaction evidenceCount paperCount
-#> 1 Q13480 P00533 <NA> Phosphorylation             2          1
-#> 2 P00533 P28482 <NA> Phosphorylation             6          1
-#> 3 P00533 Q13480 Y317 Phosphorylation             1          1
-#> 4 P00533 Q13480 <NA> Phosphorylation            24          1
-#> 5 P00533 Q13480 Y659 Phosphorylation            12          1
-#> 6 P28482 Q13480 S454 Phosphorylation             3          1
-#>                                                                                 evidenceLink
-#> 1 https://db.indra.bio/statements/from_agents?subject=4066@HGNC&object=3236@HGNC&format=html
-#> 2 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&object=6871@HGNC&format=html
-#> 3 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&object=4066@HGNC&format=html
-#> 4 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&object=4066@HGNC&format=html
-#> 5 https://db.indra.bio/statements/from_agents?subject=3236@HGNC&object=4066@HGNC&format=html
-#> 6 https://db.indra.bio/statements/from_agents?subject=6871@HGNC&object=4066@HGNC&format=html
-#>                                                        sourceCounts
-#> 1                                        {"sparser": 1, "reach": 1}
-#> 2                           {"sparser": 2, "reach": 3, "rlimsp": 1}
-#> 3                                                     {"rlimsp": 1}
-#> 4 {"reach": 14, "sparser": 5, "trips": 1, "bel_lc": 1, "rlimsp": 3}
-#> 5              {"pc": 1, "pe": 1, "hprd": 8, "psp": 1, "signor": 1}
-#> 6                                          {"hprd": 2, "signor": 1}
-#>            stmt_hash
-#> 1 -16511170354231919
-#> 2   4046712837468004
-#> 3  16300905780198239
-#> 4 -27721131241182418
-#> 5  28792790420132101
-#> 6   7148668566491587
+#>   source target     interaction directed site confidence evidence_count
+#> 1 Q13480 P00533 Phosphorylation     TRUE <NA>  0.5517375              2
+#> 2 P00533 P28482 Phosphorylation     TRUE <NA>  0.7432122              6
+#> 3 P00533 Q13480 Phosphorylation     TRUE Y317  0.5316003              1
+#> 4 P00533 Q13480 Phosphorylation     TRUE <NA>  0.8859041             24
+#> 5 P00533 Q13480 Phosphorylation     TRUE Y659  0.8030378             12
+#> 6 P28482 Q13480 Phosphorylation     TRUE S454  0.6590674              3
+#>                                                               evidence_url
+#> 1 https://db.indra.bio/statements/from_hash/-16511170354231919?format=html
+#> 2   https://db.indra.bio/statements/from_hash/4046712837468004?format=html
+#> 3  https://db.indra.bio/statements/from_hash/16300905780198239?format=html
+#> 4 https://db.indra.bio/statements/from_hash/-27721131241182418?format=html
+#> 5  https://db.indra.bio/statements/from_hash/28792790420132101?format=html
+#> 6   https://db.indra.bio/statements/from_hash/7148668566491587?format=html
+#>         statement_id backend_database query_type
+#> 1 -16511170354231919            INDRA subnetwork
+#> 2   4046712837468004            INDRA subnetwork
+#> 3  16300905780198239            INDRA subnetwork
+#> 4 -27721131241182418            INDRA subnetwork
+#> 5  28792790420132101            INDRA subnetwork
+#> 6   7148668566491587            INDRA subnetwork
+#>                                                    evidence_sources paperCount
+#> 1                                        {"sparser": 1, "reach": 1}          1
+#> 2                           {"sparser": 2, "reach": 3, "rlimsp": 1}          1
+#> 3                                                     {"rlimsp": 1}          1
+#> 4 {"reach": 14, "sparser": 5, "trips": 1, "bel_lc": 1, "rlimsp": 3}          1
+#> 5              {"pc": 1, "pe": 1, "hprd": 8, "psp": 1, "signor": 1}          1
+#> 6                                          {"hprd": 2, "signor": 1}          1
 ```
 
 ### Network Visualization

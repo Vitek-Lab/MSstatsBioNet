@@ -231,8 +231,8 @@ The evidence dataframe contains the following columns:
 | `target`       | Target protein / gene                        |
 | `interaction`  | Interaction type (e.g. Phosphorylation)      |
 | `site`         | Modification site if applicable              |
-| `evidenceLink` | URL to the INDRA evidence viewer             |
-| `stmt_hash`    | Unique INDRA statement identifier            |
+| `evidence_url` | URL of the INDRA page for this statement     |
+| `statement_id` | Unique INDRA statement identifier (hash)     |
 | `text`         | Sentence extracted from the supporting paper |
 | `pmid`         | PubMed ID of the source article              |
 | `score`        | Cosine score of the abstract vs. query       |
@@ -357,8 +357,8 @@ The evidence dataframe contains the following columns:
 | `target`       | Target protein / gene                            |
 | `interaction`  | Interaction type (e.g. Phosphorylation)          |
 | `site`         | Modification site if applicable                  |
-| `evidenceLink` | URL to the INDRA evidence viewer                 |
-| `stmt_hash`    | Unique INDRA statement identifier                |
+| `evidence_url` | URL of the INDRA page for this statement         |
+| `statement_id` | Unique INDRA statement identifier (hash)         |
 | `text`         | Sentence extracted from the supporting paper     |
 | `pmid`         | PubMed ID of the source article                  |
 | `score`        | Relevance score (tag count or cosine similarity) |

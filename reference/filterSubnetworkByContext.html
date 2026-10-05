@@ -71,7 +71,7 @@ whose abstracts meet the scoring cutoff.</p>
 
 <dt id="arg-edges">edges<a class="anchor" aria-label="anchor" href="#arg-edges"></a></dt>
 <dd><p>A dataframe of network edges with columns: source, target,
-interaction, site, evidenceLink, stmt_hash.</p></dd>
+interaction, site, evidence_url, statement_id.</p></dd>
 
 
 <dt id="arg-query">query<a class="anchor" aria-label="anchor" href="#arg-query"></a></dt>
@@ -116,7 +116,7 @@ variants such as plurals explicitly. To exclude by keyword only, omit
 
   <dt>evidence</dt>
 <dd><p>Dataframe with columns: source, target, interaction, site,
-    evidenceLink, stmt_hash, text, pmid, score. The <code>score</code> column
+    evidence_url, statement_id, text, pmid, score. The <code>score</code> column
     contains tag counts (integer) or cosine similarities (numeric) depending
     on the method used.</p></dd>
 
