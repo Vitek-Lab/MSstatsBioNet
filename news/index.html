@@ -41,6 +41,10 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="msstatsbionet-development-version">MSstatsBioNet (development version)<a class="anchor" aria-label="anchor" href="#msstatsbionet-development-version"></a></h2>
 <div class="section level3">
+<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li>New function <code><a href="../reference/validate_network.html">validate_network()</a></code> checks a <code>list(nodes, edges)</code> network against the edge and node contract (v1.0): required columns and types, the statement-type and entity-type vocabularies, value ranges, <code>NA</code> statistics on unmeasured nodes, and that every edge endpoint is a node. It stops with an error listing every problem found.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="deprecated-development-version">Deprecated<a class="anchor" aria-label="anchor" href="#deprecated-development-version"></a></h3>
 <ul><li>In <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code>, the arguments <code>paper_count_cutoff</code>, <code>correlation_cutoff</code>, and <code>protein_level_data</code> are deprecated. Supplying any of them gives a warning. They will become defunct in the next Bioconductor release and be removed in the one after.
 <ul><li>

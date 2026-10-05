@@ -39,3 +39,5 @@
   : Render a Cytoscape network in a Shiny application. This function is
   used to render a Cytoscape network visualization within a Shiny
   application.
+- [`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md)
+  : Validate a network against the edge and node contract

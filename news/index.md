@@ -2,6 +2,16 @@
 
 ## MSstatsBioNet (development version)
 
+### New features
+
+- New function
+  [`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md)
+  checks a `list(nodes, edges)` network against the edge and node
+  contract (v1.0): required columns and types, the statement-type and
+  entity-type vocabularies, value ranges, `NA` statistics on unmeasured
+  nodes, and that every edge endpoint is a node. It stops with an error
+  listing every problem found.
+
 ### Deprecated
 
 - In
