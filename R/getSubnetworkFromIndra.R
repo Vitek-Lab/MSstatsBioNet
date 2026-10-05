@@ -49,7 +49,8 @@
 #' include. One of \code{"both"} (default), \code{"up"} (upregulated only),
 #' or \code{"down"} (downregulated only).
 #'
-#' @return list of 2 data.frames, \code{nodes} and \code{edges}.
+#' @return list of 2 data.frames, \code{nodes} and \code{edges}, that meets
+#' the contract checked by \code{\link{validate_network}}.
 #'
 #' \code{edges} has one row per INDRA statement: \code{source},
 #' \code{target}, \code{interaction} (INDRA statement type),
@@ -62,6 +63,10 @@
 #' \code{evidence_sources} (evidence count per source, as JSON), and the
 #' deprecated \code{paperCount} (and \code{correlation} when
 #' \code{protein_level_data} is given).
+#'
+#' \code{nodes} has one row per analyte: \code{id}, \code{entity_name},
+#' \code{namespace}, \code{entity_id}, \code{site}, \code{log2FC}, and
+#' \code{adj.pvalue}.
 #'
 #' @export
 #'
@@ -107,6 +112,7 @@ getSubnetworkFromIndra <- function(input,
     nodes <- .constructNodesDataFrame(input, edges)
     subnetwork = .filterByPtmSite(nodes, edges, filter_by_ptm_site)
     subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, evidence_count_cutoff, filter_by_curation)
+    validate_network(subnetwork)
     warning(
         "NOTICE: This function includes third-party software components
         that are licensed under the BSD 2-Clause License. Please ensure to

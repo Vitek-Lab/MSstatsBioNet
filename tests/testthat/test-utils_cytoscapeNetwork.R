@@ -4,20 +4,20 @@
 
 create_mock_nodes <- function() {
     data.frame(
-        id       = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "BRCA1_HUMAN"),
-        logFC    = c(2.5, -1.8, 1.2, -2.1),
-        pvalue   = c(0.001, 0.02, 0.03, 0.005),
-        entityName = c("TP53", "MDM2", "ATM", "BRCA1"),
+        id          = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "BRCA1_HUMAN"),
+        log2FC      = c(2.5, -1.8, 1.2, -2.1),
+        pvalue      = c(0.001, 0.02, 0.03, 0.005),
+        entity_name = c("TP53", "MDM2", "ATM", "BRCA1"),
         stringsAsFactors = FALSE
     )
 }
 
 create_mock_nodes_ptm <- function() {
     data.frame(
-        id       = c("P53_HUMAN", "MDM2_HUMAN"),
-        logFC    = c(2.5, -1.8),
-        entityName = c("TP53", "MDM2"),
-        Site     = c(NA, "S15_S20"),
+        id          = c("P53_HUMAN", "MDM2_HUMAN"),
+        log2FC      = c(2.5, -1.8),
+        entity_name = c("TP53", "MDM2"),
+        site        = c(NA, "S15_S20"),
         stringsAsFactors = FALSE
     )
 }
@@ -236,9 +236,9 @@ test_that(".buildElements creates PTM child nodes and attachment edges", {
     expect_true("ptm_attachment" %in% edge_types)
 })
 
-test_that(".buildElements uses entityName label when requested", {
+test_that(".buildElements uses entity_name label when requested", {
     nodes  <- create_mock_nodes()
-    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "entityName")
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "entity_name")
     
     protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
                                 el$data$node_type == "protein", result)
@@ -246,10 +246,10 @@ test_that(".buildElements uses entityName label when requested", {
     expect_true(all(labels %in% c("TP53", "MDM2", "ATM", "BRCA1")))
 })
 
-test_that(".buildElements falls back to id when entityName is NA", {
+test_that(".buildElements falls back to id when entity_name is NA", {
     nodes <- create_mock_nodes()
-    nodes$entityName <- NA
-    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "entityName")
+    nodes$entity_name <- NA
+    result <- MSstatsBioNet:::.buildElements(nodes, data.frame(), "entity_name")
     
     protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
                                 el$data$node_type == "protein", result)
@@ -270,8 +270,8 @@ test_that(".buildElements computes width and height from label length", {
     expect_true(all(heights >= 40  & heights <= 60))
 })
 
-test_that(".buildElements uses grey when logFC column is absent", {
-    nodes <- create_mock_nodes()[, !names(create_mock_nodes()) %in% "logFC"]
+test_that(".buildElements uses grey when log2FC column is absent", {
+    nodes <- create_mock_nodes()[, !names(create_mock_nodes()) %in% "log2FC"]
     result <- MSstatsBioNet:::.buildElements(nodes, data.frame())
     
     protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&
@@ -322,6 +322,34 @@ test_that("cytoscapeNetwork() errors when nodes has no id column", {
 
 test_that("cytoscapeNetwork() errors when nodes is not a data frame", {
     expect_error(cytoscapeNetwork(list(id = "A")), "id column|data frame")
+})
+
+# ----- displayLabelType = "entityName" deprecation -----
+
+test_that("cytoscapeNetwork accepts the deprecated displayLabelType = 'entityName'", {
+    nodes <- create_mock_nodes()
+    expect_warning(
+        widget <- cytoscapeNetwork(nodes, data.frame(), displayLabelType = "entityName"),
+        "\"entityName\" is deprecated"
+    )
+    labels <- vapply(widget$x$elements, function(el) el$data$label, "")
+    expect_equal(labels, nodes$entity_name)
+})
+
+test_that("cytoscapeNetwork labels nodes by entity_name without a warning", {
+    nodes <- create_mock_nodes()
+    expect_silent(
+        widget <- cytoscapeNetwork(nodes, data.frame(), displayLabelType = "entity_name")
+    )
+    labels <- vapply(widget$x$elements, function(el) el$data$label, "")
+    expect_equal(labels, nodes$entity_name)
+})
+
+test_that("cytoscapeNetwork rejects an unknown displayLabelType", {
+    expect_error(
+        cytoscapeNetwork(create_mock_nodes(), data.frame(), displayLabelType = "name"),
+        "displayLabelType must be \"id\" or \"entity_name\""
+    )
 })
 
 # ----- Edge contract columns (Phase 1b of the API refactor) -----

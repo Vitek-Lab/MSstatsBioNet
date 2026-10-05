@@ -82,7 +82,8 @@ include. One of \code{"both"} (default), \code{"up"} (upregulated only),
 or \code{"down"} (downregulated only).}
 }
 \value{
-list of 2 data.frames, \code{nodes} and \code{edges}.
+list of 2 data.frames, \code{nodes} and \code{edges}, that meets
+the contract checked by \code{\link{validate_network}}.
 
 \code{edges} has one row per INDRA statement: \code{source},
 \code{target}, \code{interaction} (INDRA statement type),
@@ -95,6 +96,10 @@ list of 2 data.frames, \code{nodes} and \code{edges}.
 \code{evidence_sources} (evidence count per source, as JSON), and the
 deprecated \code{paperCount} (and \code{correlation} when
 \code{protein_level_data} is given).
+
+\code{nodes} has one row per analyte: \code{id}, \code{entity_name},
+\code{namespace}, \code{entity_id}, \code{site}, \code{log2FC}, and
+\code{adj.pvalue}.
 }
 \description{
 Using differential abundance results from MSstats, this function retrieves

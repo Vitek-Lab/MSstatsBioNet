@@ -444,24 +444,31 @@
 #' @keywords internal
 #' @noRd
 .constructNodesDataFrame <- function(input, edges) {
-    nodes = input[, c("Protein", "EntityName", "EntityId", "Site", "log2FC", "adj.pvalue")]
-    colnames(nodes) = c("id", "entityName", "entityId", "Site", "logFC", "adj.pvalue")
+    nodes = input[, c("Protein", "EntityName", "EntityNamespace", "EntityId",
+                      "Site", "log2FC", "adj.pvalue")]
+    colnames(nodes) = c("id", "entity_name", "namespace", "entity_id",
+                        "site", "log2FC", "adj.pvalue")
+    # fread reads numeric IDs (e.g. HGNC) as integers
+    for (col in c("id", "entity_name", "namespace", "entity_id", "site")) {
+        nodes[[col]] = as.character(nodes[[col]])
+    }
 
     nodes = nodes[nodes$id %in% c(edges$source, edges$target), ]
     extra_force_include_other <- setdiff(unique(c(edges$source, edges$target)), nodes$id)
     if (length(extra_force_include_other) > 0) {
         extra_nodes <- data.frame(
             id = extra_force_include_other,
-            entityName = NA,
-            entityId = NA,
-            Site = NA,
-            logFC = 0,
+            entity_name = NA_character_,
+            namespace = NA_character_,
+            entity_id = NA_character_,
+            site = NA_character_,
+            log2FC = 0,
             adj.pvalue = 1,
             stringsAsFactors = FALSE
         )
         nodes <- rbind(nodes, extra_nodes)
     }
-    nodes$entityName = ifelse(is.na(nodes$entityName), nodes$id, nodes$entityName)
+    nodes$entity_name = ifelse(is.na(nodes$entity_name), nodes$id, nodes$entity_name)
 
     return(nodes)
 }
@@ -498,7 +505,7 @@
 }
 
 .filterByPtmSite = function(nodes, edges, filter_by_ptm_site) {
-    if (filter_by_ptm_site && nrow(nodes[!is.na(nodes$Site), ]) > 0) {
+    if (filter_by_ptm_site && nrow(nodes[!is.na(nodes$site), ]) > 0) {
         ptm_overlap <- .ptmOverlap(edges, nodes)
         keep <- ptm_overlap[paste(edges$source, edges$target, edges$interaction, sep = "-")]
         edges <- edges[!is.na(keep) & keep != "", ]

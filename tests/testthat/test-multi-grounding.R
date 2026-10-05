@@ -94,9 +94,9 @@ test_that(".addAdditionalMetadataToIndraEdge recovers original Protein from a mu
     expect_equal(out$target_node_id, "BAR") # not "1097" or "A1BG"
 })
 
-# ----- .constructNodesDataFrame carries entityName + entityId -----
+# ----- .constructNodesDataFrame carries entity_name + entity_id -----
 
-test_that(".constructNodesDataFrame emits id, entityName, entityId, Site, logFC, adj.pvalue", {
+test_that(".constructNodesDataFrame emits id, entity_name, namespace, entity_id, site, log2FC, adj.pvalue", {
     input <- data.frame(
         Protein         = c("FOO", "BAR"),
         EntityNamespace = c("HGNC;CHEBI", "HGNC"),
@@ -111,10 +111,10 @@ test_that(".constructNodesDataFrame emits id, entityName, entityId, Site, logFC,
                         stringsAsFactors = FALSE)
     nodes <- MSstatsBioNet:::.constructNodesDataFrame(input, edges)
     expect_equal(colnames(nodes),
-                 c("id", "entityName", "entityId", "Site", "logFC", "adj.pvalue"))
-    expect_equal(nodes$entityName[nodes$id == "FOO"], "KIT;glucose")
-    expect_equal(nodes$entityId[nodes$id == "FOO"],   "3815;17234")
-    expect_equal(nodes$entityName[nodes$id == "BAR"], "A1BG")
+                 c("id", "entity_name", "namespace", "entity_id", "site", "log2FC", "adj.pvalue"))
+    expect_equal(nodes$entity_name[nodes$id == "FOO"], "KIT;glucose")
+    expect_equal(nodes$entity_id[nodes$id == "FOO"],   "3815;17234")
+    expect_equal(nodes$entity_name[nodes$id == "BAR"], "A1BG")
 })
 
 # ----- < 400 guard counts post-split unique pairs -----

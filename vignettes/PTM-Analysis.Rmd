@@ -67,7 +67,7 @@ head(subnetwork$edges)
 Visualize the subnetwork on your browser
 
 ```{r}
-previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "entityName")
+previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "entity_name")
 ```
 
 # Session info
