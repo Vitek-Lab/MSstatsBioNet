@@ -15,38 +15,54 @@ export(getSubnetworkFromIndra)
 export(previewNetworkInBrowser)
 export(renderCytoscapeNetwork)
 export(validate_network)
-importFrom(grDevices,colorRamp)
-importFrom(grDevices,rgb)
-importFrom(htmlwidgets,createWidget)
-importFrom(htmlwidgets,shinyRenderWidget)
-importFrom(htmlwidgets,shinyWidgetOutput)
-importFrom(httr,GET)
-importFrom(httr,POST)
-importFrom(httr,add_headers)
-importFrom(httr,content)
-importFrom(httr,content_type_json)
-importFrom(httr,status_code)
-importFrom(jsonlite,fromJSON)
-importFrom(jsonlite,toJSON)
-importFrom(r2r,hashmap)
-importFrom(r2r,keys)
-importFrom(r2r,query)
+importFrom(grDevices,
+  colorRamp,
+  rgb
+)
+importFrom(htmlwidgets,
+  createWidget,
+  shinyRenderWidget,
+  shinyWidgetOutput
+)
+importFrom(httr,
+  GET,
+  POST,
+  add_headers,
+  content,
+  content_type_json,
+  status_code
+)
+importFrom(jsonlite,
+  fromJSON,
+  toJSON
+)
+importFrom(r2r,
+  hashmap,
+  keys,
+  query
+)
 importFrom(rentrez,entrez_fetch)
-importFrom(stats,cor)
-importFrom(stats,runif)
-importFrom(stats,setNames)
+importFrom(stats,
+  cor,
+  runif,
+  setNames
+)
 importFrom(stopwords,stopwords)
-importFrom(text2vec,TfIdf)
-importFrom(text2vec,create_dtm)
-importFrom(text2vec,create_vocabulary)
-importFrom(text2vec,fit_transform)
-importFrom(text2vec,itoken)
-importFrom(text2vec,prune_vocabulary)
-importFrom(text2vec,vocab_vectorizer)
-importFrom(text2vec,word_tokenizer)
+importFrom(text2vec,
+  TfIdf,
+  create_dtm,
+  create_vocabulary,
+  fit_transform,
+  itoken,
+  prune_vocabulary,
+  vocab_vectorizer,
+  word_tokenizer
+)
 importFrom(tidyr,pivot_wider)
 importFrom(utils,browseURL)
-importFrom(xml2,read_xml)
-importFrom(xml2,xml_find_all)
-importFrom(xml2,xml_find_first)
-importFrom(xml2,xml_text)
+importFrom(xml2,
+  read_xml,
+  xml_find_all,
+  xml_find_first,
+  xml_text
+)
