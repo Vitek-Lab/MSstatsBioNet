@@ -46,8 +46,9 @@ ENTITY_TYPES <- c("protein", "gene", "transcript", "ptm_site", "metabolite",
 #' Vocabulary for nodes$node_role
 #' @keywords internal
 #' @noRd
-NODE_ROLES <- c("query", "forced", "mediator", "regulator", "target",
-               "path_endpoint", "path_intermediate")
+NODE_ROLES <- c("passed_cutoffs", "user_added", "mediator",
+               "upstream_regulator", "downstream_target",
+               "path_start", "path_end", "path_intermediate")
 
 #' Required edge columns and their types
 #' @keywords internal
@@ -68,9 +69,9 @@ REQUIRED_EDGE_COLUMNS <- c(
 
 #' Required node columns and their types
 #'
-#' entity_type, measured, selected and node_role become required once
-#' getSubnetworkFromIndra() sets them. Until then they are checked only when
-#' present (OPTIONAL_NODE_COLUMNS).
+#' entity_type, measured, included_in_query and node_role become required
+#' once getSubnetworkFromIndra() sets them. Until then they are checked only
+#' when present (OPTIONAL_NODE_COLUMNS).
 #' @keywords internal
 #' @noRd
 REQUIRED_NODE_COLUMNS <- c(id = "character")
@@ -84,7 +85,7 @@ OPTIONAL_NODE_COLUMNS <- c(
     namespace          = "character",
     entity_id          = "character",
     measured           = "logical",
-    selected           = "logical",
+    included_in_query  = "logical",
     node_role          = "character",
     site               = "character",
     has_measured_sites = "logical",
@@ -113,8 +114,9 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' Required node column: \code{id}. An \code{id} can repeat, once per PTM
 #' site row of the same protein. When present, \code{entity_type},
 #' \code{entity_name}, \code{namespace}, \code{entity_id}, \code{site},
-#' \code{log2FC}, \code{adj.pvalue}, \code{measured}, \code{selected},
-#' \code{node_role}, and \code{has_measured_sites} are type-checked.
+#' \code{log2FC}, \code{adj.pvalue}, \code{measured},
+#' \code{included_in_query}, \code{node_role}, and \code{has_measured_sites}
+#' are type-checked.
 #' Nodes with \code{measured == FALSE} must have \code{NA} statistics.
 #'
 #' Confidence values are comparable within one \code{backend_database}, not

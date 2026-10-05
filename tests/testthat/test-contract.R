@@ -196,8 +196,13 @@ test_that("validate_network checks node vocabularies when the columns exist", {
                  "nodes\\$entity_type has value\\(s\\) outside the vocabulary: enzyme")
 
     network <- .valid_network()
-    network$nodes$node_role <- c("query", "query", "regulator")
+    network$nodes$node_role <- c("passed_cutoffs", "user_added",
+                                 "upstream_regulator")
     expect_silent(validate_network(network))
+
+    network$nodes$node_role[3] <- "regulator"
+    expect_error(validate_network(network),
+                 "nodes\\$node_role has value\\(s\\) outside the vocabulary: regulator")
 })
 
 test_that("validate_network requires NA statistics on latent nodes", {
