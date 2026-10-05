@@ -20,7 +20,7 @@
                 "https://db.indra.bio/statements/from_hash/-2?format=html"),
             statement_id = c("1", "-2"),
             source_db = "INDRA",
-            query_type = "induced",
+            query_type = "subnetwork",
             stringsAsFactors = FALSE
         )
     )

@@ -139,7 +139,7 @@ OPTIONAL_NODE_COLUMNS <- c(
 #'                                 "from_hash/-1234?format=html"),
 #'         statement_id = "-1234",
 #'         source_db = "INDRA",
-#'         query_type = "induced"
+#'         query_type = "subnetwork"
 #'     )
 #' )
 #' validate_network(network)
