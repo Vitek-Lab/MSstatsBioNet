@@ -53,17 +53,17 @@ NODE_ROLES <- c("query", "forced", "mediator", "regulator", "target",
 #' @keywords internal
 #' @noRd
 REQUIRED_EDGE_COLUMNS <- c(
-    source          = "character",
-    target          = "character",
-    interaction     = "character",
-    directed        = "logical",
-    site            = "character",
-    confidence      = "numeric",
-    evidence_count  = "integer",
-    evidence_url    = "character",
-    statement_id    = "character",
-    source_database = "character",
-    query_type      = "character"
+    source           = "character",
+    target           = "character",
+    interaction      = "character",
+    directed         = "logical",
+    site             = "character",
+    confidence       = "numeric",
+    evidence_count   = "integer",
+    evidence_url     = "character",
+    statement_id     = "character",
+    backend_database = "character",
+    query_type       = "character"
 )
 
 #' Required node columns and their types
@@ -105,7 +105,7 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 #' \code{NA} when the source provides no score), \code{evidence_count}
 #' (whole number, at least 1, not \code{NA}), \code{evidence_url},
-#' \code{statement_id} (character), \code{source_database}, and
+#' \code{statement_id} (character), \code{backend_database}, and
 #' \code{query_type}.
 #' Edges of the symmetric statement types \code{"Complex"} and
 #' \code{"Association"} must have \code{directed = FALSE}.
@@ -117,7 +117,7 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' \code{node_role}, and \code{has_measured_sites} are type-checked.
 #' Nodes with \code{measured == FALSE} must have \code{NA} statistics.
 #'
-#' Confidence values are comparable within one \code{source_database}, not
+#' Confidence values are comparable within one \code{backend_database}, not
 #' across sources.
 #'
 #' @param network list with \code{nodes} and \code{edges} data.frames.
@@ -141,7 +141,7 @@ OPTIONAL_NODE_COLUMNS <- c(
 #'         evidence_url = paste0("https://db.indra.bio/statements/",
 #'                                 "from_hash/-1234?format=html"),
 #'         statement_id = "-1234",
-#'         source_database = "INDRA",
+#'         backend_database = "INDRA",
 #'         query_type = "subnetwork"
 #'     )
 #' )
@@ -236,7 +236,7 @@ validate_network <- function(network) {
         }
     }
     for (col in c("source", "target", "interaction", "directed",
-                  "statement_id", "evidence_url", "source_database",
+                  "statement_id", "evidence_url", "backend_database",
                   "query_type")) {
         if (col %in% colnames(edges) && anyNA(edges[[col]])) {
             problems <- c(problems, paste0("edges$", col, " must not be NA"))
@@ -244,7 +244,8 @@ validate_network <- function(network) {
     }
     if (all(c("interaction", "directed") %in% colnames(edges)) &&
         is.logical(edges$directed)) {
-        symmetric_directed <- edges$interaction %in% UNDIRECTED_STATEMENT_TYPES &
+        symmetric_directed <-
+            edges$interaction %in% UNDIRECTED_STATEMENT_TYPES &
             edges$directed %in% TRUE
         if (any(symmetric_directed)) {
             problems <- c(problems, paste0(

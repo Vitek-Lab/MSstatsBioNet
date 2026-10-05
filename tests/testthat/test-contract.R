@@ -19,7 +19,7 @@
                 "https://db.indra.bio/statements/from_hash/1?format=html",
                 "https://db.indra.bio/statements/from_hash/-2?format=html"),
             statement_id = c("1", "-2"),
-            source_database = "INDRA",
+            backend_database = "INDRA",
             query_type = "subnetwork",
             stringsAsFactors = FALSE
         )
@@ -47,9 +47,9 @@ test_that("validate_network requires a list with nodes and edges data.frames", {
 test_that("validate_network reports missing required edge columns", {
     network <- .valid_network()
     network$edges$confidence <- NULL
-    network$edges$source_database <- NULL
+    network$edges$backend_database <- NULL
     expect_error(validate_network(network),
-                 "edges is missing required column\\(s\\): confidence, source_database")
+                 "edges is missing required column\\(s\\): confidence, backend_database")
 })
 
 test_that("validate_network reports a missing nodes$id column", {
