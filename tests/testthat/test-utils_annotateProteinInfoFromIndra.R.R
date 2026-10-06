@@ -1,7 +1,7 @@
 # Test .callGetUniprotIdsFromUniprotMnemonicIdsApi
 test_that(".callGetUniprotIdsFromUniprotMnemonicIdsApi works correctly", {
     uniprotMnemonicIds <- list("CLH1_HUMAN")
-    local_mocked_bindings(.callGetUniprotIdsFromUniprotMnemonicIdsApi = function(x) {
+    local_mocked_bindings(.callGetUniprotIdsFromUniprotMnemonicIdsApi = function(x, cogex_url) {
         return(list(CLH1_HUMAN = "Q00610"))
     })
     result <- .callGetUniprotIdsFromUniprotMnemonicIdsApi(uniprotMnemonicIds)
@@ -14,7 +14,7 @@ test_that(".callGetUniprotIdsFromUniprotMnemonicIdsApi works correctly", {
 # Test .callGetHgncIdsFromUniprotIdsApi
 test_that(".callGetHgncIdsFromUniprotIdsApi works correctly", {
     uniprotIds <- list("Q00610")
-    local_mocked_bindings(.callGetHgncIdsFromUniprotIdsApi = function(x) {
+    local_mocked_bindings(.callGetHgncIdsFromUniprotIdsApi = function(x, cogex_url) {
         return(list("Q00610" = "2092"))
     })
     result <- .callGetHgncIdsFromUniprotIdsApi(uniprotIds)
@@ -27,7 +27,7 @@ test_that(".callGetHgncIdsFromUniprotIdsApi works correctly", {
 # Test .callGetHgncNamesFromHgncIdsApi
 test_that(".callGetHgncNamesFromHgncIdsApi works correctly", {
     hgncIds <- list("2092")
-    local_mocked_bindings(.callGetHgncNamesFromHgncIdsApi = function(x) {
+    local_mocked_bindings(.callGetHgncNamesFromHgncIdsApi = function(x, cogex_url) {
         return(list("2092" = "CLTC"))
     })
     result <- .callGetHgncNamesFromHgncIdsApi(hgncIds)
@@ -40,7 +40,7 @@ test_that(".callGetHgncNamesFromHgncIdsApi works correctly", {
 # Test .callIsKinaseApi
 test_that(".callIsKinaseApi works correctly", {
     kinaseGenes <- list("CHEK1")
-    local_mocked_bindings(.callIsKinaseApi = function(x) {
+    local_mocked_bindings(.callIsKinaseApi = function(x, cogex_url) {
         return(list("CHEK1" = TRUE))
     })
     result <- .callIsKinaseApi(kinaseGenes)
@@ -53,7 +53,7 @@ test_that(".callIsKinaseApi works correctly", {
 # Test .callIsPhosphataseApi
 test_that(".callIsPhosphataseApi works correctly", {
     phosphataseGenes <- list("MTM1")
-    local_mocked_bindings(.callIsPhosphataseApi = function(x) {
+    local_mocked_bindings(.callIsPhosphataseApi = function(x, cogex_url) {
         return(list("MTM1" = TRUE))
     })
     result <- .callIsPhosphataseApi(phosphataseGenes)
@@ -66,7 +66,7 @@ test_that(".callIsPhosphataseApi works correctly", {
 # Test .callIsTranscriptionFactorApi
 test_that(".callIsTranscriptionFactorApi works correctly", {
     transcriptionFactorGenes <- list("STAT1")
-    local_mocked_bindings(.callIsTranscriptionFactorApi = function(x) {
+    local_mocked_bindings(.callIsTranscriptionFactorApi = function(x, cogex_url) {
         return(list("STAT1" = TRUE))
     })
     result <- .callIsTranscriptionFactorApi(transcriptionFactorGenes)
@@ -98,7 +98,7 @@ test_that(".callGroundEntitiesFromGildaApi returns aligned (ns, id, name) per in
 
 test_that(".callGroundEntitiesFromGildaApi keeps non-HGNC namespaces when keep_only is NULL (mocked)", {
     text_inputs <- list("EGFR", "glucose")
-    local_mocked_bindings(.callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL) {
+    local_mocked_bindings(.callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL, grounding_url) {
         list(
             EGFR    = list(ns = "HGNC",         id = "3236",  name = "EGFR"),
             glucose = list(ns = c("MESH", "CHEBI"),

@@ -12,18 +12,22 @@ setClass("NetworkBackend", representation("VIRTUAL"))
 
 #' INDRA backend
 #'
-#' Queries INDRA CoGEx. The Network Search and Gilda URLs are added with
-#' their first queries (Phase 7 and Phase 3 of the API refactor).
+#' Queries INDRA CoGEx, and grounds names with Gilda. The Network Search URL
+#' is added with its first query (Phase 7 of the API refactor).
 #' @slot cogex_url base URL of INDRA CoGEx
+#' @slot grounding_url base URL of Gilda
 #' @keywords internal
 #' @noRd
 setClass("IndraBackend", contains = "NetworkBackend",
-         representation(cogex_url = "character"))
+         representation(cogex_url = "character",
+                        grounding_url = "character"))
 
 setValidity("IndraBackend", function(object) {
-    if (length(object@cogex_url) != 1 || is.na(object@cogex_url) ||
-        !nzchar(object@cogex_url)) {
-        return("cogex_url must be a single non-empty string")
+    for (slot_name in c("cogex_url", "grounding_url")) {
+        url <- methods::slot(object, slot_name)
+        if (length(url) != 1 || is.na(url) || !nzchar(url)) {
+            return(paste(slot_name, "must be a single non-empty string"))
+        }
     }
     TRUE
 })

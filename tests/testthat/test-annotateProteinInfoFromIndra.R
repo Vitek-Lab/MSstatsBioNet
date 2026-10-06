@@ -168,15 +168,15 @@ test_that("annotateProteinInfoFromIndra grounds each Uniprot protein group membe
     df <- data.frame(Protein = c("P13747;P23132", "Q00610"),
                      stringsAsFactors = FALSE)
     local_mocked_bindings(
-        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds) {
+        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds, cogex_url) {
             list(P13747 = "4931", P23132 = "10012", Q00610 = "2092")
         },
-        .callGetHgncNamesFromHgncIdsApi = function(hgncIds) {
+        .callGetHgncNamesFromHgncIdsApi = function(hgncIds, cogex_url) {
             list(`4931` = "HLA-E", `10012` = "RAD23A", `2092` = "CLTC")
         },
-        .callIsTranscriptionFactorApi = function(genes) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE),
-        .callIsKinaseApi = function(genes) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE),
-        .callIsPhosphataseApi = function(genes) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE)
+        .callIsTranscriptionFactorApi = function(genes, cogex_url) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE),
+        .callIsKinaseApi = function(genes, cogex_url) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE),
+        .callIsPhosphataseApi = function(genes, cogex_url) list(RAD23A = FALSE, `HLA-E` = FALSE, CLTC = FALSE)
     )
     annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot")
 
@@ -199,13 +199,13 @@ test_that("annotateProteinInfoFromIndra grounds each Uniprot protein group membe
 test_that("a protein group whose members share a gene collapses to one grounding", {
     df <- data.frame(Protein = "P13747;P13747-2", stringsAsFactors = FALSE)
     local_mocked_bindings(
-        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds) {
+        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds, cogex_url) {
             list(P13747 = "4931", `P13747-2` = "4931")
         },
-        .callGetHgncNamesFromHgncIdsApi = function(hgncIds) list(`4931` = "HLA-E"),
-        .callIsTranscriptionFactorApi = function(genes) list(`HLA-E` = FALSE),
-        .callIsKinaseApi = function(genes) list(`HLA-E` = FALSE),
-        .callIsPhosphataseApi = function(genes) list(`HLA-E` = TRUE)
+        .callGetHgncNamesFromHgncIdsApi = function(hgncIds, cogex_url) list(`4931` = "HLA-E"),
+        .callIsTranscriptionFactorApi = function(genes, cogex_url) list(`HLA-E` = FALSE),
+        .callIsKinaseApi = function(genes, cogex_url) list(`HLA-E` = FALSE),
+        .callIsPhosphataseApi = function(genes, cogex_url) list(`HLA-E` = TRUE)
     )
     annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot")
 
@@ -220,11 +220,11 @@ test_that("unresolvable protein group members are dropped, not carried as NA", {
     df <- data.frame(Protein = c("P13747;NOTANID", "NOTANID;ALSONOT"),
                      stringsAsFactors = FALSE)
     local_mocked_bindings(
-        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds) list(P13747 = "4931"),
-        .callGetHgncNamesFromHgncIdsApi = function(hgncIds) list(`4931` = "HLA-E"),
-        .callIsTranscriptionFactorApi = function(genes) list(`HLA-E` = FALSE),
-        .callIsKinaseApi = function(genes) list(`HLA-E` = FALSE),
-        .callIsPhosphataseApi = function(genes) list(`HLA-E` = FALSE)
+        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds, cogex_url) list(P13747 = "4931"),
+        .callGetHgncNamesFromHgncIdsApi = function(hgncIds, cogex_url) list(`4931` = "HLA-E"),
+        .callIsTranscriptionFactorApi = function(genes, cogex_url) list(`HLA-E` = FALSE),
+        .callIsKinaseApi = function(genes, cogex_url) list(`HLA-E` = FALSE),
+        .callIsPhosphataseApi = function(genes, cogex_url) list(`HLA-E` = FALSE)
     )
     annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot")
 
@@ -242,18 +242,18 @@ test_that("Uniprot_Mnemonic groups map each member to its own UniProt id", {
     df <- data.frame(Protein = c("CLH1_HUMAN;HLAE_HUMAN", "CLH1_HUMAN;NOPE_HUMAN"),
                      stringsAsFactors = FALSE)
     local_mocked_bindings(
-        .callGetUniprotIdsFromUniprotMnemonicIdsApi = function(uniprotMnemonicIds) {
+        .callGetUniprotIdsFromUniprotMnemonicIdsApi = function(uniprotMnemonicIds, cogex_url) {
             list(CLH1_HUMAN = "Q00610", HLAE_HUMAN = "P13747")
         },
-        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds) {
+        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds, cogex_url) {
             list(Q00610 = "2092", P13747 = "4931")
         },
-        .callGetHgncNamesFromHgncIdsApi = function(hgncIds) {
+        .callGetHgncNamesFromHgncIdsApi = function(hgncIds, cogex_url) {
             list(`2092` = "CLTC", `4931` = "HLA-E")
         },
-        .callIsTranscriptionFactorApi = function(genes) list(CLTC = FALSE),
-        .callIsKinaseApi = function(genes) list(CLTC = FALSE),
-        .callIsPhosphataseApi = function(genes) list(CLTC = FALSE)
+        .callIsTranscriptionFactorApi = function(genes, cogex_url) list(CLTC = FALSE),
+        .callIsKinaseApi = function(genes, cogex_url) list(CLTC = FALSE),
+        .callIsPhosphataseApi = function(genes, cogex_url) list(CLTC = FALSE)
     )
     annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot_Mnemonic")
 
@@ -271,13 +271,13 @@ test_that("Hgnc_Name groups pool and deduplicate Gilda groundings", {
     df <- data.frame(Protein = c("EGFR;ERBB2", "EGFR;EGFR"),
                      stringsAsFactors = FALSE)
     local_mocked_bindings(
-        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL) {
+        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL, grounding_url) {
             list(EGFR  = list(ns = "HGNC", id = "3236", name = "EGFR"),
                  ERBB2 = list(ns = "HGNC", id = "3430", name = "ERBB2"))
         },
-        .callIsTranscriptionFactorApi = function(genes) list(EGFR = FALSE),
-        .callIsKinaseApi = function(genes) list(EGFR = TRUE),
-        .callIsPhosphataseApi = function(genes) list(EGFR = FALSE)
+        .callIsTranscriptionFactorApi = function(genes, cogex_url) list(EGFR = FALSE),
+        .callIsKinaseApi = function(genes, cogex_url) list(EGFR = TRUE),
+        .callIsPhosphataseApi = function(genes, cogex_url) list(EGFR = FALSE)
     )
     annotated_df <- annotateProteinInfoFromIndra(df, "Hgnc_Name")
 
@@ -293,7 +293,7 @@ test_that("Hgnc_Name groups pool and deduplicate Gilda groundings", {
 test_that("Metabolite groups keep every namespace Gilda returns per member", {
     df <- data.frame(Protein = "glucose;citrate", stringsAsFactors = FALSE)
     local_mocked_bindings(
-        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL) {
+        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL, grounding_url) {
             list(glucose = list(ns   = c("CHEBI", "MESH"),
                                 id   = c("17234", "D005947"),
                                 name = c("glucose", "Glucose")),
@@ -312,15 +312,15 @@ test_that("Metabolite groups keep every namespace Gilda returns per member", {
 test_that("a protein group's groundings fan out into separate query nodes", {
     df <- data.frame(Protein = "P13747;P23132", stringsAsFactors = FALSE)
     local_mocked_bindings(
-        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds) {
+        .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds, cogex_url) {
             list(P13747 = "4931", P23132 = "10012")
         },
-        .callGetHgncNamesFromHgncIdsApi = function(hgncIds) {
+        .callGetHgncNamesFromHgncIdsApi = function(hgncIds, cogex_url) {
             list(`4931` = "HLA-E", `10012` = "RAD23A")
         },
-        .callIsTranscriptionFactorApi = function(genes) list(),
-        .callIsKinaseApi = function(genes) list(),
-        .callIsPhosphataseApi = function(genes) list()
+        .callIsTranscriptionFactorApi = function(genes, cogex_url) list(),
+        .callIsKinaseApi = function(genes, cogex_url) list(),
+        .callIsPhosphataseApi = function(genes, cogex_url) list()
     )
     annotated_df <- annotateProteinInfoFromIndra(df, "Uniprot")
 

@@ -87,11 +87,11 @@
 #' @importFrom jsonlite fromJSON
 #' @keywords internal
 #' @noRd
-.filterIndraResponse <- function(res, statement_types, evidence_count_cutoff, 
+.filterIndraResponse <- function(res, statement_types, evidence_count_cutoff,
                                  sources_filter = NULL) {
     if (!is.null(statement_types)) {
         res = Filter(
-            function(statement) statement$data$stmt_type %in% statement_types, 
+            function(statement) statement$data$stmt_type %in% statement_types,
             res)
     }
     if (!is.null(sources_filter)) {
@@ -100,12 +100,12 @@
                 parsed <- tryCatch(fromJSON(statement$data$source_counts), error = function(e) NULL)
                 if (is.null(parsed)) return(FALSE)
                 return(any(names(parsed) %in% sources_filter))
-            }, 
+            },
             res
         )
     }
     res = Filter(
-        function(statement) statement$data$evidence_count >= evidence_count_cutoff, 
+        function(statement) statement$data$evidence_count >= evidence_count_cutoff,
         res
     )
     return(res)
@@ -194,7 +194,7 @@
         } else {
             edge$site = NA_character_
         }
-        if (!key %in% keys(edgeToMetadataMapping) || 
+        if (!key %in% keys(edgeToMetadataMapping) ||
             edge$data$evidence_count > edgeToMetadataMapping[[key]]$data$evidence_count) {
             edge <- .addAdditionalMetadataToIndraEdge(edge, input)
             edge$data$paper_count <- 1 # TODO: fix paper count
@@ -240,4 +240,268 @@
         stringsAsFactors = FALSE
     )
     return(edges)
+}
+
+# CoGEx ID-mapping and entity-property calls, used by convert_ids() and
+# get_entity_properties(). Moved from utils_annotateProteinInfoFromIndra.R in
+# Phase 3 of the API refactor.
+
+#' Call API to get UniProt IDs from UniProt mnemonic IDs
+#' @param uniprotMnemonicIds list of UniProt mnemonic ids
+#' @param cogex_url base URL of INDRA CoGEx
+#' @return list of UniProt IDs
+#' @importFrom jsonlite toJSON
+#' @importFrom httr POST add_headers content
+#' @keywords internal
+#' @noRd
+.callGetUniprotIdsFromUniprotMnemonicIdsApi <- function(uniprotMnemonicIds, cogex_url = INDRA_API_URL) {
+
+    if (!is.list(uniprotMnemonicIds)) {
+        stop("Input must be a list.")
+    }
+
+    if (length(uniprotMnemonicIds) == 0) {
+        stop("Input list must not be empty.")
+    }
+
+    tryCatch({
+        # Attempt to convert all elements to character if not already character
+        uniprotMnemonicIds <- lapply(uniprotMnemonicIds, function(x) {
+            if (!is.character(x)) {
+                as.character(x)
+            } else {
+                x
+            }
+        })
+
+        # Check if conversion was successful
+        if (any(!sapply(uniprotMnemonicIds, is.character))) {
+            stop("All elements in the list must be character strings representing UniProt mnemonic IDs.")
+        }
+    }, error = function(e) {
+        stop("An error occurred converting uniprot mnemonic IDs to character strings: ", e$message)
+    })
+
+    apiUrl <- file.path(cogex_url, "api/get_uniprot_ids_from_uniprot_mnemonic_ids")
+
+    requestBody <- list(uniprot_mnemonic_ids = uniprotMnemonicIds)
+    requestBody <- jsonlite::toJSON(requestBody, auto_unbox = TRUE)
+    res <- tryCatch({
+        response <- POST(
+            apiUrl,
+            body = requestBody,
+            add_headers("Content-Type" = "application/json"),
+            encode = "raw"
+        )
+        content(response)
+    }, error = function(e) {
+        message("Error in API call: ", e)
+        NULL
+    })
+    return(res)
+}
+
+#' Call API to get HGNC IDs from UniProt IDs
+#' @param uniprotIds list of UniProt IDs
+#' @param cogex_url base URL of INDRA CoGEx
+#' @return list of HGNC IDs
+#' @importFrom jsonlite toJSON
+#' @importFrom httr POST add_headers content
+#' @keywords internal
+#' @noRd
+.callGetHgncIdsFromUniprotIdsApi <- function(uniprotIds, cogex_url = INDRA_API_URL) {
+
+    if (!is.list(uniprotIds)) {
+        stop("Input must be a list.")
+    }
+
+    if (any(!sapply(uniprotIds, is.character))) {
+        stop("All elements in the list must be character strings representing UniProt IDs.")
+    }
+
+    if (length(uniprotIds) == 0) {
+        stop("Input list must not be empty.")
+    }
+
+    apiUrl <- file.path(cogex_url, "api/get_hgnc_ids_from_uniprot_ids")
+
+    requestBody <- list(uniprot_ids = uniprotIds)
+    requestBody <- jsonlite::toJSON(requestBody, auto_unbox = TRUE)
+    res <- tryCatch({
+        response <- POST(
+            apiUrl,
+            body = requestBody,
+            add_headers("Content-Type" = "application/json"),
+            encode = "raw"
+        )
+        content(response)
+    }, error = function(e) {
+        message("Error in API call: ", e)
+        NULL
+    })
+    return(res)
+}
+
+#' Call API to get HGNC names from HGNC IDs
+#' @param hgncIds list of HGNC IDs
+#' @param cogex_url base URL of INDRA CoGEx
+#' @return list of HGNC names
+#' @importFrom jsonlite toJSON
+#' @importFrom httr POST add_headers content
+#' @keywords internal
+#' @noRd
+.callGetHgncNamesFromHgncIdsApi <- function(hgncIds, cogex_url = INDRA_API_URL) {
+
+    if (!is.list(hgncIds)) {
+        stop("Input must be a list.")
+    }
+
+    if (any(!sapply(hgncIds, is.character))) {
+        stop("All elements in the list must be character strings representing HGNC IDs.")
+    }
+
+    if (length(hgncIds) == 0) {
+        stop("Input list must not be empty.")
+    }
+
+    apiUrl <- file.path(cogex_url, "api/get_hgnc_names_from_hgnc_ids")
+
+    requestBody <- list(hgnc_ids = hgncIds)
+    requestBody <- jsonlite::toJSON(requestBody, auto_unbox = TRUE)
+    res <- tryCatch({
+        response <- POST(
+            apiUrl,
+            body = requestBody,
+            add_headers("Content-Type" = "application/json"),
+            encode = "raw"
+        )
+        content(response)
+    }, error = function(e) {
+        message("Error in API call: ", e)
+        NULL
+    })
+    return(res)
+}
+
+#' Call API to check if genes are kinases
+#' @param genes list of gene names
+#' @param cogex_url base URL of INDRA CoGEx
+#' @return list indicating if genes are kinases
+#' @importFrom jsonlite toJSON
+#' @importFrom httr POST add_headers content
+#' @keywords internal
+#' @noRd
+.callIsKinaseApi <- function(genes, cogex_url = INDRA_API_URL) {
+
+    if (!is.list(genes)) {
+        stop("Input must be a list.")
+    }
+
+    if (any(!sapply(genes, is.character))) {
+        stop("All elements in the list must be character strings representing gene names.")
+    }
+
+    if (length(genes) == 0) {
+        stop("Input list must not be empty.")
+    }
+
+    apiUrl <- file.path(cogex_url, "api/is_kinase")
+
+    requestBody <- list(genes = genes)
+    requestBody <- jsonlite::toJSON(requestBody, auto_unbox = TRUE)
+    res <- tryCatch({
+        response <- POST(
+            apiUrl,
+            body = requestBody,
+            add_headers("Content-Type" = "application/json"),
+            encode = "raw"
+        )
+        content(response)
+    }, error = function(e) {
+        message("Error in API call: ", e)
+        NULL
+    })
+    return(res)
+}
+
+#' Call API to check if genes are phosphatases
+#' @param genes list of gene names
+#' @param cogex_url base URL of INDRA CoGEx
+#' @return list indicating if genes are phosphatases
+#' @importFrom jsonlite toJSON
+#' @importFrom httr POST add_headers content
+#' @keywords internal
+#' @noRd
+.callIsPhosphataseApi <- function(genes, cogex_url = INDRA_API_URL) {
+
+    if (!is.list(genes)) {
+        stop("Input must be a list.")
+    }
+
+    if (any(!sapply(genes, is.character))) {
+        stop("All elements in the list must be character strings representing gene names.")
+    }
+
+    if (length(genes) == 0) {
+        stop("Input list must not be empty.")
+    }
+
+    apiUrl <- file.path(cogex_url, "api/is_phosphatase")
+
+    requestBody <- list(genes = genes)
+    requestBody <- jsonlite::toJSON(requestBody, auto_unbox = TRUE)
+    res <- tryCatch({
+        response <- POST(
+            apiUrl,
+            body = requestBody,
+            add_headers("Content-Type" = "application/json"),
+            encode = "raw"
+        )
+        content(response)
+    }, error = function(e) {
+        message("Error in API call: ", e)
+        NULL
+    })
+    return(res)
+}
+
+#' Call API to check if genes are transcription factors
+#' @param genes list of gene names
+#' @param cogex_url base URL of INDRA CoGEx
+#' @return list indicating if genes are transcription factors
+#' @importFrom jsonlite toJSON
+#' @importFrom httr POST add_headers content
+#' @keywords internal
+#' @noRd
+.callIsTranscriptionFactorApi <- function(genes, cogex_url = INDRA_API_URL) {
+
+    if (!is.list(genes)) {
+        stop("Input must be a list.")
+    }
+
+    if (any(!sapply(genes, is.character))) {
+        stop("All elements in the list must be character strings representing gene names.")
+    }
+
+    if (length(genes) == 0) {
+        stop("Input list must not be empty.")
+    }
+
+    apiUrl <- file.path(cogex_url, "api/is_transcription_factor")
+
+    requestBody <- list(genes = genes)
+    requestBody <- jsonlite::toJSON(requestBody, auto_unbox = TRUE)
+    res <- tryCatch({
+        response <- POST(
+            apiUrl,
+            body = requestBody,
+            add_headers("Content-Type" = "application/json"),
+            encode = "raw"
+        )
+        content(response)
+    }, error = function(e) {
+        message("Error in API call: ", e)
+        NULL
+    })
+    return(res)
 }
