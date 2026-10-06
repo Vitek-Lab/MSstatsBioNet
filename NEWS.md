@@ -5,7 +5,7 @@
 * New function `validate_network()` checks a `list(nodes, edges)` network
 against the edge and node contract (v1.0): required columns and types, the
 statement-type and entity-type vocabularies, value ranges, `NA` statistics
-on unmeasured nodes, and that every edge endpoint is a node. It stops with
+on nodes that are not in the input data, and that every edge endpoint is a node. It stops with
 an error listing every problem found.
 
 ## Breaking changes
@@ -38,7 +38,7 @@ stops with an error instead of returning a network that breaks the contract.
 * `cytoscapeNetwork()` now errors when `displayLabelType` is not `"id"` or
 `"entity_name"`. Other values used to fall back to `"id"` silently.
 * The nodes returned by `getSubnetworkFromIndra()` say whether each node
-was measured and why it is in the network. New columns: `entity_type`
+is in the input data and why it is in the network. New columns: `entity_type`
 (`"protein"`, `"ptm_site"`, `"metabolite"`, `"family"`, ...), `measured`
 (`TRUE` for analytes in `input`), `included_in_query`, `node_role`
 (`"passed_cutoffs"`, or `"user_added"` for nodes there only through
@@ -47,8 +47,8 @@ PTM site rows). `nodes` is now always a data.frame, also when `input` is a
 data.table.
 * Nodes added through `force_include_other` that are not in `input` have
 `NA` for `logFC` and `adj.pvalue`, and `measured = FALSE`. They used to get
-`logFC = 0` and `adj.pvalue = 1`, which looked like a measured protein with
-no change. They now also carry INDRA's namespace and identifier, and an
+`logFC = 0` and `adj.pvalue = 1`, which looked like a protein in the input data
+with no change. They now also carry INDRA's namespace and identifier, and an
 `entity_type` from the namespace (FamPlex families are `"family"`).
 * INDRA statements between identifiers that are equal but in different
 namespaces (`HGNC:1234` and `CHEBI:1234`) are no longer merged into one

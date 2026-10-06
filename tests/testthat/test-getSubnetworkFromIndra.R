@@ -205,7 +205,8 @@ test_that("getSubnetworkFromIndra reproduces the pinned golden output", {
 
 # ----- Node status (Phase 3c of the API refactor) -----
 
-# A minimal INDRA statement, as .callIndraCogexApi() returns it
+# A minimal INDRA statement, as .callIndraCogexApi() returns it. source and
+# target are c(namespace, identifier, INDRA name).
 .make_statement <- function(source, target, stmt_type = "Activation",
                             hash = "1", evidence_count = 1L) {
     list(
@@ -286,11 +287,11 @@ test_that("force_include_other in the input keeps the row's statistics, as user_
     subnetwork <- .run_with_statements(input, statements, pvalueCutoff = 0.05,
                                        force_include_other = "HGNC:2")
     nodes <- subnetwork$nodes
-    b <- nodes[nodes$id == "B", ]
-    expect_true(b$measured)
-    expect_equal(b$logFC, 0.01)
-    expect_equal(b$adj.pvalue, 0.9)
-    expect_equal(b$node_role, "user_added")
+    node_b <- nodes[nodes$id == "B", ]
+    expect_true(node_b$measured)
+    expect_equal(node_b$logFC, 0.01)
+    expect_equal(node_b$adj.pvalue, 0.9)
+    expect_equal(node_b$node_role, "user_added")
     expect_equal(nodes$node_role[nodes$id == "A"], "passed_cutoffs")
 })
 
@@ -312,10 +313,10 @@ test_that("a node matching rows of several nodes keeps INDRA's name and NA stati
     expect_message(
         subnetwork <- .run_with_statements(input, statements),
         "1 node\\(s\\) from the backend match entities of several nodes.*GENEA")
-    genea <- subnetwork$nodes[subnetwork$nodes$id == "GENEA", ]
-    expect_true(genea$measured)
-    expect_true(is.na(genea$logFC))
-    expect_equal(genea$node_role, "passed_cutoffs")
+    ambiguous_node <- subnetwork$nodes[subnetwork$nodes$id == "GENEA", ]
+    expect_true(ambiguous_node$measured)
+    expect_true(is.na(ambiguous_node$logFC))
+    expect_equal(ambiguous_node$node_role, "passed_cutoffs")
     expect_silent(validate_network(subnetwork))
 })
 
@@ -342,12 +343,12 @@ test_that("PTM site rows become rows of the protein's node, with has_measured_si
         .make_statement(c("HGNC", "2", "GENEB"), c("HGNC", "1", "GENEA")))
     subnetwork <- .run_with_statements(input, statements)
     nodes <- subnetwork$nodes
-    p1 <- nodes[nodes$id == "P1", ]
-    expect_equal(p1$site, c("S10", "S20"))
-    expect_equal(p1$logFC, c(1, 2))
-    expect_true(all(p1$entity_type == "ptm_site"))
-    expect_true(all(p1$has_measured_sites))
-    expect_true(all(p1$measured))
+    p1_rows <- nodes[nodes$id == "P1", ]
+    expect_equal(p1_rows$site, c("S10", "S20"))
+    expect_equal(p1_rows$logFC, c(1, 2))
+    expect_true(all(p1_rows$entity_type == "ptm_site"))
+    expect_true(all(p1_rows$has_measured_sites))
+    expect_true(all(p1_rows$measured))
     expect_false(nodes$has_measured_sites[nodes$id == "P2"])
     expect_equal(subnetwork$edges$target, "P1")
 })

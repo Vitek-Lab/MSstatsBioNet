@@ -113,19 +113,20 @@
 
 #' Add additional metadata to an edge
 #' @param edge object representation of an INDRA statement
-#' @param index entity rows by grounding, from \code{.build_endpoint_index()}
+#' @param grounding_lookup the entity rows of each grounding, from
+#' \code{.build_grounding_lookup()}
 #' @return edge with additional metadata
 #' @keywords internal
 #' @noRd
-.addAdditionalMetadataToIndraEdge <- function(edge, index) {
+.addAdditionalMetadataToIndraEdge <- function(edge, grounding_lookup) {
     edge$evidence_url <- .indraStatementUrl(edge$statement_id)
     # Map each grounded INDRA endpoint back to the node of its entity row,
     # matching namespace and identifier, so a multi-grounded row is found
     # by any of its groundings.
-    edge$source_node_id <- .match_endpoint_node_id(
-        index, edge$source_ns, edge$source_id, edge$source_name)
-    edge$target_node_id <- .match_endpoint_node_id(
-        index, edge$target_ns, edge$target_id, edge$target_name)
+    edge$source_node_id <- .find_node_id_for_grounding(
+        grounding_lookup, edge$source_ns, edge$source_id, edge$source_name)
+    edge$target_node_id <- .find_node_id_for_grounding(
+        grounding_lookup, edge$target_ns, edge$target_id, edge$target_name)
     return(edge)
 }
 
@@ -142,13 +143,14 @@
 
 #' Collapse duplicate INDRA statements into a mapping of edge to metadata
 #' @param res INDRA response
-#' @param index entity rows by grounding, from \code{.build_endpoint_index()}
+#' @param grounding_lookup the entity rows of each grounding, from
+#' \code{.build_grounding_lookup()}
 #' @importFrom jsonlite fromJSON
 #' @importFrom r2r hashmap keys
 #' @return processed edge to metadata mapping
 #' @keywords internal
 #' @noRd
-.collapseDuplicateEdgesIntoEdgeToMetadataMapping <- function(res, index) {
+.collapseDuplicateEdgesIntoEdgeToMetadataMapping <- function(res, grounding_lookup) {
     edgeToMetadataMapping <- hashmap()
 
     for (edge in res) {
@@ -168,7 +170,7 @@
         }
         if (!key %in% keys(edgeToMetadataMapping) ||
             edge$data$evidence_count > edgeToMetadataMapping[[key]]$data$evidence_count) {
-            edge <- .addAdditionalMetadataToIndraEdge(edge, index)
+            edge <- .addAdditionalMetadataToIndraEdge(edge, grounding_lookup)
             edge$data$paper_count <- 1 # TODO: fix paper count
             edgeToMetadataMapping[[key]] <- edge
         }
@@ -179,14 +181,15 @@
 
 #' Construct edges data.frame from INDRA response
 #' @param res INDRA response
-#' @param index entity rows by grounding, from \code{.build_endpoint_index()}
+#' @param grounding_lookup the entity rows of each grounding, from
+#' \code{.build_grounding_lookup()}
 #' @importFrom r2r query keys
 #' @importFrom jsonlite fromJSON
 #' @return edge data.frame
 #' @keywords internal
 #' @noRd
-.constructEdgesDataFrame <- function(res, index) {
-    res <- .collapseDuplicateEdgesIntoEdgeToMetadataMapping(res, index)
+.constructEdgesDataFrame <- function(res, grounding_lookup) {
+    res <- .collapseDuplicateEdgesIntoEdgeToMetadataMapping(res, grounding_lookup)
     statements <- lapply(keys(res), function(x) query(res, x))
     interaction <- vapply(statements, function(x) x$data$stmt_type, "")
     edges <- data.frame(

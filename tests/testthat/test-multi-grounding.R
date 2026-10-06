@@ -58,7 +58,7 @@ test_that(".buildCogexGroundings errors on bad force_include_other format", {
     )
 })
 
-# ----- Endpoint matching + .addAdditionalMetadataToIndraEdge membership round-trip -----
+# ----- Grounding lookup + .addAdditionalMetadataToIndraEdge membership round-trip -----
 
 .multi_grounded_entities <- function(included_in_query = c(TRUE, TRUE)) {
     entities <- MSstatsBioNet:::.build_entities_from_annotated_input(data.frame(
@@ -74,47 +74,47 @@ test_that(".buildCogexGroundings errors on bad force_include_other format", {
     entities
 }
 
-test_that(".match_endpoint_rows matches a (ns, id) endpoint via membership in ;-split entity_id", {
-    index <- MSstatsBioNet:::.build_endpoint_index(.multi_grounded_entities())
+test_that(".find_entity_rows_for_grounding matches a (namespace, identifier) grounding via membership in ;-split entity_id", {
+    grounding_lookup <- MSstatsBioNet:::.build_grounding_lookup(.multi_grounded_entities())
 
-    expect_equal(MSstatsBioNet:::.match_endpoint_rows(index, "CHEBI", "17234"), 1L)
-    expect_equal(MSstatsBioNet:::.match_endpoint_rows(index, "HGNC", "1097"), 2L)
+    expect_equal(MSstatsBioNet:::.find_entity_rows_for_grounding(grounding_lookup, "CHEBI", "17234"), 1L)
+    expect_equal(MSstatsBioNet:::.find_entity_rows_for_grounding(grounding_lookup, "HGNC", "1097"), 2L)
     # The id 17234 appears in FOO but only under namespace CHEBI, so a HGNC:17234
     # query must NOT match — namespace-awareness is the whole point.
-    expect_equal(MSstatsBioNet:::.match_endpoint_rows(index, "HGNC", "17234"),
+    expect_equal(MSstatsBioNet:::.find_entity_rows_for_grounding(grounding_lookup, "HGNC", "17234"),
                  integer(0))
 })
 
-test_that(".match_endpoint_rows prefers rows in the query", {
+test_that(".find_entity_rows_for_grounding prefers rows in the query", {
     entities <- .multi_grounded_entities(c(TRUE, FALSE))
     entities$entity_id[2] <- "3815"
-    index <- MSstatsBioNet:::.build_endpoint_index(entities)
-    expect_equal(MSstatsBioNet:::.match_endpoint_rows(index, "HGNC", "3815"), 1L)
+    grounding_lookup <- MSstatsBioNet:::.build_grounding_lookup(entities)
+    expect_equal(MSstatsBioNet:::.find_entity_rows_for_grounding(grounding_lookup, "HGNC", "3815"), 1L)
     # A grounding no queried row has is matched against all rows
     entities$entity_id[2] <- "1097"
-    index <- MSstatsBioNet:::.build_endpoint_index(entities)
-    expect_equal(MSstatsBioNet:::.match_endpoint_rows(index, "HGNC", "1097"), 2L)
+    grounding_lookup <- MSstatsBioNet:::.build_grounding_lookup(entities)
+    expect_equal(MSstatsBioNet:::.find_entity_rows_for_grounding(grounding_lookup, "HGNC", "1097"), 2L)
 })
 
 test_that(".addAdditionalMetadataToIndraEdge recovers original Protein from a multi-grounded endpoint", {
-    index <- MSstatsBioNet:::.build_endpoint_index(.multi_grounded_entities())
+    grounding_lookup <- MSstatsBioNet:::.build_grounding_lookup(.multi_grounded_entities())
     edge <- list(
         source_id = "17234", source_ns = "CHEBI", source_name = "glucose",
         target_id = "1097",  target_ns = "HGNC",  target_name = "A1BG"
     )
-    out <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(edge, index)
-    expect_equal(out$source_node_id, "FOO") # not "17234" or "glucose"
-    expect_equal(out$target_node_id, "BAR") # not "1097" or "A1BG"
+    edge_with_node_ids <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(edge, grounding_lookup)
+    expect_equal(edge_with_node_ids$source_node_id, "FOO") # not "17234" or "glucose"
+    expect_equal(edge_with_node_ids$target_node_id, "BAR") # not "1097" or "A1BG"
 })
 
 # ----- .build_network_nodes carries entity_name + entity_id -----
 
 test_that(".build_network_nodes emits the node contract columns", {
-    index <- MSstatsBioNet:::.build_endpoint_index(.multi_grounded_entities())
+    grounding_lookup <- MSstatsBioNet:::.build_grounding_lookup(.multi_grounded_entities())
     edges <- data.frame(source = c("FOO"), target = c("BAR"),
                         stringsAsFactors = FALSE)
     nodes <- MSstatsBioNet:::.build_network_nodes(
-        index, edges, MSstatsBioNet:::.collect_indra_endpoints(list(), index))
+        grounding_lookup, edges, MSstatsBioNet:::.list_statement_endpoints(list(), grounding_lookup))
     expect_equal(colnames(nodes),
                  c("id", "entity_type", "entity_name", "namespace", "entity_id",
                    "measured", "included_in_query", "node_role", "site",
@@ -127,8 +127,8 @@ test_that(".build_network_nodes emits the node contract columns", {
 
 # ----- < 400 guard counts post-split unique pairs -----
 
-test_that(".validateIndraSubnetworkInput counts unique (ns, id) pairs AFTER ;-splitting", {
-    .groundings <- function(namespace, entity_id) {
+test_that(".validateIndraSubnetworkInput counts unique (namespace, identifier) groundings after ;-splitting", {
+    .build_query_groundings <- function(namespace, entity_id) {
         entities <- MSstatsBioNet:::.build_entities_from_annotated_input(data.frame(
             Protein         = paste0("P", 1:200),
             log2FC          = rep(1.0, 200),
@@ -138,12 +138,12 @@ test_that(".validateIndraSubnetworkInput counts unique (ns, id) pairs AFTER ;-sp
             EntityName      = gsub("[0-9]+", "name", entity_id),
             stringsAsFactors = FALSE
         ))
-        MSstatsBioNet:::.get_query_groundings(entities)
+        MSstatsBioNet:::.get_groundings_to_query(entities)
     }
     # 200 rows × 2 pairs each = 400 unique pairs → fails the < 400 guard
     expect_error(
         MSstatsBioNet:::.validateIndraSubnetworkInput(
-            .groundings(rep("HGNC;CHEBI", 200), paste0(1:200, ";C", 1:200)),
+            .build_query_groundings(rep("HGNC;CHEBI", 200), paste0(1:200, ";C", 1:200)),
             evidence_sources = NULL, include_entities = NULL
         ),
         "less than 400 proteins"
@@ -152,7 +152,7 @@ test_that(".validateIndraSubnetworkInput counts unique (ns, id) pairs AFTER ;-sp
     # 200 rows × 1 pair each = 200 unique pairs → passes
     expect_silent(
         MSstatsBioNet:::.validateIndraSubnetworkInput(
-            .groundings(rep("HGNC", 200), as.character(1:200)),
+            .build_query_groundings(rep("HGNC", 200), as.character(1:200)),
             evidence_sources = NULL, include_entities = NULL
         )
     )

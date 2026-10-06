@@ -10,12 +10,12 @@
 #' @noRd
 .validateGetSubnetworkFromIndraInput <- function(input, protein_level_data = NULL,
                                                  force_include_other = NULL) {
-    required_cols <- c("Protein", "log2FC", "adj.pvalue",
+    required_columns <- c("Protein", "log2FC", "adj.pvalue",
                        "EntityNamespace", "EntityId", "EntityName")
-    missing_cols <- setdiff(required_cols, colnames(input))
-    if (length(missing_cols) > 0) {
+    missing_columns <- setdiff(required_columns, colnames(input))
+    if (length(missing_columns) > 0) {
         stop("Invalid Input Error: input is missing required column(s): ",
-             paste(missing_cols, collapse = ", "), ".")
+             paste(missing_columns, collapse = ", "), ".")
     }
     if ("Label" %in% colnames(input)) {
         labels <- unique(input$Label[!is.na(input$Label)])
@@ -54,16 +54,17 @@
     input$Protein <- as.character(input$Protein)
     first_namespace <- vapply(strsplit(as.character(input$EntityNamespace),
                                        ";", fixed = TRUE),
-                              function(x) x[1], character(1))
+                              function(namespaces) namespaces[1],
+                              character(1))
     entity_types <- .get_namespace_entity_types(first_namespace)
     entity_types[is.na(first_namespace) | entity_types == "other"] <- "protein"
     entity_types[!is.na(parse_ptm_sites(input$Protein)$site)] <- "ptm_site"
-    input$.entity_type <- entity_types
-    input$.id_type <- ifelse(entity_types %in% c("protein", "ptm_site"),
+    input$inferred_entity_type <- entity_types
+    input$inferred_id_type <- ifelse(entity_types %in% c("protein", "ptm_site"),
                              "uniprot", "chemical_name")
     entities <- prepare_entities(input, id_column = "Protein",
-                                 entity_type = ".entity_type",
-                                 id_type = ".id_type",
+                                 entity_type = "inferred_entity_type",
+                                 id_type = "inferred_id_type",
                                  logfc_column = "log2FC")
     # fread reads numeric IDs (e.g. HGNC) as integers
     entities$namespace <- as.character(input$EntityNamespace)
