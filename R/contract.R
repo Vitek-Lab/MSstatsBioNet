@@ -89,7 +89,7 @@ OPTIONAL_NODE_COLUMNS <- c(
     node_role          = "character",
     site               = "character",
     has_measured_sites = "logical",
-    log2FC             = "numeric",
+    logFC              = "numeric",
     adj.pvalue         = "numeric"
 )
 
@@ -114,7 +114,7 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' Required node column: \code{id}. An \code{id} can repeat, once per PTM
 #' site row of the same protein. When present, \code{entity_type},
 #' \code{entity_name}, \code{namespace}, \code{entity_id}, \code{site},
-#' \code{log2FC}, \code{adj.pvalue}, \code{measured},
+#' \code{logFC}, \code{adj.pvalue}, \code{measured},
 #' \code{included_in_query}, \code{node_role}, and \code{has_measured_sites}
 #' are type-checked.
 #' Nodes with \code{measured == FALSE} must have \code{NA} statistics.
@@ -315,7 +315,7 @@ validate_network <- function(network) {
     # A non-logical measured column is reported by .check_columns()
     if ("measured" %in% colnames(nodes) && is.logical(nodes$measured)) {
         latent <- !is.na(nodes$measured) & !nodes$measured
-        statistics <- intersect(c("log2FC", "adj.pvalue"), colnames(nodes))
+        statistics <- intersect(c("logFC", "adj.pvalue"), colnames(nodes))
         for (column in statistics) {
             if (any(latent & !is.na(nodes[[column]]))) {
                 problems <- c(problems, paste0(

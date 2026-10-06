@@ -3,7 +3,7 @@
         nodes = data.frame(
             id = c("A", "B", "C"),
             entity_name = c("CHEK1", "CDC25A", "TP53"),
-            log2FC = c(1.2, -0.5, NA),
+            logFC  = c(1.2, -0.5, NA),
             adj.pvalue = c(0.01, 0.2, NA),
             stringsAsFactors = FALSE
         ),
@@ -72,8 +72,8 @@ test_that("validate_network checks column types", {
     expect_error(validate_network(network), "edges\\$evidence_count must be integer")
 
     network <- .valid_network()
-    network$nodes$log2FC <- c("1", "2", NA)
-    expect_error(validate_network(network), "nodes\\$log2FC must be numeric")
+    network$nodes$logFC <- c("1", "2", NA)
+    expect_error(validate_network(network), "nodes\\$logFC must be numeric")
 })
 
 test_that("validate_network accepts whole-number doubles for evidence_count", {
@@ -215,10 +215,10 @@ test_that("validate_network requires NA statistics on latent nodes", {
     network$nodes$measured <- c(TRUE, TRUE, FALSE)
     expect_silent(validate_network(network))
 
-    network$nodes$log2FC[3] <- 0
+    network$nodes$logFC[3] <- 0
     network$nodes$adj.pvalue[3] <- 1
     expect_error(validate_network(network),
-                 "nodes\\$log2FC must be NA for nodes with measured == FALSE")
+                 "nodes\\$logFC must be NA for nodes with measured == FALSE")
     expect_error(validate_network(network),
                  "nodes\\$adj.pvalue must be NA for nodes with measured == FALSE")
 })
@@ -226,7 +226,7 @@ test_that("validate_network requires NA statistics on latent nodes", {
 test_that("validate_network reports a non-logical measured column", {
     network <- .valid_network()
     network$nodes$measured <- c("yes", "yes", "no")
-    network$nodes$log2FC[3] <- 0
+    network$nodes$logFC[3] <- 0
     err <- tryCatch(validate_network(network),
                     error = function(e) conditionMessage(e))
     expect_match(err, "nodes\\$measured must be logical")

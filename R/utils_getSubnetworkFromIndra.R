@@ -143,7 +143,7 @@
     nodes = input[, c("Protein", "EntityName", "EntityNamespace", "EntityId",
                       "Site", "log2FC", "adj.pvalue")]
     colnames(nodes) = c("id", "entity_name", "namespace", "entity_id",
-                        "site", "log2FC", "adj.pvalue")
+                        "site", "logFC", "adj.pvalue")
     # fread reads numeric IDs (e.g. HGNC) as integers
     for (col in c("id", "entity_name", "namespace", "entity_id", "site")) {
         nodes[[col]] = as.character(nodes[[col]])
@@ -158,7 +158,7 @@
             namespace = NA_character_,
             entity_id = NA_character_,
             site = NA_character_,
-            log2FC = 0,
+            logFC = 0,
             adj.pvalue = 1,
             stringsAsFactors = FALSE
         )

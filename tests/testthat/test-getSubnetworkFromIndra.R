@@ -129,7 +129,7 @@ test_that("getSubnetworkFromIndra returns edges and nodes that meet the contract
     )
     expect_equal(
         colnames(subnetwork$nodes),
-        c("id", "entity_name", "namespace", "entity_id", "site", "log2FC",
+        c("id", "entity_name", "namespace", "entity_id", "site", "logFC",
           "adj.pvalue")
     )
 })

@@ -1,4 +1,4 @@
-#' Map log2FC values to a blue-grey-red colour palette
+#' Map logFC values to a blue-grey-red colour palette
 #' @importFrom grDevices colorRamp rgb
 #' @keywords internal
 #' @noRd
@@ -232,8 +232,8 @@
 #' @noRd
 .buildElements <- function(nodes, edges, display_label_type = "id") {
     # ── node colours ──────────────────────────────────────────────────────
-    node_colors <- if ("log2FC" %in% names(nodes)) {
-        .mapLogFCToColor(nodes$log2FC)
+    node_colors <- if ("logFC" %in% names(nodes)) {
+        .mapLogFCToColor(nodes$logFC)
     } else {
         rep("#D3D3D3", nrow(nodes))
     }
