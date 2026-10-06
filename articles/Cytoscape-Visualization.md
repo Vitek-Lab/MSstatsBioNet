@@ -57,7 +57,9 @@ cytoscapeNetwork(nodes_fc, edges_fc)
 
 # ── Example 3 · PTM satellite nodes ─────────────────────────────────────────
 # The `site` column (underscore-separated) creates small circle child-nodes
-# clustered around the parent protein.  Hover over edges to see overlap
+# clustered around the parent protein.  Each site takes its row's colour; a
+# protein is coloured only from a row with no `site` (here AKT1), so EGFR and
+# SRC are drawn as uncoloured containers.  Hover over edges to see overlap
 # information when an edge target shares a PTM site with node data.
 
 nodes_ptm <- data.frame(
@@ -80,7 +82,35 @@ cytoscapeNetwork(nodes_ptm, edges_ptm, nodeFontSize = 14)
 
 ``` r
 
-# ── Example 4 · Entity labels + left-to-right layout ───────────────────────
+# ── Example 4 · Nodes outside the input, and node shapes ───────────────────
+# The node status columns from get_network() change how a node is drawn:
+# measured = FALSE (not in the input data) has no fill and a dashed border,
+# included_in_query = FALSE is faded, and entity_type sets the shape.
+# Complex and Association edges have no arrow (the `directed` column).
+
+nodes_status <- data.frame(
+    id                = c("TP53",    "MDM2",    "CDKN1A",  "GLUCOSE"),
+    entity_type       = c("protein", "protein", "protein", "metabolite"),
+    measured          = c(TRUE,      TRUE,      FALSE,     TRUE),
+    included_in_query = c(TRUE,      FALSE,     TRUE,      TRUE),
+    logFC             = c(1.8,       0.1,       NA,        -1.2),
+    stringsAsFactors  = FALSE
+)
+
+edges_status <- data.frame(
+    source      = c("TP53",    "TP53",           "GLUCOSE"),
+    target      = c("MDM2",    "CDKN1A",         "TP53"),
+    interaction = c("Complex", "IncreaseAmount", "Association"),
+    directed    = c(FALSE,     TRUE,             FALSE),
+    stringsAsFactors = FALSE
+)
+
+cytoscapeNetwork(nodes_status, edges_status)
+```
+
+``` r
+
+# ── Example 5 · Entity labels + left-to-right layout ───────────────────────
 
 nodes_entity <- data.frame(
     id          = c("ENSG001", "ENSG002", "ENSG003"),
@@ -105,7 +135,7 @@ cytoscapeNetwork(
 
 ``` r
 
-# ── Example 5 · Evidence links ───────────────────────────────────────────────
+# ── Example 6 · Evidence links ───────────────────────────────────────────────
 # Click an edge to open the evidence URL in a new tab.
 
 edges_ev <- data.frame(
@@ -124,7 +154,7 @@ cytoscapeNetwork(nodes_min, edges_ev)
 
 ``` r
 
-# ── Example 6 · Shiny integration ───────────────────────────────────────────
+# ── Example 7 · Shiny integration ───────────────────────────────────────────
 if (requireNamespace("shiny", quietly = TRUE)) {
     library(shiny)
     ui <- fluidPage(
@@ -165,7 +195,7 @@ if (requireNamespace("shiny", quietly = TRUE)) {
 
 ``` r
 
-# ── Example 7 · Save to a standalone HTML file ──────────────────────────────
+# ── Example 8 · Save to a standalone HTML file ──────────────────────────────
 
 widget <- cytoscapeNetwork(nodes_ptm, edges_ptm)
 

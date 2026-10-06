@@ -9,7 +9,8 @@
 
    The `x` object passed from R (via createWidget / jsonlite serialisation):
    {
-     nodes        : [ { id, label, color, node_type, parent?, parent_protein? }, … ],
+     nodes        : [ { id, label, color, node_type, status, shape?,
+                        entity_type?, parent?, parent_protein? }, … ],
      edges        : [ { source, target, id, interaction, edge_type, category,
                         color, line_style, arrow_shape, width, tooltip,
                         evidence_url? }, … ],
@@ -50,7 +51,7 @@ HTMLWidgets.widget({
           style: {
             "background-color": "data(color)",
             "label":            "data(label)",
-            "shape":            "round-rectangle",
+            "shape":            "data(shape)",
             "font-size":        (nodeFontSize || 12) + "px",
             "font-weight":      "bold",
             "color":            "#000",
@@ -84,6 +85,33 @@ HTMLWidgets.widget({
             "text-halign":      "center",
             "text-wrap":        "wrap",
             "text-max-width":   "18px"
+          }
+        },
+        /* ── node status (see .node_display_status in R) ───────────────── */
+        {
+          /* not in the input data: no fill, dashed grey border */
+          selector: "node[status = 'latent']",
+          style: {
+            "background-opacity": 0,
+            "border-style":       "dashed",
+            "border-color":       "#999",
+            "color":              "#555"
+          }
+        },
+        {
+          /* in the input, but no logFC to colour by: no fill, solid border */
+          selector: "node[status = 'sites_only'], node[status = 'no_logfc']",
+          style: {
+            "background-opacity": 0,
+            "border-style":       "solid"
+          }
+        },
+        {
+          /* in the input, but not part of the query: faded */
+          selector: "node[status = 'not_queried']",
+          style: {
+            "background-opacity": 0.4,
+            "border-opacity":     0.5
           }
         },
         /* ── invisible compound containers ──────────────────────────── */
@@ -197,34 +225,104 @@ HTMLWidgets.widget({
       });
     }
 
+    /* helper - escape text for the legend's innerHTML */
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    /* helper - small SVG of a Cytoscape node shape for the legend */
+    function shapeIcon(shape) {
+      var body;
+      switch (shape) {
+        case "hexagon":
+          body = '<polygon points="5,2 17,2 22,9 17,16 5,16 0,9"/>'; break;
+        case "diamond":
+          body = '<polygon points="11,1 21,9 11,17 1,9"/>'; break;
+        case "octagon":
+          body = '<polygon points="7,1 15,1 21,6 21,12 15,17 7,17 1,12 1,6"/>'; break;
+        case "barrel":
+          body = '<path d="M4,1 H18 Q22,9 18,17 H4 Q0,9 4,1 Z"/>'; break;
+        default:
+          body = '<rect x="1" y="2" width="20" height="14" rx="4"/>';
+      }
+      return '<svg width="22" height="18" style="margin-right:7px;flex-shrink:0;" ' +
+             'fill="#fff" stroke="#333" stroke-width="1.5">' + body + '</svg>';
+    }
+
+    /* helper - one legend row: a swatch followed by a label */
+    function legendRow(swatchHtml, label) {
+      return '<div style="display:flex;align-items:center;margin-bottom:5px;font-size:12px;">' +
+             swatchHtml + '<span>' + escapeHtml(label) + '</span></div>';
+    }
+
+    /* helper - legend heading */
+    function legendHeading(text) {
+      return '<div style="font-weight:bold;margin:10px 0 6px 0;font-size:13px;">' +
+             text + '</div>';
+    }
+
     /* helper – build the legend panel beside the network */
     function buildLegend(cyInstance, legendEl) {
       if (!legendEl) return;
 
-      var edgeTypeConfigs = [
-        { type: "Activation",     color: "#44AA44", label: "Activation",      dash: false },
-        { type: "Inhibition",     color: "#FF4444", label: "Inhibition",      dash: false },
-        { type: "IncreaseAmount", color: "#4488FF", label: "Increase Amount", dash: false },
-        { type: "DecreaseAmount", color: "#FF8844", label: "Decrease Amount", dash: false },
-        { type: "Phosphorylation",color: "#9932CC", label: "Phosphorylation", dash: true  },
-        { type: "Complex",        color: "#8B4513", label: "Complex",         dash: false }
-      ];
-
-      var existingTypes = {};
+      /* Edge types: one entry per statement type drawn, styled as drawn */
+      var edgeTypes = {};
       cyInstance.edges().forEach(function (e) {
-        var raw = e.data("interaction") || "";
-        existingTypes[raw] = true;
+        if (e.data("edge_type") === "ptm_attachment") return;
+        var type = e.data("interaction") || "";
+        if (!type || edgeTypes[type]) return;
+        edgeTypes[type] = { color: e.data("color"), style: e.data("line_style") };
       });
+      var edgeItems = Object.keys(edgeTypes).sort().map(function (type) {
+        var c = edgeTypes[type];
+        var line = (c.style === "dashed" || c.style === "dotted")
+          ? "border-top:2px " + c.style + " " + c.color + ";"
+          : "background-color:" + c.color + ";";
+        return legendRow(
+          '<div style="width:28px;height:3px;' + line + 'margin-right:7px;flex-shrink:0;"></div>',
+          type.replace(/([a-z])([A-Z])/g, "$1 $2"));
+      }).join("");
 
-      var edgeItems = edgeTypeConfigs
-        .filter(function (c) { return existingTypes[c.type]; })
+      /* Node status: only the statuses present, worded relative to the input */
+      var statusConfigs = [
+        { status: "latent",      label: "not in input data",
+          box: "border:2px dashed #999;background:transparent;" },
+        { status: "sites_only",  label: "no protein-level row in input",
+          box: "border:2px solid #333;background:transparent;" },
+        { status: "no_logfc",    label: "in input, no logFC shown",
+          box: "border:2px solid #333;background:transparent;" },
+        { status: "not_queried", label: "in input, not in query",
+          box: "border:2px solid rgba(51,51,51,.5);background:rgba(255,165,144,.4);" }
+      ];
+      var statuses = {};
+      cyInstance.nodes().forEach(function (n) {
+        if (n.data("status")) statuses[n.data("status")] = true;
+      });
+      var statusItems = statusConfigs
+        .filter(function (c) { return statuses[c.status]; })
         .map(function (c) {
-          var dash = c.dash ? "border-top: 2px dashed " + c.color + ";" : "background-color:" + c.color + ";";
-          return '<div style="display:flex;align-items:center;margin-bottom:5px;font-size:12px;">' +
-                 '<div style="width:28px;height:3px;' + dash + 'margin-right:7px;flex-shrink:0;"></div>' +
-                 '<span>' + c.label + '</span></div>';
+          return legendRow(
+            '<div style="width:22px;height:14px;border-radius:4px;box-sizing:border-box;' +
+            c.box + 'margin-right:7px;flex-shrink:0;"></div>', c.label);
         })
         .join("");
+
+      /* Node shape: listed when the network has more than one shape */
+      var shapeTypes = {};
+      cyInstance.nodes('[node_type = "protein"]').forEach(function (n) {
+        var shape = n.data("shape") || "round-rectangle";
+        var type  = n.data("entity_type") || "";
+        if (type === "ptm_site") type = "protein";
+        shapeTypes[shape] = shapeTypes[shape] || {};
+        if (type) shapeTypes[shape][type] = true;
+      });
+      var shapes = Object.keys(shapeTypes);
+      var shapeItems = shapes.length < 2 ? "" : shapes.map(function (shape) {
+        var types = Object.keys(shapeTypes[shape]).sort();
+        return legendRow(shapeIcon(shape), types.length ? types.join(", ") : "other");
+      }).join("");
 
       var hasPtm = cyInstance.nodes('[node_type = "ptm"]').length > 0;
 
@@ -235,7 +333,9 @@ HTMLWidgets.widget({
         '  <div style="display:flex;flex-direction:column;justify-content:space-between;height:110px;font-size:11px;">' +
         '    <span>Upregulated</span><span>Neutral</span><span>Downregulated</span>' +
         '  </div></div>' +
-        (edgeItems ? '<div style="font-weight:bold;margin-bottom:6px;font-size:13px;">Edge types</div>' + edgeItems : '') +
+        statusItems +
+        (shapeItems ? legendHeading("Node shape") + shapeItems : '') +
+        (edgeItems ? legendHeading("Edge types") + edgeItems : '') +
         (hasPtm
           ? '<div style="margin-top:12px;padding:7px;background:#e3f2fd;border-radius:4px;font-size:10px;line-height:1.4;">' +
             '<strong>PTM info:</strong> Hover over edges to see overlapping PTM sites.</div>'

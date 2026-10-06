@@ -67,13 +67,26 @@ both the configuration and HTML export in one step.</p>
 columns: <code>logFC</code> (numeric), <code>entity_name</code>
 (character; may be semicolon-joined for multi-grounded
 rows), <code>entity_id</code> (character), <code>site</code>
-(character, underscore-separated PTM site list).</p></dd>
+(character, underscore-separated PTM site list), and
+the node status columns of <code><a href="validate_network.html">validate_network()</a></code>:
+<code>entity_type</code> sets the node shape (e.g. a hexagon
+for <code>"metabolite"</code>); <code>measured = FALSE</code> draws a
+node with no fill and a dashed grey border ("not in input
+data"); <code>included_in_query = FALSE</code> fades it. A node
+with an <code>NA</code> <code>logFC</code> has no fill. A protein
+with <code>site</code> rows takes its colour from its row
+with no <code>site</code>; without one, only its sites are
+coloured. Missing status columns count as <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-edges">edges<a class="anchor" aria-label="anchor" href="#arg-edges"></a></dt>
 <dd><p>Data frame with columns <code>source</code>, <code>target</code>,
-<code>interaction</code>.  Optional: <code>site</code>,
-<code>evidence_url</code>, opened when an edge is clicked.</p></dd>
+<code>interaction</code>.  Optional: <code>directed</code> (an
+edge with <code>FALSE</code> has no arrow and is drawn once
+for both directions; without the column, <code>Complex</code>
+and <code>Association</code> edges are undirected),
+<code>site</code>, <code>evidence_url</code>, opened when an edge is
+clicked.</p></dd>
 
 
 <dt id="arg-filename">filename<a class="anchor" aria-label="anchor" href="#arg-filename"></a></dt>

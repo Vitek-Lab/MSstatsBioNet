@@ -21,12 +21,22 @@ previewNetworkInBrowser(
   Data frame with at minimum an `id` column. Optional columns: `logFC`
   (numeric), `entity_name` (character; may be semicolon-joined for
   multi-grounded rows), `entity_id` (character), `site` (character,
-  underscore-separated PTM site list).
+  underscore-separated PTM site list), and the node status columns of
+  [`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md):
+  `entity_type` sets the node shape (e.g. a hexagon for `"metabolite"`);
+  `measured = FALSE` draws a node with no fill and a dashed grey border
+  ("not in input data"); `included_in_query = FALSE` fades it. A node
+  with an `NA` `logFC` has no fill. A protein with `site` rows takes its
+  colour from its row with no `site`; without one, only its sites are
+  coloured. Missing status columns count as `TRUE`.
 
 - edges:
 
   Data frame with columns `source`, `target`, `interaction`. Optional:
-  `site`, `evidence_url`, opened when an edge is clicked.
+  `directed` (an edge with `FALSE` has no arrow and is drawn once for
+  both directions; without the column, `Complex` and `Association` edges
+  are undirected), `site`, `evidence_url`, opened when an edge is
+  clicked.
 
 - displayLabelType:
 
