@@ -10,7 +10,8 @@ filterSubnetworkByContext(
   query = NULL,
   cutoff = NULL,
   method = c("tag_count", "cosine"),
-  exclude_keywords = NULL
+  exclude_keywords = NULL,
+  backend = NULL
 )
 }
 \arguments{
@@ -43,6 +44,12 @@ removed, regardless of their score. For example, \code{"colon"} matches
 "colon" and "colon-specific" but not "colonize" or "colons"; list
 variants such as plurals explicitly. To exclude by keyword only, omit
 \code{query}. Default \code{NULL} excludes nothing.}
+
+\item{backend}{the backend to get the evidence from, e.g.
+\code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+backend named in each edge's \code{backend_database}. Pass a backend
+built with non-default settings, such as a different URL, here.
+See \code{\link{get_evidence}()}.}
 }
 \value{
 A named list with four elements:
@@ -57,7 +64,7 @@ A named list with four elements:
   The \code{evidence} and \code{abstracts} elements can be passed to the
   same-named arguments of \code{\link{decomposeSubnetworkByTopic}} or
   \code{\link{decomposeSubnetworkIntoHierarchicalTopics}}, together with the
-  returned list as \code{subnetwork}, so INDRA and PubMed are not queried
+  returned list as \code{subnetwork}, so the backend and PubMed are not queried
   again.
 }
 \description{

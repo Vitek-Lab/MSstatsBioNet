@@ -120,31 +120,6 @@ describe(".score_by_cosine", {
     
 })
 
-describe(".extract_evidence_text", {
-    
-    test_that("stops when required columns are missing from the edges dataframe", {
-        bad_df <- data.frame(source = "A", target = "B", stringsAsFactors = FALSE)
-        expect_error(
-            .extract_evidence_text(bad_df),
-            regexp = "Missing required columns"
-        )
-    })
-    
-    test_that("returns an empty dataframe with correct columns when the INDRA API returns nothing", {
-        edges <- make_edges()
-        
-        # Mock .query_indra_evidence to always return NULL
-        mockery::stub(.extract_evidence_text, ".query_indra_evidence", NULL)
-        
-        result <- suppressWarnings(.extract_evidence_text(edges))
-        expect_s3_class(result, "data.frame")
-        expect_true(all(c("source", "target", "interaction", "site",
-                          "evidence_url", "statement_id", "text", "pmid") %in% names(result)))
-        expect_equal(nrow(result), 0)
-    })
-    
-})
-
 describe(".fetch_clean_abstracts_xml", {
     
     test_that("returns an empty list when given an empty pmids vector", {
@@ -245,7 +220,7 @@ describe("filterSubnetworkByContext", {
         nodes <- make_nodes()
         edges <- make_edges()
         
-        # --- mock .extract_evidence_text ---
+        # --- mock .fetch_evidence ---
         mock_evidence <- data.frame(
             source       = c("A", "B"),
             target       = c("B", "C"),
@@ -260,7 +235,7 @@ describe("filterSubnetworkByContext", {
             pmid         = c("11111111", "22222222"),
             stringsAsFactors = FALSE
         )
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text", mock_evidence)
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence", mock_evidence)
         
         # --- mock .fetch_clean_abstracts_xml ---
         mock_abstracts <- list(
@@ -294,7 +269,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("returns the abstracts of the PMIDs in the kept evidence", {
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       make_mock_evidence())
         mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
                       make_mock_abstracts())
@@ -310,7 +285,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("exclude_keywords drops abstracts containing any keyword", {
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       make_mock_evidence())
         mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
                       make_mock_abstracts())
@@ -328,7 +303,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("exclude_keywords takes precedence over a passing score", {
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       make_mock_evidence())
         mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
                       make_mock_abstracts())
@@ -344,7 +319,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("exclude_keywords works with the cosine method", {
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       make_mock_evidence())
         mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
                       make_mock_abstracts())
@@ -358,7 +333,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("filters by exclude_keywords alone when query is omitted", {
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       make_mock_evidence())
         mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
                       make_mock_abstracts())
@@ -373,7 +348,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("keeps every abstract when no exclude keyword matches", {
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       make_mock_evidence())
         mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
                       make_mock_abstracts())
@@ -423,7 +398,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("trims padded query and exclude_keywords terms", {
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       make_mock_evidence())
         mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
                       make_mock_abstracts())
@@ -438,7 +413,7 @@ describe("filterSubnetworkByContext", {
     })
 
     test_that("returns empty abstracts when no evidence is found", {
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       make_mock_evidence()[0, ])
 
         result <- suppressWarnings(filterSubnetworkByContext(
@@ -485,7 +460,7 @@ describe("filterSubnetworkByContext", {
         edges <- do.call(rbind, edges)
         nodes <- data.frame(id = unique(c(edges$source, edges$target)),
                             stringsAsFactors = FALSE)
-        mockery::stub(filterSubnetworkByContext, ".extract_evidence_text",
+        mockery::stub(filterSubnetworkByContext, ".fetch_evidence",
                       do.call(rbind, evidence))
         mockery::stub(filterSubnetworkByContext, ".fetch_clean_abstracts_xml",
                       abstracts)
@@ -496,7 +471,7 @@ describe("filterSubnetworkByContext", {
         expect_false(any(grepl("^G3_", filtered$edges$source)))
 
         testthat::local_mocked_bindings(
-            .extract_evidence_text = function(...) stop("INDRA was queried"),
+            .fetch_evidence = function(...) stop("INDRA was queried"),
             .fetch_clean_abstracts_xml = function(...) stop("PubMed was queried")
         )
         hierarchy <- decomposeSubnetworkIntoHierarchicalTopics(

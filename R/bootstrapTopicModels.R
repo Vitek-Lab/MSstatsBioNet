@@ -30,6 +30,10 @@
 #' @param tol relative-change tolerance for NMF early stopping. Default 1e-4.
 #' @param seed random seed for the reference fit, the resampling, and each
 #'   bootstrap NMF. Default 1.
+#' @param backend the backend to get the evidence from, e.g.
+#'   \code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+#'   backend named in each edge's \code{backend_database}. See
+#'   \code{\link{get_evidence}()}.
 #'
 #' @return A list with
 #'   \describe{
@@ -73,7 +77,8 @@ bootstrapTopicModels <- function(subnetwork,
                                  min_term_count = 2,
                                  max_iter = 200,
                                  tol = 1e-4,
-                                 seed = 1) {
+                                 seed = 1,
+                                 backend = NULL) {
 
     .validateDecomposeSubnetworkByTopicInput(subnetwork, n_topics, 0.2,
                                              include_ppi)
@@ -82,9 +87,11 @@ bootstrapTopicModels <- function(subnetwork,
         stop("`n_boot` must be a single integer >= 2.")
     }
     n_boot <- as.integer(n_boot)
+    .check_backend_argument(backend)
 
     # Build the shared matrices once; keep the vocabulary fixed across resamples.
-    mats <- .buildTopicMatrices(subnetwork, n_topics, min_term_count)
+    mats <- .buildTopicMatrices(subnetwork, n_topics, min_term_count,
+                                backend = backend)
     X_text <- mats$X_text
     X_edges <- mats$X_edges
     k <- mats$n_topics

@@ -11,7 +11,8 @@ compareTopicModels(
   unit = c("edges", "papers"),
   min_term_count = 2,
   max_iter = 200,
-  tol = 1e-04
+  tol = 1e-04,
+  backend = NULL
 )
 }
 \arguments{
@@ -34,6 +35,11 @@ building the text matrix. Default 2.}
 Default 200.}
 
 \item{tol}{relative-change tolerance for NMF early stopping. Default 1e-4.}
+
+\item{backend}{the backend to get the evidence from, e.g.
+\code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+backend named in each edge's \code{backend_database}. See
+\code{\link{get_evidence}()}.}
 }
 \value{
 A list with

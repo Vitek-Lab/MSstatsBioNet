@@ -91,6 +91,102 @@ setMethod("backend_capabilities", "IndraBackend",
              max_nodes         = INDRA_MAX_NODES)
     })
 
+# INDRA evidence. Sends the unique statement hashes to CoGEx
+# get_evidences_for_stmt_hashes and copies each evidence sentence onto every
+# edge row with that hash. Network Search edges carry the same hashes, so
+# this covers every INDRA query type.
+#' @rdname get_evidence
+#' @export
+setMethod("get_evidence", "IndraBackend",
+    function(backend, edges, ...) {
+        .check_evidence_edge_columns(edges)
+        statement_ids <- unique(edges$statement_id)
+        cat(sprintf("Processing %d unique statement hashes...\n",
+                    length(statement_ids)))
+        evidence_by_statement <- .query_indra_evidence(statement_ids,
+                                                       backend@cogex_url)
+        .build_indra_evidence_table(edges, evidence_by_statement)
+    })
+
+#' Edge columns that get_evidence() copies to its output
+#' @keywords internal
+#' @noRd
+EVIDENCE_EDGE_COLUMNS <- c("source", "target", "interaction", "site",
+                           "evidence_url", "statement_id")
+
+#' Check that edges have the columns get_evidence() needs
+#' @param edges edges data.frame
+#' @return \code{NULL}, invisibly; errors naming the missing columns
+#' @keywords internal
+#' @noRd
+.check_evidence_edge_columns <- function(edges) {
+    missing_cols <- setdiff(EVIDENCE_EDGE_COLUMNS, names(edges))
+    if (length(missing_cols) > 0) {
+        stop(sprintf("Missing required columns: %s",
+                     paste(missing_cols, collapse = ", ")))
+    }
+    invisible(NULL)
+}
+
+#' Build the evidence table from the CoGEx evidence of each statement
+#' @param edges edges data.frame with \code{EVIDENCE_EDGE_COLUMNS}
+#' @param evidence_by_statement named list from \code{.query_indra_evidence()}
+#' @return data.frame with \code{EVIDENCE_EDGE_COLUMNS}, \code{text}, and
+#'   \code{pmid}; one row per (edge, evidence with text) pair
+#' @keywords internal
+#' @noRd
+.build_indra_evidence_table <- function(edges, evidence_by_statement) {
+    results_list <- list()
+    result_count <- 0
+
+    for (statement_id in unique(edges$statement_id)) {
+        evidence_list <- evidence_by_statement[[as.character(statement_id)]]
+        if (is.null(evidence_list) || length(evidence_list) == 0) next
+
+        matching_indices <- which(edges$statement_id == statement_id)
+
+        for (evidence in evidence_list) {
+            if (!is.null(evidence[["text"]]) && nchar(evidence[["text"]]) > 0) {
+                for (idx in matching_indices) {
+                    result_count <- result_count + 1
+                    results_list[[result_count]] <- data.frame(
+                        source       = edges$source[idx],
+                        target       = edges$target[idx],
+                        interaction  = edges$interaction[idx],
+                        site         = edges$site[idx],
+                        evidence_url = edges$evidence_url[idx],
+                        statement_id = edges$statement_id[idx],
+                        text         = evidence[["text"]],
+                        pmid         = if (is.null(evidence[["pmid"]])) "" else evidence[["pmid"]],
+                        stringsAsFactors = FALSE
+                    )
+                }
+            }
+        }
+    }
+
+    if (result_count == 0) {
+        warning("No evidence text found for any statement hash")
+        return(.build_empty_evidence_table())
+    }
+
+    results_df <- do.call(rbind, results_list)
+    cat(sprintf("\nComplete! Found %d evidence text entries.\n", nrow(results_df)))
+    results_df
+}
+
+#' Evidence table with no rows
+#' @return data.frame with the get_evidence() columns and no rows
+#' @keywords internal
+#' @noRd
+.build_empty_evidence_table <- function() {
+    data.frame(
+        source = character(), target = character(), interaction = character(),
+        site = character(), evidence_url = character(), statement_id = character(),
+        text = character(), pmid = character(), stringsAsFactors = FALSE
+    )
+}
+
 #' The question a subnetwork query asks, with the entity counts
 #'
 #' Printed by \code{get_network()}, e.g. "INDRA subnetwork: how are 42

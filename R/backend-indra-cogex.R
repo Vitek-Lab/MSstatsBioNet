@@ -480,3 +480,72 @@
     })
     return(res)
 }
+
+
+#' Query INDRA CoGEx for the evidence of statements
+#'
+#' Hashes that are missing from the response (unknown hashes, or a
+#' batch whose request failed) are absent from the returned list.
+#'
+#' @param stmt_hashes Character vector of statement hash strings
+#' @param cogex_url   base URL of INDRA CoGEx
+#' @param batch_size  Number of hashes to request per API call
+#' @param sleep       Seconds to pause between API calls
+#' @return Named list: statement_id -> list of evidence objects. Empty list when
+#'         no evidence could be retrieved.
+#' @keywords internal
+#' @noRd
+#' @importFrom httr POST status_code content content_type_json
+.query_indra_evidence <- function(stmt_hashes, cogex_url = INDRA_API_URL,
+                                  batch_size = 100, sleep = 1) {
+    url <- file.path(cogex_url, "api/get_evidences_for_stmt_hashes")
+
+    stmt_hashes <- unique(as.character(stmt_hashes))
+    if (length(stmt_hashes) == 0) return(list())
+
+    batches   <- split(stmt_hashes, ceiling(seq_along(stmt_hashes) / batch_size))
+    n_batches <- length(batches)
+    results   <- list()
+
+    cat(sprintf("Fetching evidence for %d hashes in %d batch(es) of up to %d...\n",
+                length(stmt_hashes), n_batches, batch_size))
+
+    for (i in seq_along(batches)) {
+        batch <- batches[[i]]
+
+        parsed <- tryCatch({
+            response <- POST(
+                url,
+                body   = list(stmt_hashes = I(batch)),
+                encode = "json",
+                content_type_json()
+            )
+
+            if (status_code(response) != 200) {
+                warning(sprintf("API returned status %d for stmt_hashes: %s",
+                                status_code(response),
+                                paste(batch, collapse = ", ")))
+                NULL
+            } else {
+                content(response, as = "parsed")
+            }
+        }, error = function(e) {
+            warning(sprintf("Error querying stmt_hashes %s: %s",
+                            paste(batch, collapse = ", "), e$message))
+            return(NULL)
+        })
+
+        cat(sprintf("Progress: %d/%d batches (%.1f%%)\n",
+                    i, n_batches, (i / n_batches) * 100))
+
+        if (!is.null(parsed)) {
+            matched <- intersect(names(parsed), batch)
+            results[matched] <- parsed[matched]
+        }
+
+        if (i < n_batches) Sys.sleep(sleep)
+    }
+
+    cat("Done fetching evidence!\n")
+    results
+}

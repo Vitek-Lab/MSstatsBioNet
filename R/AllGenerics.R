@@ -173,6 +173,61 @@ setMethod("get_entity_properties", "NetworkBackend",
              call. = FALSE)
     })
 
+#' Get the evidence behind network edges
+#'
+#' Looks up the evidence sentences and their PubMed IDs for each edge,
+#' using the edge's \code{statement_id}. Edges that share a
+#' \code{statement_id} get the same evidence.
+#'
+#' For INDRA, the evidence comes from CoGEx. Evidence without text is left
+#' out, and \code{pmid} is \code{""} for evidence from a source with no
+#' PubMed ID.
+#'
+#' \code{\link{filterSubnetworkByContext}()} and the topic functions call
+#' \code{get_evidence()} with the backend named in each edge's
+#' \code{backend_database}, unless their \code{backend} argument is given.
+#'
+#' @param backend a \code{NetworkBackend}, e.g. from
+#' \code{\link{indra_backend}()}
+#' @param edges the \code{edges} of a network from
+#' \code{\link{get_network}()}. Needs the columns \code{source},
+#' \code{target}, \code{interaction}, \code{site}, \code{evidence_url}, and
+#' \code{statement_id}.
+#' @param ... passed to methods
+#' @return data.frame with one row per (edge, evidence sentence) pair and
+#' the columns \code{source}, \code{target}, \code{interaction},
+#' \code{site}, \code{evidence_url}, \code{statement_id}, \code{text}, and
+#' \code{pmid}. It has no rows, with a warning, when no edge has evidence
+#' text.
+#' @seealso \code{\link{filterSubnetworkByContext}()}
+#' @export
+#' @examples
+#' \donttest{
+#' input <- data.table::fread(system.file(
+#'     "extdata/groupComparisonModel.csv",
+#'     package = "MSstatsBioNet"
+#' ))
+#' indra <- indra_backend()
+#' entities <- prepare_entities(input, entity_type = "protein",
+#'                              id_type = "uniprot")
+#' entities <- convert_ids(indra, entities)
+#' entities <- select_entities(entities, pvalue_cutoff = 0.05)
+#' network <- get_network(indra, entities, interaction_types = "Complex")
+#' evidence <- get_evidence(indra, head(network$edges, 2))
+#' head(evidence[, c("source", "target", "pmid", "text")])
+#' }
+setGeneric("get_evidence",
+    function(backend, edges, ...) standardGeneric("get_evidence"),
+    signature = "backend")
+
+#' @rdname get_evidence
+#' @export
+setMethod("get_evidence", "NetworkBackend",
+    function(backend, edges, ...) {
+        stop(class(backend), " does not support get_evidence().",
+             call. = FALSE)
+    })
+
 #' What a backend supports
 #'
 #' Lists the queries, identifier conversions, entity properties, and

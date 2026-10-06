@@ -5,7 +5,7 @@
 #' (at most \code{max_edges} edges), producing a topic tree: broad themes near
 #' the root and increasingly specific sub-themes towards the leaves.
 #'
-#' INDRA evidence and PubMed abstracts are gathered once for the input
+#' Edge evidence and PubMed abstracts are gathered once for the input
 #' subnetwork and reused for every sub-decomposition, so no further network
 #' requests are made during the recursion. Each sub-decomposition rebuilds its
 #' vocabulary and refits the NMF on only the papers supporting that branch's
@@ -38,10 +38,14 @@
 #' @param evidence optional pre-fetched evidence data.frame, e.g.
 #'   \code{attr(topics, "corpus")$evidence} from
 #'   \code{\link{decomposeSubnetworkByTopic}} or \code{result$corpus$evidence}
-#'   from a previous call of this function. Default \code{NULL} queries INDRA
-#'   once.
+#'   from a previous call of this function. Default \code{NULL} queries the
+#'   backend once.
 #' @param abstracts optional named character vector mapping PMID to abstract
 #'   text. Only missing PMIDs are fetched from PubMed. Default \code{NULL}.
+#' @param backend the backend to get the evidence from, e.g.
+#'   \code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+#'   backend named in each edge's \code{backend_database}. See
+#'   \code{\link{get_evidence}()}.
 #' @param ... further arguments passed to
 #'   \code{\link{decomposeSubnetworkByTopic}}, e.g. \code{n_top_terms},
 #'   \code{min_term_count}, \code{include_ppi}, \code{seed}.
@@ -106,11 +110,13 @@ decomposeSubnetworkIntoHierarchicalTopics <- function(subnetwork,
                                                       max_depth = 5,
                                                       evidence = NULL,
                                                       abstracts = NULL,
+                                                      backend = NULL,
                                                       ...) {
 
     .validateDecomposeSubnetworkByTopicInput(subnetwork, n_topics,
                                              edge_topic_cutoff)
     .validateTopicCorpusInput(evidence, abstracts)
+    .check_backend_argument(backend)
     if (!is.numeric(max_edges) || length(max_edges) != 1L ||
         is.na(max_edges) || max_edges < 1) {
         stop("`max_edges` must be a single number >= 1.")
@@ -122,7 +128,8 @@ decomposeSubnetworkIntoHierarchicalTopics <- function(subnetwork,
     }
 
     # Gather the corpus once; every sub-decomposition reuses it.
-    corpus <- .gatherTopicCorpus(subnetwork$edges, evidence, abstracts)
+    corpus <- .gatherTopicCorpus(subnetwork$edges, evidence, abstracts,
+                                 backend)
 
     root <- list(nodes = subnetwork$nodes, edges = subnetwork$edges,
                  topTerms = character(0), pmids = character(0))

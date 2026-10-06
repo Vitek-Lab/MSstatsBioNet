@@ -44,6 +44,10 @@
 #' @param max_iter maximum number of NMF multiplicative-update iterations.
 #'   Default 200.
 #' @param tol relative-change tolerance for NMF early stopping. Default 1e-4.
+#' @param backend the backend to get the evidence from, e.g.
+#'   \code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+#'   backend named in each edge's \code{backend_database}. See
+#'   \code{\link{get_evidence}()}.
 #'
 #' @return A list with
 #'   \describe{
@@ -87,7 +91,8 @@ compareTopicModels <- function(subnetwork,
                                unit = c("edges", "papers"),
                                min_term_count = 2,
                                max_iter = 200,
-                               tol = 1e-4) {
+                               tol = 1e-4,
+                               backend = NULL) {
 
     unit <- match.arg(unit)
     # Reuse the decompose validator for subnetwork/n_topics structure.
@@ -97,9 +102,11 @@ compareTopicModels <- function(subnetwork,
         stop("`seeds` must be a vector of at least two integer seeds.")
     }
     seeds <- as.integer(seeds)
+    .check_backend_argument(backend)
 
     # Build the shared matrices once; only the NMF is repeated per seed.
-    mats <- .buildTopicMatrices(subnetwork, n_topics, min_term_count)
+    mats <- .buildTopicMatrices(subnetwork, n_topics, min_term_count,
+                                backend = backend)
     X_text <- mats$X_text
     X_edges <- mats$X_edges
     k <- mats$n_topics

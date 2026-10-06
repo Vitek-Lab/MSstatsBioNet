@@ -6,7 +6,8 @@
 #'
 #' The procedure is:
 #' \enumerate{
-#'   \item For every edge, the supporting INDRA evidence is retrieved and the
+#'   \item For every edge, the supporting evidence is retrieved from the
+#'     backend (see \code{\link{get_evidence}}) and the
 #'     PubMed abstract of each referenced PMID is fetched. Papers (PMIDs) are
 #'     the shared unit of analysis.
 #'   \item Two matrices are built that share the same rows (papers):
@@ -52,10 +53,14 @@
 #'   \code{attr(topics, "corpus")$evidence} from a previous call. It is subset
 #'   to the edges of \code{subnetwork}, so the evidence gathered for a parent
 #'   network can be reused for any of its topic subnetworks. When \code{NULL}
-#'   (default) the evidence is queried from INDRA.
+#'   (default) the evidence is queried from the backend.
 #' @param abstracts optional named character vector (or list) mapping PMID to
 #'   abstract text, e.g. \code{attr(topics, "corpus")$abstracts}. Only PMIDs
 #'   missing from it are fetched from PubMed. Default \code{NULL} fetches all.
+#' @param backend the backend to get the evidence from, e.g.
+#'   \code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+#'   backend named in each edge's \code{backend_database}. See
+#'   \code{\link{get_evidence}()}.
 #'
 #' @return A list of length \code{n_topics}, named \code{topic_1} ...
 #'   \code{topic_k}. Each element is a topic-specific subnetwork: a list with
@@ -93,7 +98,7 @@
 #' topics$topic_1$topTerms
 #' exportNetworkToHTML(topics$topic_1$nodes, topics$topic_1$edges)
 #'
-#' # Re-decompose a topic without re-querying INDRA / PubMed.
+#' # Re-decompose a topic without re-querying the backend / PubMed.
 #' corpus <- attr(topics, "corpus")
 #' topics_deeper <- decomposeSubnetworkByTopic(
 #'     topics$topic_1, n_topics = 5,
@@ -110,15 +115,18 @@ decomposeSubnetworkByTopic <- function(subnetwork,
                                        seed = 1,
                                        include_ppi = TRUE,
                                        evidence = NULL,
-                                       abstracts = NULL) {
+                                       abstracts = NULL,
+                                       backend = NULL) {
 
     .validateDecomposeSubnetworkByTopicInput(subnetwork, n_topics,
                                              edge_topic_cutoff, include_ppi)
     .validateTopicCorpusInput(evidence, abstracts)
+    .check_backend_argument(backend)
 
     # 1-3. Build the shared paper-by-word and paper-by-edge matrices.
     mats <- .buildTopicMatrices(subnetwork, n_topics, min_term_count,
-                                evidence = evidence, abstracts = abstracts)
+                                evidence = evidence, abstracts = abstracts,
+                                backend = backend)
     nodes     <- mats$nodes
     edges     <- mats$edges
     pmids     <- mats$pmids
