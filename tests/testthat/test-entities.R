@@ -27,14 +27,14 @@ test_that("prepare_entities() builds one row per analyte", {
     expect_identical(colnames(entities), c(
         "id", "entity_type", "id_type", "namespace", "entity_id",
         "entity_name", "included_in_query", "site", "parent_id", "organism",
-        "log2FC", "adj.pvalue"))
+        "logFC", "adj.pvalue"))
     expect_true(all(entities$entity_type == "protein"))
     expect_true(all(entities$id_type == "uniprot"))
     expect_true(all(is.na(entities$namespace)))
     expect_true(all(entities$included_in_query))
     expect_true(all(is.na(entities$site)))
     expect_true(all(entities$organism == "9606"))
-    expect_identical(entities$log2FC, input$log2FC)
+    expect_identical(entities$logFC, input$log2FC)
     expect_identical(entities$adj.pvalue, input$adj.pvalue)
 })
 
@@ -52,16 +52,47 @@ test_that("prepare_entities() reads id_column, organism, and omits absent statis
                                  id_type = "hgnc_symbol", organism = "10090")
     expect_identical(entities$id, c("TP53", "EGFR"))
     expect_true(all(entities$organism == "10090"))
-    expect_false(any(c("log2FC", "adj.pvalue") %in% colnames(entities)))
+    expect_false(any(c("logFC", "adj.pvalue") %in% colnames(entities)))
+})
+
+test_that("prepare_entities() copies log2FC, log10FC, or logFC to logFC unchanged", {
+    for (col in c("log2FC", "log10FC", "logFC")) {
+        df <- data.frame(Protein = c("A", "B"), fc = c(1.5, -0.5))
+        names(df)[2] <- col
+        entities <- prepare_entities(df, entity_type = "protein",
+                                     id_type = "uniprot")
+        expect_identical(entities$logFC, c(1.5, -0.5))
+        expect_false(any(c("log2FC", "log10FC") %in% colnames(entities)))
+    }
+})
+
+test_that("prepare_entities() takes the fold-change column from logfc_column", {
+    df <- data.frame(Protein = c("A", "B"), log2FC = c(1, 2), my_fc = c(3, 4))
+    entities <- prepare_entities(df, entity_type = "protein",
+                                 id_type = "uniprot", logfc_column = "my_fc")
+    expect_identical(entities$logFC, c(3, 4))
+    expect_error(prepare_entities(df, entity_type = "protein",
+                                  id_type = "uniprot", logfc_column = "fc"),
+                 "logfc_column must name a column of df")
+})
+
+test_that("prepare_entities() errors on several fold-change columns", {
+    df <- data.frame(Protein = "A", log2FC = 1, log10FC = 0.3)
+    expect_error(prepare_entities(df, entity_type = "protein",
+                                  id_type = "uniprot"),
+                 "several fold-change columns: log2FC, log10FC.*logfc_column")
+    entities <- prepare_entities(df, entity_type = "protein",
+                                 id_type = "uniprot", logfc_column = "log10FC")
+    expect_identical(entities$logFC, 0.3)
 })
 
 test_that("prepare_entities() takes entity_type and id_type from columns", {
     df <- data.frame(Protein = c("P04637", "glucose"),
                      kind = c("protein", "metabolite"),
-                     system = c("uniprot", "name"))
+                     system = c("uniprot", "chemical_name"))
     entities <- prepare_entities(df, entity_type = "kind", id_type = "system")
     expect_identical(entities$entity_type, c("protein", "metabolite"))
-    expect_identical(entities$id_type, c("uniprot", "name"))
+    expect_identical(entities$id_type, c("uniprot", "chemical_name"))
 })
 
 test_that("prepare_entities() rejects invalid arguments", {
@@ -112,7 +143,7 @@ test_that("prepare_entities() errors on several comparisons unless label names o
     entities <- prepare_entities(df, entity_type = "protein",
                                  id_type = "uniprot", label = "A vs C")
     expect_identical(entities$id, "P04637")
-    expect_identical(entities$log2FC, 2)
+    expect_identical(entities$logFC, 2)
     expect_error(prepare_entities(df, entity_type = "protein",
                                   id_type = "uniprot", label = "B vs C"),
                  "label 'B vs C' is not in df\\$Label")
@@ -128,7 +159,7 @@ test_that("prepare_entities() errors on several comparisons unless label names o
 test_that("prepare_entities() parses sites only for ptm_site rows", {
     df <- data.frame(Protein = c("P00533_S1039_S1042", "PC_A1"),
                      kind = c("ptm_site", "metabolite"))
-    entities <- prepare_entities(df, entity_type = "kind", id_type = "name")
+    entities <- prepare_entities(df, entity_type = "kind", id_type = "chemical_name")
     expect_identical(entities$site, c("S1039_S1042", NA))
     expect_identical(entities$parent_id, c("P00533", NA))
     expect_identical(entities$id, c("P00533_S1039_S1042", "PC_A1"))
@@ -156,12 +187,12 @@ test_that("prepare_entities() warns on ptm_site rows without a site", {
 test_that("parse_ptm_sites() splits MSstatsPTM identifiers", {
     parsed <- parse_ptm_sites(c("P00533_S1039_S1042", "P00533_S1064",
                                 "CLH1_HUMAN_S148", "P1;P2_S148",
-                                "P1_S148;P2_T5", "O00217", "P1_S148_extra"))
+                                "P1_S148;P2_S5", "O00217", "P1_S148_extra"))
     expect_identical(colnames(parsed), c("id", "parent_id", "site"))
     expect_identical(parsed$parent_id, c("P00533", "P00533", "CLH1_HUMAN",
                                          "P1;P2", "P1;P2", NA, NA))
     expect_identical(parsed$site, c("S1039_S1042", "S1064", "S148", "S148",
-                                    "S148;T5", NA, NA))
+                                    "S148;S5", NA, NA))
 })
 
 test_that("parse_ptm_sites() takes a custom pattern and handles empty input", {
@@ -173,35 +204,35 @@ test_that("parse_ptm_sites() takes a custom pattern and handles empty input", {
     expect_identical(colnames(empty), c("id", "parent_id", "site"))
 })
 
-test_that("groundings() returns one row per grounding", {
+test_that("expand_groundings() returns one row per grounding", {
     entities <- prepare_entities(data.frame(Protein = c("A", "B", "C")),
                                  entity_type = "protein", id_type = "uniprot")
     entities$namespace <- c("HGNC;CHEBI", "HGNC", NA)
     entities$entity_id <- c("1097;28748", "7715", NA)
     entities$entity_name <- c("BRAF;NA", NA, NA)
-    long <- groundings(entities)
+    long <- expand_groundings(entities)
     expect_identical(long$id, c("A", "A", "B"))
     expect_identical(long$namespace, c("HGNC", "CHEBI", "HGNC"))
     expect_identical(long$entity_id, c("1097", "28748", "7715"))
     expect_identical(long$entity_name, c("BRAF", NA, NA))
-    expect_identical(groundings(entities, namespaces = "CHEBI")$id, "A")
-    expect_equal(nrow(groundings(entities, namespaces = "UP")), 0)
+    expect_identical(expand_groundings(entities, namespaces = "CHEBI")$id, "A")
+    expect_equal(nrow(expand_groundings(entities, namespaces = "UP")), 0)
 })
 
-test_that("groundings() rejects misaligned groundings", {
+test_that("expand_groundings() rejects misaligned groundings", {
     entities <- prepare_entities(data.frame(Protein = "A"),
                                  entity_type = "protein", id_type = "uniprot")
     entities$namespace <- "HGNC;HGNC"
     entities$entity_id <- "1097"
-    expect_error(groundings(entities), "Misaligned: A")
+    expect_error(expand_groundings(entities), "Misaligned: A")
 })
 
 test_that("entity validation reports missing columns and bad values", {
     entities <- prepare_entities(data.frame(Protein = c("A", "B")),
                                  entity_type = "protein", id_type = "uniprot")
-    expect_error(groundings(data.frame(id = "A")),
+    expect_error(expand_groundings(data.frame(id = "A")),
                  "entities is missing required column\\(s\\): entity_type")
-    expect_error(groundings(list(id = "A")), "must be a data.frame")
+    expect_error(expand_groundings(list(id = "A")), "must be a data.frame")
     bad <- entities
     bad$included_in_query <- c("yes", "no")
     expect_error(select_entities(bad), "included_in_query must be logical")
@@ -222,7 +253,7 @@ test_that("select_entities() flags rows and drops none", {
     expect_equal(nrow(selected), nrow(entities))
     expect_identical(selected$included_in_query,
                      !is.na(entities$adj.pvalue) &
-                         !is.infinite(entities$log2FC) &
+                         !is.infinite(entities$logFC) &
                          entities$adj.pvalue < 0.01)
     expect_false(any(selected$user_added))
 })
@@ -292,7 +323,7 @@ test_that("select_entities() works without statistics when no cutoff needs them"
     expect_error(select_entities(entities, pvalue_cutoff = 0.05),
                  "pvalue_cutoff needs the adj.pvalue column")
     expect_error(select_entities(entities, direction = "up"),
-                 "needs the log2FC column")
+                 "needs the logFC column")
 })
 
 test_that("select_entities() rejects invalid cutoffs", {

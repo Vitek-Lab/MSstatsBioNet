@@ -10,7 +10,24 @@
 #' @noRd
 ID_TYPES <- c("uniprot", "uniprot_mnemonic", "hgnc_symbol",
               "ensembl_protein", "ensembl_gene", "entrez",
-              "name", "inchikey", "hmdb", "chebi", "chembl")
+              "chemical_name", "inchikey", "hmdb", "chebi", "chembl")
+
+#' Fold-change columns that prepare_entities() copies to entities$logFC
+#'
+#' MSstats names the column after the log base it used (log2FC by default,
+#' log10FC with logTrans = 10).
+#' @keywords internal
+#' @noRd
+LOGFC_COLUMNS <- c("log2FC", "log10FC", "logFC")
+
+#' Pattern for MSstatsPTM site identifiers
+#'
+#' Matches an identifier ending in one or more \code{_<residue><position>}
+#' tokens, e.g. \code{P00533_S1039_S1042}. The first capture group is the
+#' parent identifier, the second the site tokens.
+#' @keywords internal
+#' @noRd
+MSSTATS_PTM_SITE_PATTERN <- "^(.*?)((?:_[A-Z][0-9]+)+)$"
 
 #' Required entity columns and their types
 #' @keywords internal
@@ -40,21 +57,28 @@ REQUIRED_ENTITY_COLUMNS <- c(
 #' \code{df} holding one per row.
 #' @param id_type the identifier system of \code{id_column}
 #' (\code{"uniprot"}, \code{"uniprot_mnemonic"}, \code{"hgnc_symbol"},
-#' \code{"name"}, ...), or the name of a column of \code{df} holding one per
-#' row. For PTM sites, the identifier system of the parent protein.
+#' \code{"chemical_name"}, ...), or the name of a column of \code{df}
+#' holding one per row. For PTM sites, the identifier system of the parent
+#' protein. \code{"chemical_name"} is a metabolite, lipid, or drug name,
+#' common or IUPAC (e.g. \code{"glucose"}), grounded by text matching.
 #' @param organism NCBI taxon ID, as a string.
 #' @param label the comparison to keep, when \code{df} has a \code{Label}
 #' column with more than one value.
+#' @param logfc_column the fold-change column to copy to \code{logFC}.
+#' \code{NULL} uses whichever of \code{log2FC}, \code{log10FC}, or
+#' \code{logFC} \code{df} has. Values are copied unchanged, in the log base
+#' of the input.
 #' @return data.frame with columns \code{id}, \code{entity_type},
 #' \code{id_type}, \code{namespace}, \code{entity_id}, \code{entity_name}
 #' (all \code{NA} until \code{convert_ids()}), \code{included_in_query}
 #' (\code{TRUE} until \code{select_entities()}), \code{site} and
 #' \code{parent_id} (for \code{ptm_site} rows), \code{organism}, and
-#' \code{log2FC} and \code{adj.pvalue} when \code{df} has them.
+#' \code{logFC} and \code{adj.pvalue} when \code{df} has them.
 #' @keywords internal
 #' @noRd
 prepare_entities <- function(df, id_column = "Protein", entity_type, id_type,
-                             organism = "9606", label = NULL) {
+                             organism = "9606", label = NULL,
+                             logfc_column = NULL) {
     df <- as.data.frame(df)
     if (!is.character(id_column) || length(id_column) != 1 ||
         !id_column %in% colnames(df)) {
@@ -66,6 +90,7 @@ prepare_entities <- function(df, id_column = "Protein", entity_type, id_type,
              call. = FALSE)
     }
     df <- .select_label(df, label)
+    logfc_column <- .find_logfc_column(df, logfc_column)
 
     ids <- as.character(df[[id_column]])
     if (anyNA(ids) || any(!nzchar(ids))) {
@@ -75,13 +100,13 @@ prepare_entities <- function(df, id_column = "Protein", entity_type, id_type,
     duplicated_ids <- unique(ids[duplicated(ids)])
     if (length(duplicated_ids) > 0) {
         stop("Identifiers in column '", id_column, "' must be unique. ",
-             "Duplicated: ", .format_values(duplicated_ids), ".",
+             "Duplicated: ", .list_values_for_message(duplicated_ids), ".",
              call. = FALSE)
     }
 
-    entity_types <- .value_or_column(df, entity_type, ENTITY_TYPES,
-                                     "entity_type")
-    id_types <- .value_or_column(df, id_type, ID_TYPES, "id_type")
+    entity_types <- .resolve_value_or_column(df, entity_type, ENTITY_TYPES,
+                                             "entity_type")
+    id_types <- .resolve_value_or_column(df, id_type, ID_TYPES, "id_type")
 
     n <- nrow(df)
     entities <- data.frame(
@@ -112,31 +137,20 @@ prepare_entities <- function(df, id_column = "Protein", entity_type, id_type,
         if (any(no_site)) {
             warning(sum(no_site), " ptm_site row(s) have no site in their ",
                     "identifier and are treated as their own parent: ",
-                    .format_values(entities$id[is_ptm][no_site]), ".",
+                    .list_values_for_message(entities$id[is_ptm][no_site]), ".",
                     call. = FALSE)
             entities$parent_id[is_ptm][no_site] <-
                 entities$id[is_ptm][no_site]
         }
     }
 
-    for (col in c("log2FC", "adj.pvalue")) {
-        if (col %in% colnames(df)) {
-            entities[[col]] <- as.numeric(df[[col]])
-        }
+    if (!is.null(logfc_column)) {
+        entities$logFC <- as.numeric(df[[logfc_column]])
+    }
+    if ("adj.pvalue" %in% colnames(df)) {
+        entities$adj.pvalue <- as.numeric(df$adj.pvalue)
     }
     entities
-}
-
-#' Pattern for MSstatsPTM site identifiers
-#'
-#' Matches an identifier ending in one or more \code{_<residue><position>}
-#' tokens, e.g. \code{P00533_S1039_S1042}. The first capture group is the
-#' parent identifier, the second the site tokens.
-#' @return a Perl regular expression
-#' @keywords internal
-#' @noRd
-msstats_ptm_pattern <- function() {
-    "^(.*?)((?:_[A-Z][0-9]+)+)$"
 }
 
 #' Split PTM site identifiers into parent and site
@@ -144,17 +158,21 @@ msstats_ptm_pattern <- function() {
 #' Each \code{";"}-separated member of an identifier (a protein group) is
 #' parsed on its own. Members without a site are kept as parents.
 #'
-#' @param ids character vector of identifiers, e.g. \code{"P00533_S1064"}
-#' or \code{"P1;P2_S148"}.
+#' For example, \code{"P1_S148;P2_S5"} gives parent \code{"P1;P2"} and site
+#' \code{"S148;S5"}, and \code{"P00533_S1039_S1042"} gives parent
+#' \code{"P00533"} and site \code{"S1039_S1042"}.
+#'
+#' @param ids character vector of identifiers, e.g. \code{"P1_S148;P2_S5"}.
 #' @param pattern Perl regular expression with two capture groups, the
-#' parent and the site tokens (see \code{msstats_ptm_pattern()}).
+#' parent and the site tokens. The default, \code{MSSTATS_PTM_SITE_PATTERN},
+#' matches one or more trailing \code{_<residue><position>} tokens.
 #' @return data.frame with columns \code{id}, \code{parent_id}, and
-#' \code{site}. \code{site} is \code{"S1039_S1042"} for several sites on one
+#' \code{site}. \code{site} is \code{"_"}-joined for several sites on one
 #' protein and \code{";"}-joined across group members, and \code{NA} when no
 #' member has a site. \code{parent_id} is \code{NA} when \code{site} is.
 #' @keywords internal
 #' @noRd
-parse_ptm_sites <- function(ids, pattern = msstats_ptm_pattern()) {
+parse_ptm_sites <- function(ids, pattern = MSSTATS_PTM_SITE_PATTERN) {
     ids <- as.character(ids)
     parsed <- vapply(ids, function(id) {
         members <- strsplit(id, ";", fixed = TRUE)[[1]]
@@ -176,7 +194,7 @@ parse_ptm_sites <- function(ids, pattern = msstats_ptm_pattern()) {
                stringsAsFactors = FALSE)
 }
 
-#' Long table of an entity table's groundings
+#' Expand an entity table's groundings into a long table
 #'
 #' The one place that splits the \code{";"}-joined \code{namespace},
 #' \code{entity_id}, and \code{entity_name} columns. Backends read
@@ -190,7 +208,7 @@ parse_ptm_sites <- function(ids, pattern = msstats_ptm_pattern()) {
 #' are left out.
 #' @keywords internal
 #' @noRd
-groundings <- function(entities, namespaces = NULL) {
+expand_groundings <- function(entities, namespaces = NULL) {
     .validate_entities(entities)
     grounded <- !is.na(entities$namespace) & !is.na(entities$entity_id)
     entities <- entities[grounded, , drop = FALSE]
@@ -211,7 +229,7 @@ groundings <- function(entities, namespaces = NULL) {
     if (any(misaligned)) {
         stop("namespace, entity_id, and entity_name must have the same ",
              "number of ';'-separated values. Misaligned: ",
-             .format_values(entities$id[misaligned]), ".", call. = FALSE)
+             .list_values_for_message(entities$id[misaligned]), ".", call. = FALSE)
     }
     long <- data.frame(
         id          = rep(entities$id, n_groundings),
@@ -238,11 +256,12 @@ groundings <- function(entities, namespaces = NULL) {
 #' @param entities entity table from \code{prepare_entities()}
 #' @param pvalue_cutoff keep rows with \code{adj.pvalue} below this.
 #' \code{NULL} applies no cutoff.
-#' @param logfc_cutoff keep rows with \code{abs(log2FC)} above this.
+#' @param logfc_cutoff keep rows with \code{abs(logFC)} above this, on the
+#' log scale of the input.
 #' \code{NULL} applies no cutoff.
-#' @param direction \code{"both"}, \code{"up"} (\code{log2FC > 0}), or
-#' \code{"down"} (\code{log2FC < 0}).
-#' @param include_infinite_fc whether rows with infinite \code{log2FC}
+#' @param direction \code{"both"}, \code{"up"} (\code{logFC > 0}), or
+#' \code{"down"} (\code{logFC < 0}).
+#' @param include_infinite_fc whether rows with infinite \code{logFC}
 #' (detected in one condition only) are selected regardless of
 #' \code{pvalue_cutoff} and \code{logfc_cutoff}. \code{direction} still
 #' applies.
@@ -277,20 +296,20 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
         is.na(include_infinite_fc)) {
         stop("include_infinite_fc must be TRUE or FALSE.", call. = FALSE)
     }
-    needs_log2fc <- !is.null(logfc_cutoff) || direction != "both" ||
+    needs_logfc <- !is.null(logfc_cutoff) || direction != "both" ||
         include_infinite_fc
     .require_entity_column(entities, "adj.pvalue", !is.null(pvalue_cutoff),
                            "pvalue_cutoff")
-    .require_entity_column(entities, "log2FC", needs_log2fc,
+    .require_entity_column(entities, "logFC", needs_logfc,
                            "logfc_cutoff, direction, or include_infinite_fc")
 
     n <- nrow(entities)
-    log2fc <- if ("log2FC" %in% colnames(entities)) {
-        entities$log2FC
+    logfc <- if ("logFC" %in% colnames(entities)) {
+        entities$logFC
     } else {
         rep(NA_real_, n)
     }
-    infinite <- is.infinite(log2fc)
+    infinite <- is.infinite(logfc)
     passed <- !infinite
     if ("adj.pvalue" %in% colnames(entities)) {
         passed <- passed & !is.na(entities$adj.pvalue)
@@ -299,15 +318,15 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
         passed <- passed & entities$adj.pvalue < pvalue_cutoff
     }
     if (!is.null(logfc_cutoff)) {
-        passed <- passed & !is.na(log2fc) & abs(log2fc) > logfc_cutoff
+        passed <- passed & !is.na(logfc) & abs(logfc) > logfc_cutoff
     }
     if (include_infinite_fc) {
         passed <- passed | infinite
     }
     if (direction == "up") {
-        passed <- passed & !is.na(log2fc) & log2fc > 0
+        passed <- passed & !is.na(logfc) & logfc > 0
     } else if (direction == "down") {
-        passed <- passed & !is.na(log2fc) & log2fc < 0
+        passed <- passed & !is.na(logfc) & logfc < 0
     }
 
     forced <- .match_force_include(entities, force_include)
@@ -330,14 +349,14 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
     if (!is.character(force_include)) {
         stop("force_include must be a character vector.", call. = FALSE)
     }
-    long <- groundings(entities)
+    long <- expand_groundings(entities)
     grounding_keys <- paste(long$namespace, long$entity_id, sep = ":")
     by_grounding <- unique(long$id[grounding_keys %in% force_include])
     matched <- entities$id %in% force_include | entities$id %in% by_grounding
     unmatched <- setdiff(force_include, c(entities$id, grounding_keys))
     if (length(unmatched) > 0) {
         message(length(unmatched), " force_include value(s) match no ",
-                "entity: ", .format_values(unmatched), ". To add them as ",
+                "entity: ", .list_values_for_message(unmatched), ". To add them as ",
                 "nodes, pass them to get_network(include_entities = ).")
     }
     matched
@@ -367,7 +386,7 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
     }
     bad_types <- setdiff(entities$entity_type, ENTITY_TYPES)
     if (length(bad_types) > 0) {
-        stop("Unknown entity_type value(s): ", .format_values(bad_types),
+        stop("Unknown entity_type value(s): ", .list_values_for_message(bad_types),
              ". Allowed: ", paste(ENTITY_TYPES, collapse = ", "), ".",
              call. = FALSE)
     }
@@ -392,7 +411,7 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
         }
         if (!label %in% df$Label) {
             stop("label '", label, "' is not in df$Label. Available: ",
-                 .format_values(unique(df$Label)), ".", call. = FALSE)
+                 .list_values_for_message(unique(df$Label)), ".", call. = FALSE)
         }
         return(df[df$Label %in% label, , drop = FALSE])
     }
@@ -400,7 +419,7 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
         labels <- unique(df$Label[!is.na(df$Label)])
         if (length(labels) > 1) {
             stop("df has ", length(labels), " comparisons in its Label ",
-                 "column: ", .format_values(labels), ". Choose one with ",
+                 "column: ", .list_values_for_message(labels), ". Choose one with ",
                  "label = .", call. = FALSE)
         }
     }
@@ -408,6 +427,10 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
 }
 
 #' Resolve an argument that is either a vocabulary value or a column name
+#'
+#' Turns \code{entity_type = "protein"} into one value per row, and
+#' \code{entity_type = "kind"} into the values of column \code{kind}, checked
+#' against the vocabulary.
 #' @param df input table
 #' @param value the argument
 #' @param vocabulary allowed values
@@ -415,7 +438,7 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
 #' @return character vector with one value per row of \code{df}
 #' @keywords internal
 #' @noRd
-.value_or_column <- function(df, value, vocabulary, arg) {
+.resolve_value_or_column <- function(df, value, vocabulary, arg) {
     if (!is.character(value) || length(value) != 1 || is.na(value)) {
         stop(arg, " must be a single string.", call. = FALSE)
     }
@@ -431,10 +454,34 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
     bad <- setdiff(values, vocabulary)
     if (length(bad) > 0) {
         stop("Column '", value, "' has value(s) not allowed for ", arg, ": ",
-             .format_values(bad), ". Allowed: ",
+             .list_values_for_message(bad), ". Allowed: ",
              paste(vocabulary, collapse = ", "), ".", call. = FALSE)
     }
     values
+}
+
+#' Find the fold-change column of an input table
+#' @param df input table
+#' @param logfc_column a column name, or \code{NULL} to look for one of
+#' \code{LOGFC_COLUMNS}
+#' @return the column name, or \code{NULL} when \code{df} has none
+#' @keywords internal
+#' @noRd
+.find_logfc_column <- function(df, logfc_column) {
+    if (!is.null(logfc_column)) {
+        if (!is.character(logfc_column) || length(logfc_column) != 1 ||
+            !logfc_column %in% colnames(df)) {
+            stop("logfc_column must name a column of df.", call. = FALSE)
+        }
+        return(logfc_column)
+    }
+    found <- intersect(LOGFC_COLUMNS, colnames(df))
+    if (length(found) > 1) {
+        stop("df has several fold-change columns: ",
+             paste(found, collapse = ", "), ". Choose one with ",
+             "logfc_column = .", call. = FALSE)
+    }
+    if (length(found) == 0) NULL else found
 }
 
 #' Stop when a cutoff needs an entity column that is absent
@@ -446,10 +493,18 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
     }
 }
 
-#' Format values for a message, truncating long lists
+#' List offending values in an error, warning, or message
+#'
+#' Joins the values with ", " so a message can name what went wrong, e.g.
+#' "Duplicated: P04637, P00533.". Shows at most \code{max_shown} values and
+#' counts the rest, so a table with thousands of bad rows still gives a
+#' readable message.
+#' @param values the values to name
+#' @param max_shown how many to show before "... (n more)"
+#' @return a single string
 #' @keywords internal
 #' @noRd
-.format_values <- function(values, max_shown = 5) {
+.list_values_for_message <- function(values, max_shown = 5) {
     values <- as.character(values)
     shown <- paste(values[seq_len(min(length(values), max_shown))],
                    collapse = ", ")
