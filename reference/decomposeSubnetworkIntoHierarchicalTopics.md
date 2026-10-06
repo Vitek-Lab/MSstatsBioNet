@@ -18,6 +18,7 @@ decomposeSubnetworkIntoHierarchicalTopics(
   max_depth = 5,
   evidence = NULL,
   abstracts = NULL,
+  backend = NULL,
   ...
 )
 ```
@@ -57,12 +58,20 @@ decomposeSubnetworkIntoHierarchicalTopics(
   `attr(topics, "corpus")$evidence` from
   [`decomposeSubnetworkByTopic`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.md)
   or `result$corpus$evidence` from a previous call of this function.
-  Default `NULL` queries INDRA once.
+  Default `NULL` queries the backend once.
 
 - abstracts:
 
   optional named character vector mapping PMID to abstract text. Only
   missing PMIDs are fetched from PubMed. Default `NULL`.
+
+- backend:
+
+  the backend to get the evidence from, e.g.
+  [`indra_backend()`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.md).
+  `NULL` (default) uses the default backend named in each edge's
+  `backend_database`. See
+  [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md).
 
 - ...:
 
@@ -109,7 +118,7 @@ An object of class `topicHierarchy`: a list with
 
 ## Details
 
-INDRA evidence and PubMed abstracts are gathered once for the input
+Edge evidence and PubMed abstracts are gathered once for the input
 subnetwork and reused for every sub-decomposition, so no further network
 requests are made during the recursion. Each sub-decomposition rebuilds
 its vocabulary and refits the NMF on only the papers supporting that

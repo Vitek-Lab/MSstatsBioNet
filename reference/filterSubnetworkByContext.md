@@ -13,7 +13,8 @@ filterSubnetworkByContext(
   query = NULL,
   cutoff = NULL,
   method = c("tag_count", "cosine"),
-  exclude_keywords = NULL
+  exclude_keywords = NULL,
+  backend = NULL
 )
 ```
 
@@ -59,6 +60,15 @@ filterSubnetworkByContext(
   plurals explicitly. To exclude by keyword only, omit `query`. Default
   `NULL` excludes nothing.
 
+- backend:
+
+  the backend to get the evidence from, e.g.
+  [`indra_backend()`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.md).
+  `NULL` (default) uses the default backend named in each edge's
+  `backend_database`. Pass a backend built with non-default settings,
+  such as a different URL, here. See
+  [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md).
+
 ## Value
 
 A named list with four elements:
@@ -88,8 +98,8 @@ arguments of
 [`decomposeSubnetworkByTopic`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.md)
 or
 [`decomposeSubnetworkIntoHierarchicalTopics`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkIntoHierarchicalTopics.md),
-together with the returned list as `subnetwork`, so INDRA and PubMed are
-not queried again.
+together with the returned list as `subnetwork`, so the backend and
+PubMed are not queried again.
 
 ## Details
 

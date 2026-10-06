@@ -62,7 +62,8 @@ unsupervised non-negative matrix factorization (NMF).</p>
 <span>  seed <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  include_ppi <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  evidence <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  abstracts <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  abstracts <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  backend <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -121,13 +122,20 @@ text-learned topics, so the PPIs do not influence the topics themselves.</p></dd
 <code>attr(topics, "corpus")$evidence</code> from a previous call. It is subset
 to the edges of <code>subnetwork</code>, so the evidence gathered for a parent
 network can be reused for any of its topic subnetworks. When <code>NULL</code>
-(default) the evidence is queried from INDRA.</p></dd>
+(default) the evidence is queried from the backend.</p></dd>
 
 
 <dt id="arg-abstracts">abstracts<a class="anchor" aria-label="anchor" href="#arg-abstracts"></a></dt>
 <dd><p>optional named character vector (or list) mapping PMID to
 abstract text, e.g. <code>attr(topics, "corpus")$abstracts</code>. Only PMIDs
 missing from it are fetched from PubMed. Default <code>NULL</code> fetches all.</p></dd>
+
+
+<dt id="arg-backend">backend<a class="anchor" aria-label="anchor" href="#arg-backend"></a></dt>
+<dd><p>the backend to get the evidence from, e.g.
+<code><a href="indra_backend.html">indra_backend()</a></code>. <code>NULL</code> (default) uses the default
+backend named in each edge's <code>backend_database</code>. See
+<code><a href="get_evidence.html">get_evidence()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -158,7 +166,8 @@ missing from it are fetched from PubMed. Default <code>NULL</code> fetches all.<
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The procedure is:</p><ol><li><p>For every edge, the supporting INDRA evidence is retrieved and the
+    <p>The procedure is:</p><ol><li><p>For every edge, the supporting evidence is retrieved from the
+    backend (see <code><a href="get_evidence.html">get_evidence</a></code>) and the
     PubMed abstract of each referenced PMID is fetched. Papers (PMIDs) are
     the shared unit of analysis.</p></li>
 <li><p>Two matrices are built that share the same rows (papers):
@@ -204,7 +213,7 @@ missing from it are fetched from PubMed. Default <code>NULL</code> fetches all.<
 <span class="r-in"><span><span class="va">topics</span><span class="op">$</span><span class="va">topic_1</span><span class="op">$</span><span class="va">topTerms</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="exportNetworkToHTML.html">exportNetworkToHTML</a></span><span class="op">(</span><span class="va">topics</span><span class="op">$</span><span class="va">topic_1</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">topics</span><span class="op">$</span><span class="va">topic_1</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Re-decompose a topic without re-querying INDRA / PubMed.</span></span></span>
+<span class="r-in"><span><span class="co"># Re-decompose a topic without re-querying the backend / PubMed.</span></span></span>
 <span class="r-in"><span><span class="va">corpus</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">topics</span>, <span class="st">"corpus"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">topics_deeper</span> <span class="op">&lt;-</span> <span class="fu">decomposeSubnetworkByTopic</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    <span class="va">topics</span><span class="op">$</span><span class="va">topic_1</span>, n_topics <span class="op">=</span> <span class="fl">5</span>,</span></span>

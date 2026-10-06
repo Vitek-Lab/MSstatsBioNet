@@ -40,6 +40,8 @@
     describes the questions a query can ask, with a glossary.
     [`subnetwork_query()`](https://vitek-lab.github.io/MSstatsBioNet/reference/subnetwork_query.md)
     is the first; more are planned.
+  - `get_evidence(backend, edges)` returns the evidence sentences and
+    PubMed IDs behind each edge, looked up by `statement_id`.
   - The S4 classes `NetworkBackend`, `IndraBackend`, `NetworkQuery`, and
     `SubnetworkQuery` are exported, so other packages can add backends.
 
@@ -60,6 +62,18 @@
   and lipids, diamond for drugs, octagon for complexes, barrel for
   families. The legend shows only the node styles, shapes, and edge
   types present, and covers every statement type of the contract.
+
+- [`filterSubnetworkByContext()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.md),
+  [`decomposeSubnetworkByTopic()`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.md),
+  [`decomposeSubnetworkIntoHierarchicalTopics()`](https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkIntoHierarchicalTopics.md),
+  [`compareTopicModels()`](https://vitek-lab.github.io/MSstatsBioNet/reference/compareTopicModels.md),
+  and
+  [`bootstrapTopicModels()`](https://vitek-lab.github.io/MSstatsBioNet/reference/bootstrapTopicModels.md)
+  take a `backend` argument. By default each edge’s evidence comes from
+  the backend named in its `backend_database` column, so a network
+  subset or rebuilt with `list(nodes =, edges =)` still works. Pass
+  `backend` to use one built with non-default settings, such as
+  `indra_backend(cogex_url = )`.
 
 ### Breaking changes
 
@@ -223,6 +237,10 @@
   which matches the nodes INDRA returns against every row. Like
   [`get_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.md),
   it now prints the question it asks as a message.
+- The context and topic functions get edge evidence through
+  [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md).
+  The INDRA evidence lookup now uses the backend’s `cogex_url` in place
+  of a hard-coded URL. Its output is unchanged.
 
 ## MSstatsBioNet 0.99.0
 

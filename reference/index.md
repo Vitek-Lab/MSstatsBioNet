@@ -41,6 +41,8 @@
   : Get subnetwork from INDRA database
 - [`get_entity_properties()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_entity_properties.md)
   : Add a backend's properties of each entity
+- [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md)
+  : Get the evidence behind network edges
 - [`get_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.md)
   : Get a network from a backend
 - [`indra_backend()`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.md)

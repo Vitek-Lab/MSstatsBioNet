@@ -19,7 +19,8 @@ bootstrapTopicModels(
   min_term_count = 2,
   max_iter = 200,
   tol = 1e-04,
-  seed = 1
+  seed = 1,
+  backend = NULL
 )
 ```
 
@@ -66,6 +67,14 @@ bootstrapTopicModels(
 
   random seed for the reference fit, the resampling, and each bootstrap
   NMF. Default 1.
+
+- backend:
+
+  the backend to get the evidence from, e.g.
+  [`indra_backend()`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.md).
+  `NULL` (default) uses the default backend named in each edge's
+  `backend_database`. See
+  [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md).
 
 ## Value
 

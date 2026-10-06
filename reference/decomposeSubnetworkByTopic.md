@@ -19,7 +19,8 @@ decomposeSubnetworkByTopic(
   seed = 1,
   include_ppi = TRUE,
   evidence = NULL,
-  abstracts = NULL
+  abstracts = NULL,
+  backend = NULL
 )
 ```
 
@@ -76,13 +77,21 @@ decomposeSubnetworkByTopic(
   `attr(topics, "corpus")$evidence` from a previous call. It is subset
   to the edges of `subnetwork`, so the evidence gathered for a parent
   network can be reused for any of its topic subnetworks. When `NULL`
-  (default) the evidence is queried from INDRA.
+  (default) the evidence is queried from the backend.
 
 - abstracts:
 
   optional named character vector (or list) mapping PMID to abstract
   text, e.g. `attr(topics, "corpus")$abstracts`. Only PMIDs missing from
   it are fetched from PubMed. Default `NULL` fetches all.
+
+- backend:
+
+  the backend to get the evidence from, e.g.
+  [`indra_backend()`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.md).
+  `NULL` (default) uses the default backend named in each edge's
+  `backend_database`. See
+  [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md).
 
 ## Value
 
@@ -120,9 +129,11 @@ are attached as the `"corpus"` attribute (a list with `evidence` and
 
 The procedure is:
 
-1.  For every edge, the supporting INDRA evidence is retrieved and the
-    PubMed abstract of each referenced PMID is fetched. Papers (PMIDs)
-    are the shared unit of analysis.
+1.  For every edge, the supporting evidence is retrieved from the
+    backend (see
+    [`get_evidence`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md))
+    and the PubMed abstract of each referenced PMID is fetched. Papers
+    (PMIDs) are the shared unit of analysis.
 
 2.  Two matrices are built that share the same rows (papers): `X_text`
     (papers x words, term counts from the abstracts) and `X_edges`
@@ -170,7 +181,7 @@ topics <- decomposeSubnetworkByTopic(subnetwork, n_topics = 5)
 topics$topic_1$topTerms
 exportNetworkToHTML(topics$topic_1$nodes, topics$topic_1$edges)
 
-# Re-decompose a topic without re-querying INDRA / PubMed.
+# Re-decompose a topic without re-querying the backend / PubMed.
 corpus <- attr(topics, "corpus")
 topics_deeper <- decomposeSubnetworkByTopic(
     topics$topic_1, n_topics = 5,

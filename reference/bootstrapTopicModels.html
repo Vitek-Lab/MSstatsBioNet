@@ -66,7 +66,8 @@ lists change with and without the PPI view (run once per <code>include_ppi</code
 <span>  min_term_count <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  max_iter <span class="op">=</span> <span class="fl">200</span>,</span>
 <span>  tol <span class="op">=</span> <span class="fl">1e-04</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">1</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  backend <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -115,6 +116,13 @@ Default 200.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>random seed for the reference fit, the resampling, and each
 bootstrap NMF. Default 1.</p></dd>
+
+
+<dt id="arg-backend">backend<a class="anchor" aria-label="anchor" href="#arg-backend"></a></dt>
+<dd><p>the backend to get the evidence from, e.g.
+<code><a href="indra_backend.html">indra_backend()</a></code>. <code>NULL</code> (default) uses the default
+backend named in each edge's <code>backend_database</code>. See
+<code><a href="get_evidence.html">get_evidence()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

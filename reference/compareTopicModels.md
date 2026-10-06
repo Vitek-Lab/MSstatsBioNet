@@ -17,7 +17,8 @@ compareTopicModels(
   unit = c("edges", "papers"),
   min_term_count = 2,
   max_iter = 200,
-  tol = 1e-04
+  tol = 1e-04,
+  backend = NULL
 )
 ```
 
@@ -54,6 +55,14 @@ compareTopicModels(
 - tol:
 
   relative-change tolerance for NMF early stopping. Default 1e-4.
+
+- backend:
+
+  the backend to get the evidence from, e.g.
+  [`indra_backend()`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.md).
+  `NULL` (default) uses the default backend named in each edge's
+  `backend_database`. See
+  [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md).
 
 ## Value
 

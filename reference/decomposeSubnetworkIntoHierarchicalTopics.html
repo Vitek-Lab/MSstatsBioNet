@@ -62,6 +62,7 @@ the root and increasingly specific sub-themes towards the leaves.</p>
 <span>  max_depth <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  evidence <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  abstracts <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  backend <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -99,13 +100,20 @@ edges. Lower values allow an edge to appear in several sibling topics.</p></dd>
 <dd><p>optional pre-fetched evidence data.frame, e.g.
 <code>attr(topics, "corpus")$evidence</code> from
 <code><a href="decomposeSubnetworkByTopic.html">decomposeSubnetworkByTopic</a></code> or <code>result$corpus$evidence</code>
-from a previous call of this function. Default <code>NULL</code> queries INDRA
-once.</p></dd>
+from a previous call of this function. Default <code>NULL</code> queries the
+backend once.</p></dd>
 
 
 <dt id="arg-abstracts">abstracts<a class="anchor" aria-label="anchor" href="#arg-abstracts"></a></dt>
 <dd><p>optional named character vector mapping PMID to abstract
 text. Only missing PMIDs are fetched from PubMed. Default <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-backend">backend<a class="anchor" aria-label="anchor" href="#arg-backend"></a></dt>
+<dd><p>the backend to get the evidence from, e.g.
+<code><a href="indra_backend.html">indra_backend()</a></code>. <code>NULL</code> (default) uses the default
+backend named in each edge's <code>backend_database</code>. See
+<code><a href="get_evidence.html">get_evidence()</a></code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -151,7 +159,7 @@ text. Only missing PMIDs are fetched from PubMed. Default <code>NULL</code>.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>INDRA evidence and PubMed abstracts are gathered once for the input
+    <p>Edge evidence and PubMed abstracts are gathered once for the input
 subnetwork and reused for every sub-decomposition, so no further network
 requests are made during the recursion. Each sub-decomposition rebuilds its
 vocabulary and refits the NMF on only the papers supporting that branch's
