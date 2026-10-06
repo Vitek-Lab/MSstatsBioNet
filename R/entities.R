@@ -194,7 +194,7 @@ parse_ptm_sites <- function(ids, pattern = MSSTATS_PTM_SITE_PATTERN) {
                stringsAsFactors = FALSE)
 }
 
-#' Expand an entity table's groundings into a long table
+#' Build a table of an entity table's groundings, one row per grounding
 #'
 #' The one place that splits the \code{";"}-joined \code{namespace},
 #' \code{entity_id}, and \code{entity_name} columns. Backends read
@@ -208,7 +208,7 @@ parse_ptm_sites <- function(ids, pattern = MSSTATS_PTM_SITE_PATTERN) {
 #' are left out.
 #' @keywords internal
 #' @noRd
-expand_groundings <- function(entities, namespaces = NULL) {
+build_grounding_table <- function(entities, namespaces = NULL) {
     .validate_entities(entities)
     grounded <- !is.na(entities$namespace) & !is.na(entities$entity_id)
     entities <- entities[grounded, , drop = FALSE]
@@ -349,7 +349,7 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
     if (!is.character(force_include)) {
         stop("force_include must be a character vector.", call. = FALSE)
     }
-    long <- expand_groundings(entities)
+    long <- build_grounding_table(entities)
     grounding_keys <- paste(long$namespace, long$entity_id, sep = ":")
     by_grounding <- unique(long$id[grounding_keys %in% force_include])
     matched <- entities$id %in% force_include | entities$id %in% by_grounding
@@ -396,7 +396,10 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
 #' Keep one comparison of a groupComparison table
 #' @param df input table
 #' @param label the \code{Label} value to keep, or \code{NULL}
-#' @return \code{df}, restricted to \code{label}
+#' @return \code{df}, restricted to \code{label}. With no \code{label} and
+#' one non-missing \code{Label} value, restricted to that value, so rows with
+#' a missing \code{Label} are dropped. Unchanged when \code{df} has no
+#' \code{Label} column or only missing values.
 #' @keywords internal
 #' @noRd
 .select_label <- function(df, label) {
@@ -421,6 +424,9 @@ select_entities <- function(entities, pvalue_cutoff = NULL,
             stop("df has ", length(labels), " comparisons in its Label ",
                  "column: ", .list_values_for_message(labels), ". Choose one with ",
                  "label = .", call. = FALSE)
+        }
+        if (length(labels) == 1) {
+            return(df[df$Label %in% labels, , drop = FALSE])
         }
     }
     df

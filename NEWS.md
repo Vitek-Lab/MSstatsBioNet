@@ -68,7 +68,7 @@ vector", the name of the argument in the new API.
 input: `prepare_entities()` (one row per analyte, with its entity type,
 identifier system, and organism; copies `log2FC`, `log10FC`, or `logFC` to
 `logFC`; stops when the input has several comparisons in `Label` and
-`label` doesn't name one), `parse_ptm_sites()`, `expand_groundings()`, and
+`label` doesn't name one), `parse_ptm_sites()`, `build_grounding_table()`, and
 `select_entities()` (flags rows that pass the cutoffs and drops none).
 Nothing calls them yet.
 

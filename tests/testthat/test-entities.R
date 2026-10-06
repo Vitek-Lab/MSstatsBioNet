@@ -156,6 +156,23 @@ test_that("prepare_entities() errors on several comparisons unless label names o
                                        id_type = "uniprot")), 2)
 })
 
+test_that("prepare_entities() drops NA-label rows when one label is present", {
+    df <- data.frame(Protein = c("P04637", "P04637", "P00533"),
+                     Label = c("A vs B", NA, "A vs B"),
+                     log2FC = c(1, 2, 3))
+    entities <- prepare_entities(df, entity_type = "protein",
+                                 id_type = "uniprot")
+    expect_identical(entities$id, c("P04637", "P00533"))
+    expect_identical(entities$logFC, c(1, 3))
+})
+
+test_that("prepare_entities() keeps every row when Label is all NA", {
+    df <- data.frame(Protein = c("P04637", "P00533"), Label = NA)
+    entities <- prepare_entities(df, entity_type = "protein",
+                                 id_type = "uniprot")
+    expect_identical(entities$id, c("P04637", "P00533"))
+})
+
 test_that("prepare_entities() parses sites only for ptm_site rows", {
     df <- data.frame(Protein = c("P00533_S1039_S1042", "PC_A1"),
                      kind = c("ptm_site", "metabolite"))
@@ -204,35 +221,36 @@ test_that("parse_ptm_sites() takes a custom pattern and handles empty input", {
     expect_identical(colnames(empty), c("id", "parent_id", "site"))
 })
 
-test_that("expand_groundings() returns one row per grounding", {
+test_that("build_grounding_table() returns one row per grounding", {
     entities <- prepare_entities(data.frame(Protein = c("A", "B", "C")),
                                  entity_type = "protein", id_type = "uniprot")
     entities$namespace <- c("HGNC;CHEBI", "HGNC", NA)
     entities$entity_id <- c("1097;28748", "7715", NA)
     entities$entity_name <- c("BRAF;NA", NA, NA)
-    long <- expand_groundings(entities)
+    long <- build_grounding_table(entities)
     expect_identical(long$id, c("A", "A", "B"))
     expect_identical(long$namespace, c("HGNC", "CHEBI", "HGNC"))
     expect_identical(long$entity_id, c("1097", "28748", "7715"))
     expect_identical(long$entity_name, c("BRAF", NA, NA))
-    expect_identical(expand_groundings(entities, namespaces = "CHEBI")$id, "A")
-    expect_equal(nrow(expand_groundings(entities, namespaces = "UP")), 0)
+    chebi <- build_grounding_table(entities, namespaces = "CHEBI")
+    expect_identical(chebi$id, "A")
+    expect_equal(nrow(build_grounding_table(entities, namespaces = "UP")), 0)
 })
 
-test_that("expand_groundings() rejects misaligned groundings", {
+test_that("build_grounding_table() rejects misaligned groundings", {
     entities <- prepare_entities(data.frame(Protein = "A"),
                                  entity_type = "protein", id_type = "uniprot")
     entities$namespace <- "HGNC;HGNC"
     entities$entity_id <- "1097"
-    expect_error(expand_groundings(entities), "Misaligned: A")
+    expect_error(build_grounding_table(entities), "Misaligned: A")
 })
 
 test_that("entity validation reports missing columns and bad values", {
     entities <- prepare_entities(data.frame(Protein = c("A", "B")),
                                  entity_type = "protein", id_type = "uniprot")
-    expect_error(expand_groundings(data.frame(id = "A")),
+    expect_error(build_grounding_table(data.frame(id = "A")),
                  "entities is missing required column\\(s\\): entity_type")
-    expect_error(expand_groundings(list(id = "A")), "must be a data.frame")
+    expect_error(build_grounding_table(list(id = "A")), "must be a data.frame")
     bad <- entities
     bad$included_in_query <- c("yes", "no")
     expect_error(select_entities(bad), "included_in_query must be logical")
