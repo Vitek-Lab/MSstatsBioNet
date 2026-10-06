@@ -52,10 +52,26 @@ test_that(".mapLogFCToColor returns valid hex colours", {
     expect_true(all(grepl("^#[0-9A-Fa-f]{6}$", colors)))
 })
 
-test_that(".mapLogFCToColor returns grey for all-NA input", {
+test_that(".mapLogFCToColor returns the no-data colour for all-NA input", {
     colors <- MSstatsBioNet:::.mapLogFCToColor(c(NA, NA, NA))
     expect_length(colors, 3)
-    expect_true(all(colors == "#D3D3D3"))
+    expect_true(all(colors == MSstatsBioNet:::NO_DATA_NODE_COLOR))
+})
+
+test_that(".mapLogFCToColor gives NA a colour distinct from a zero fold change", {
+    colors <- MSstatsBioNet:::.mapLogFCToColor(c(-2, 0, NA, 2))
+    expect_equal(colors[3], MSstatsBioNet:::NO_DATA_NODE_COLOR)
+    expect_equal(colors[2], MSstatsBioNet:::NEUTRAL_NODE_COLOR)
+    expect_false(MSstatsBioNet:::NO_DATA_NODE_COLOR ==
+                     MSstatsBioNet:::NEUTRAL_NODE_COLOR)
+    # NA does not shift the colours of the other values
+    expect_equal(colors[-3], MSstatsBioNet:::.mapLogFCToColor(c(-2, 0, 2)))
+})
+
+test_that(".mapLogFCToColor keeps NA distinct when one value is non-NA", {
+    colors <- MSstatsBioNet:::.mapLogFCToColor(c(1, NA))
+    expect_equal(colors, c(MSstatsBioNet:::NEUTRAL_NODE_COLOR,
+                           MSstatsBioNet:::NO_DATA_NODE_COLOR))
 })
 
 test_that(".mapLogFCToColor returns grey for all-identical values", {
@@ -83,14 +99,18 @@ test_that(".relProps returns correct structure", {
     props <- MSstatsBioNet:::.relProps()
     
     expect_type(props, "list")
-    expect_true(all(c("complex", "regulatory", "phosphorylation", "other") %in% names(props)))
-    
-    expect_equal(props$complex$consolidate, "undirected")
-    expect_equal(props$regulatory$consolidate, "directed")
-    expect_equal(props$phosphorylation$consolidate, "directed")
+    expect_true(all(c("complex", "regulatory", "phosphorylation",
+                      "modification", "other") %in% names(props)))
     
     expect_true("Inhibition" %in% names(props$regulatory$colors))
     expect_true("Activation" %in% names(props$regulatory$colors))
+})
+
+test_that(".relProps puts every contract statement type in exactly one category", {
+    props <- MSstatsBioNet:::.relProps()
+    listed <- unlist(lapply(props, `[[`, "types"), use.names = FALSE)
+    expect_setequal(listed, MSstatsBioNet:::INTERACTION_TYPES)
+    expect_false(anyDuplicated(listed) > 0)
 })
 
 # =============================================================================
@@ -102,6 +122,10 @@ test_that(".classify maps interaction types to correct categories", {
     expect_equal(MSstatsBioNet:::.classify("Activation"),      "regulatory")
     expect_equal(MSstatsBioNet:::.classify("Phosphorylation"), "phosphorylation")
     expect_equal(MSstatsBioNet:::.classify("Complex"),         "complex")
+    expect_equal(MSstatsBioNet:::.classify("Association"),     "complex")
+    expect_equal(MSstatsBioNet:::.classify("Dephosphorylation"), "phosphorylation")
+    expect_equal(MSstatsBioNet:::.classify("Ubiquitination"),  "modification")
+    expect_equal(MSstatsBioNet:::.classify("Translocation"),   "other")
     expect_equal(MSstatsBioNet:::.classify("Unknown"),         "other")
 })
 
@@ -163,6 +187,43 @@ test_that(".consolidateEdges marks complex as undirected", {
     complex <- result[result$interaction == "Complex", ]
     expect_equal(nrow(complex), 1)
     expect_equal(complex$edge_type, "undirected")
+})
+
+test_that(".consolidateEdges reads the directed column", {
+    edges <- data.frame(source      = c("A", "B", "C"),
+                        target      = c("B", "A", "D"),
+                        interaction = c("Activation", "Activation", "Complex"),
+                        directed    = c(FALSE, FALSE, TRUE),
+                        stringsAsFactors = FALSE)
+    result <- MSstatsBioNet:::.consolidateEdges(edges)
+    # Undirected A-B pair is drawn once; a directed Complex keeps its arrow
+    expect_equal(nrow(result), 2)
+    expect_equal(result$edge_type[result$interaction == "Activation"],
+                 "undirected")
+    expect_equal(result$edge_type[result$interaction == "Complex"], "directed")
+})
+
+test_that(".consolidateEdges falls back to the statement type without directed", {
+    edges <- data.frame(source      = c("A", "C", "E"),
+                        target      = c("B", "D", "F"),
+                        interaction = c("Complex", "Association", "Activation"),
+                        stringsAsFactors = FALSE)
+    result <- MSstatsBioNet:::.consolidateEdges(edges)
+    # A Complex edge with no reverse edge is still undirected
+    expect_equal(result$edge_type, c("undirected", "undirected", "directed"))
+
+    edges$directed <- c(NA, FALSE, NA)
+    expect_equal(MSstatsBioNet:::.consolidateEdges(edges)$edge_type,
+                 c("undirected", "undirected", "directed"))
+})
+
+test_that(".consolidateEdges keeps undirected edges of different types", {
+    edges <- data.frame(source      = c("A", "B"),
+                        target      = c("B", "A"),
+                        interaction = c("Complex", "Association"),
+                        stringsAsFactors = FALSE)
+    result <- MSstatsBioNet:::.consolidateEdges(edges)
+    expect_equal(nrow(result), 2)
 })
 
 test_that(".consolidateEdges handles empty input", {
@@ -278,6 +339,127 @@ test_that(".buildElements uses grey when logFC column is absent", {
                                 el$data$node_type == "protein", result)
     colors <- sapply(protein_nodes, function(el) el$data$color)
     expect_true(all(colors == "#D3D3D3"))
+})
+
+# Node data of the main (non-PTM, non-compound) nodes, keyed by id
+.main_node_data <- function(elements) {
+    main <- Filter(function(el) identical(el$data$node_type, "protein"),
+                   elements)
+    stats::setNames(lapply(main, `[[`, "data"),
+                    vapply(main, function(el) el$data$id, character(1)))
+}
+
+# A network with (a) a significant protein, (b) a protein in the input with
+# logFC near 0 that was not queried, and (c) a protein not in the input
+.node_status_fixture <- function() {
+    data.frame(
+        id                = c("SIG", "FLAT", "LATENT"),
+        entity_type       = "protein",
+        measured          = c(TRUE, TRUE, FALSE),
+        included_in_query = c(TRUE, FALSE, TRUE),
+        logFC             = c(2.5, 0.01, NA),
+        adj.pvalue        = c(0.001, 0.9, NA),
+        stringsAsFactors  = FALSE
+    )
+}
+
+test_that(".node_display_status distinguishes measured, not queried, and latent", {
+    status <- MSstatsBioNet:::.node_display_status(.node_status_fixture())
+    expect_equal(status, c("measured", "not_queried", "latent"))
+})
+
+test_that(".node_display_status treats missing status columns as measured", {
+    nodes <- create_mock_nodes()
+    expect_true(all(MSstatsBioNet:::.node_display_status(nodes) == "measured"))
+    nodes$logFC[2] <- NA
+    expect_equal(MSstatsBioNet:::.node_display_status(nodes)[2], "no_logfc")
+    nodes$logFC <- NULL
+    expect_true(all(MSstatsBioNet:::.node_display_status(nodes) == "measured"))
+})
+
+test_that(".buildElements styles the node-status fixture three ways", {
+    nodes <- .main_node_data(MSstatsBioNet:::.buildElements(
+        .node_status_fixture(), data.frame()))
+    expect_equal(nodes$SIG$status, "measured")
+    expect_equal(nodes$FLAT$status, "not_queried")
+    expect_equal(nodes$LATENT$status, "latent")
+    expect_equal(nodes$LATENT$color, MSstatsBioNet:::NO_DATA_NODE_COLOR)
+    expect_false(nodes$FLAT$color == nodes$LATENT$color)
+})
+
+test_that(".buildElements colours a PTM protein from its protein-level row", {
+    nodes <- data.frame(id    = c("P1", "P1", "P1"),
+                        site  = c("S5", NA, "T9"),
+                        logFC = c(-2, 1.5, 2),
+                        stringsAsFactors = FALSE)
+    elements <- MSstatsBioNet:::.buildElements(nodes, data.frame())
+    protein <- .main_node_data(elements)$P1
+    expected <- MSstatsBioNet:::.mapLogFCToColor(nodes$logFC)
+    expect_equal(protein$color, expected[2])
+    expect_equal(protein$status, "measured")
+    ptm <- Filter(function(el) identical(el$data$node_type, "ptm"), elements)
+    ptm_colors <- vapply(ptm, function(el) el$data$color, character(1))
+    names(ptm_colors) <- vapply(ptm, function(el) el$data$label, character(1))
+    expect_equal(unname(ptm_colors[c("S5", "T9")]), expected[c(1, 3)])
+})
+
+test_that(".buildElements draws a PTM protein without a protein-level row as a container", {
+    elements <- MSstatsBioNet:::.buildElements(create_mock_nodes_ptm(),
+                                               data.frame())
+    mdm2 <- .main_node_data(elements)$MDM2_HUMAN
+    expect_equal(mdm2$status, "sites_only")
+    expect_equal(mdm2$color, MSstatsBioNet:::NO_DATA_NODE_COLOR)
+    # The site nodes keep the colour of their row
+    ptm <- Filter(function(el) identical(el$data$node_type, "ptm"), elements)
+    site_color <- MSstatsBioNet:::.mapLogFCToColor(
+        create_mock_nodes_ptm()$logFC)[2]
+    expect_true(all(vapply(ptm, function(el) el$data$color, character(1)) ==
+                        site_color))
+    expect_true(all(vapply(ptm, function(el) el$data$status, character(1)) ==
+                        "measured"))
+})
+
+test_that(".buildElements gives nodes a shape by entity_type", {
+    nodes <- data.frame(id          = c("P", "M", "D", "F", "X", "S"),
+                        entity_type = c("protein", "metabolite", "drug",
+                                        "family", NA, "ptm_site"),
+                        stringsAsFactors = FALSE)
+    data <- .main_node_data(MSstatsBioNet:::.buildElements(nodes, data.frame()))
+    shapes <- vapply(data, `[[`, character(1), "shape")
+    expect_equal(unname(shapes[c("P", "M", "D", "F", "X", "S")]),
+                 c("round-rectangle", "hexagon", "diamond", "barrel",
+                   "round-rectangle", "round-rectangle"))
+    expect_equal(data$X$entity_type, "")
+    expect_equal(data$M$entity_type, "metabolite")
+})
+
+test_that(".buildElements gives every node the protein shape without entity_type", {
+    data <- .main_node_data(MSstatsBioNet:::.buildElements(create_mock_nodes(),
+                                                           data.frame()))
+    expect_true(all(vapply(data, `[[`, character(1), "shape") ==
+                        "round-rectangle"))
+})
+
+test_that("every ENTITY_TYPES value has a node shape", {
+    expect_setequal(names(MSstatsBioNet:::NODE_SHAPES),
+                    MSstatsBioNet:::ENTITY_TYPES)
+})
+
+test_that(".buildElements draws undirected edges without an arrow", {
+    edges <- data.frame(source = c("P53_HUMAN", "MDM2_HUMAN"),
+                        target = c("MDM2_HUMAN", "ATM_HUMAN"),
+                        interaction = c("Association", "Activation"),
+                        directed = c(FALSE, TRUE),
+                        stringsAsFactors = FALSE)
+    elements <- MSstatsBioNet:::.buildElements(create_mock_nodes(), edges)
+    edge_data <- lapply(Filter(function(el) !is.null(el$data$source) &&
+                                   !identical(el$data$edge_type,
+                                              "ptm_attachment"),
+                               elements), `[[`, "data")
+    arrows <- vapply(edge_data, `[[`, character(1), "arrow_shape")
+    names(arrows) <- vapply(edge_data, `[[`, character(1), "interaction")
+    expect_equal(unname(arrows[c("Association", "Activation")]),
+                 c("none", "triangle"))
 })
 
 # =============================================================================

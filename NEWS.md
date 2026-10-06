@@ -37,7 +37,28 @@ statement-type and entity-type vocabularies, value ranges, `NA` statistics
 on nodes that are not in the input data, and that every edge's source and
 target are nodes. It stops with an error listing every problem found.
 
+* `cytoscapeNetwork()` draws the node status columns. Nodes not in the
+input data (`measured = FALSE`) have no fill and a dashed grey border, and
+the legend lists them as "not in input data"; nodes with
+`included_in_query = FALSE` are faded; nodes with an `NA` `logFC` have no
+fill. `entity_type` sets the node shape: hexagon for metabolites and lipids,
+diamond for drugs, octagon for complexes, barrel for families. The legend
+shows only the node styles, shapes, and edge types present, and covers
+every statement type of the contract.
+
 ## Breaking changes
+
+* `cytoscapeNetwork()` reads the edge `directed` column: an undirected edge
+has no arrow and is drawn once for both directions, even when the reverse
+edge is missing. Edges without the column treat `Complex` and
+`Association` as undirected. Previously a `Complex` edge without its
+reverse was drawn as directed.
+* `cytoscapeNetwork()` colours a protein with PTM `site` rows from its
+row with no `site`. A protein with only site rows is drawn as an uncoloured
+container, and its site nodes keep their own colours. Previously it took
+the colour of its first row, often a site's fold change.
+* `cytoscapeNetwork()` no longer draws an `NA` `logFC` as the grey of a
+zero fold change.
 
 * The edges returned by `getSubnetworkFromIndra()` follow the edge contract.
 Columns are renamed, with no aliases: `stmt_hash` to `statement_id` (now

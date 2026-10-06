@@ -18,11 +18,24 @@ exportNetworkToHTML(
 columns: \code{logFC} (numeric), \code{entity_name}
 (character; may be semicolon-joined for multi-grounded
 rows), \code{entity_id} (character), \code{site}
-(character, underscore-separated PTM site list).}
+(character, underscore-separated PTM site list), and
+the node status columns of \code{\link{validate_network}()}:
+\code{entity_type} sets the node shape (e.g. a hexagon
+for \code{"metabolite"}); \code{measured = FALSE} draws a
+node with no fill and a dashed grey border ("not in input
+data"); \code{included_in_query = FALSE} fades it. A node
+with an \code{NA} \code{logFC} has no fill. A protein
+with \code{site} rows takes its colour from its row
+with no \code{site}; without one, only its sites are
+coloured. Missing status columns count as \code{TRUE}.}
 
 \item{edges}{Data frame with columns \code{source}, \code{target},
-\code{interaction}.  Optional: \code{site},
-\code{evidence_url}, opened when an edge is clicked.}
+\code{interaction}.  Optional: \code{directed} (an
+edge with \code{FALSE} has no arrow and is drawn once
+for both directions; without the column, \code{Complex}
+and \code{Association} edges are undirected),
+\code{site}, \code{evidence_url}, opened when an edge is
+clicked.}
 
 \item{filename}{Output HTML filename}
 
