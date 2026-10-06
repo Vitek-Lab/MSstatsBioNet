@@ -102,6 +102,7 @@ subnetworks.
 ``` r
 
 subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), logfc_cutoff = 1, force_include_other = c("HGNC:3236"))
+#> INDRA subnetwork: how are 11 selected PTM sites and 1 added entity connected to each other, with no other nodes added?
 #> Warning in getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), : NOTICE: This function includes third-party software components
 #>         that are licensed under the BSD 2-Clause License. Please ensure to
 #>         include the third-party licensing agreements if redistributing this

@@ -42,7 +42,22 @@
 <h2 class="pkg-version" data-toc-text="development version" id="msstatsbionet-development-version">MSstatsBioNet (development version)<a class="anchor" aria-label="anchor" href="#msstatsbionet-development-version"></a></h2>
 <div class="section level3">
 <h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
-<ul><li>New function <code><a href="../reference/validate_network.html">validate_network()</a></code> checks a <code>list(nodes, edges)</code> network against the edge and node contract (v1.0): required columns and types, the statement-type and entity-type vocabularies, value ranges, <code>NA</code> statistics on nodes that are not in the input data, and that every edge’s source and target are nodes. It stops with an error listing every problem found.</li>
+<ul><li>A new API for building networks from MSstats results, which separates the steps that <code><a href="../reference/annotateProteinInfoFromIndra.html">annotateProteinInfoFromIndra()</a></code> and <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> combine, and works for proteins, PTM sites, and metabolites:
+<ul><li>
+<code><a href="../reference/prepare_entities.html">prepare_entities()</a></code> builds an entity table with one row per analyte, its entity type (<code>"protein"</code>, <code>"ptm_site"</code>, <code>"metabolite"</code>, …), identifier system, organism, and statistics. It copies <code>log2FC</code>, <code>log10FC</code>, or <code>logFC</code> to <code>logFC</code>, parses PTM sites, and stops when the input has several comparisons in <code>Label</code> unless <code>label</code> names one.</li>
+<li>
+<code><a href="../reference/indra_backend.html">indra_backend()</a></code> creates the INDRA backend, and <code><a href="../reference/backend_capabilities.html">backend_capabilities()</a></code> lists what a backend supports.</li>
+<li>
+<code><a href="../reference/convert_ids.html">convert_ids()</a></code> grounds the entity table (CoGEx for UniProt IDs and mnemonics, Gilda for gene symbols and chemical names), and <code><a href="../reference/get_entity_properties.html">get_entity_properties()</a></code> adds <code>is_transcription_factor</code>, <code>is_kinase</code>, and <code>is_phosphatase</code>.</li>
+<li>
+<code><a href="../reference/select_entities.html">select_entities()</a></code> flags the rows that pass the cutoffs, and drops none, so that nodes in the input are recognized even when they fail the cutoffs.</li>
+<li>
+<code>get_network(backend, entities, query = subnetwork_query())</code> queries the backend and returns <code>nodes</code> and <code>edges</code> that meet the contract. It takes <code>interaction_types</code>, <code>min_evidence</code>, <code>min_confidence</code> (new: drops edges below it, and edges with no score), <code>evidence_sources</code>, and <code>include_entities</code>. It prints the question it asks as a message, e.g. “INDRA subnetwork: how are 42 selected proteins connected to each other, with no other nodes added?”.</li>
+<li>
+<code><a href="../reference/network_queries.html">?network_queries</a></code> describes the questions a query can ask, with a glossary. <code><a href="../reference/subnetwork_query.html">subnetwork_query()</a></code> is the first; more are planned.</li>
+<li>The S4 classes <code>NetworkBackend</code>, <code>IndraBackend</code>, <code>NetworkQuery</code>, and <code>SubnetworkQuery</code> are exported, so other packages can add backends.</li>
+</ul></li>
+<li>New function <code><a href="../reference/validate_network.html">validate_network()</a></code> checks a <code>list(nodes, edges)</code> network against the edge and node contract (v1.0): required columns and types, the statement-type and entity-type vocabularies, value ranges, <code>NA</code> statistics on nodes that are not in the input data, and that every edge’s source and target are nodes. It stops with an error listing every problem found.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
@@ -82,13 +97,12 @@
 <div class="section level3">
 <h3 id="internal-changes-development-version">Internal changes<a class="anchor" aria-label="anchor" href="#internal-changes-development-version"></a></h3>
 <ul><li>
-<code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> now runs through an internal INDRA backend object and the S4 generic <code>get_network()</code>, the first step toward supporting network databases other than INDRA. Its output is unchanged. The new functions are not exported yet.</li>
+<code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> now runs through an internal INDRA backend object and the S4 generic <code><a href="../reference/get_network.html">get_network()</a></code>, the first step toward supporting network databases other than INDRA.</li>
 <li>The error for a non-character <code>sources_filter</code> in <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> now reads “evidence_sources must be a character vector”, the name of the argument in the new API.</li>
-<li>Added internal functions for the entity table that the new API takes as input: <code>prepare_entities()</code> (one row per analyte, with its entity type, identifier system, and organism; copies <code>log2FC</code>, <code>log10FC</code>, or <code>logFC</code> to <code>logFC</code>; stops when the input has several comparisons in <code>Label</code> and <code>label</code> doesn’t name one), <code>parse_ptm_sites()</code>, <code>build_grounding_table()</code>, and <code>select_entities()</code> (flags rows that pass the cutoffs and drops none). Nothing calls them yet.</li>
 <li>
-<code><a href="../reference/annotateProteinInfoFromIndra.html">annotateProteinInfoFromIndra()</a></code> now runs through two internal generics of the new API: <code>convert_ids()</code>, which grounds an entity table through the INDRA backend (CoGEx for UniProt IDs and mnemonics, Gilda for gene symbols and chemical names), and <code>get_entity_properties()</code>, which adds the <code>is_transcription_factor</code>, <code>is_kinase</code>, and <code>is_phosphatase</code> columns. Its output is unchanged. The INDRA backend now also holds the Gilda URL, and the organism of the entity table is passed to Gilda in place of a hard-coded human taxon ID.</li>
+<code><a href="../reference/annotateProteinInfoFromIndra.html">annotateProteinInfoFromIndra()</a></code> now runs through <code><a href="../reference/convert_ids.html">convert_ids()</a></code> and <code><a href="../reference/get_entity_properties.html">get_entity_properties()</a></code>. Its output is unchanged. The INDRA backend now also holds the Gilda URL, and the organism of the entity table is passed to Gilda in place of a hard-coded human taxon ID.</li>
 <li>
-<code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> builds an entity table from <code>input</code>, flags the rows to query with <code>select_entities()</code>, and passes all rows to <code>get_network()</code>, which matches the nodes INDRA returns against every row.</li>
+<code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> builds an entity table from <code>input</code>, flags the rows to query with <code><a href="../reference/select_entities.html">select_entities()</a></code>, and passes all rows to <code><a href="../reference/get_network.html">get_network()</a></code>, which matches the nodes INDRA returns against every row. Like <code><a href="../reference/get_network.html">get_network()</a></code>, it now prints the question it asks as a message.</li>
 </ul></div>
 </div>
     <div class="section level2">

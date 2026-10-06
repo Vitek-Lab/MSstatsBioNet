@@ -2,14 +2,24 @@
 
 ## All functions
 
+- [`NetworkBackend-class`](https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkBackend-class.md)
+  [`IndraBackend-class`](https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkBackend-class.md)
+  : Network backend classes
+- [`NetworkQuery-class`](https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkQuery-class.md)
+  [`SubnetworkQuery-class`](https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkQuery-class.md)
+  : Network query classes
 - [`annotateProteinInfoFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.md)
   : Annotate Protein Information from Indra
+- [`backend_capabilities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/backend_capabilities.md)
+  : What a backend supports
 - [`bootstrapTopicModels()`](https://vitek-lab.github.io/MSstatsBioNet/reference/bootstrapTopicModels.md)
   : Bootstrap the topic decomposition to find each topic's robust top
   words
 - [`compareTopicModels()`](https://vitek-lab.github.io/MSstatsBioNet/reference/compareTopicModels.md)
   : Test whether including PPIs changes topic structure beyond random
   chance
+- [`convert_ids()`](https://vitek-lab.github.io/MSstatsBioNet/reference/convert_ids.md)
+  : Ground entities in a backend's namespaces
 - [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
   : Render a Cytoscape network visualisation
 - [`cytoscapeNetworkOutput()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.md)
@@ -29,6 +39,16 @@
   : Filter a subnetwork by contextual relevance
 - [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
   : Get subnetwork from INDRA database
+- [`get_entity_properties()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_entity_properties.md)
+  : Add a backend's properties of each entity
+- [`get_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.md)
+  : Get a network from a backend
+- [`indra_backend()`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.md)
+  : Create an INDRA backend
+- [`network_queries`](https://vitek-lab.github.io/MSstatsBioNet/reference/network_queries.md)
+  : Questions you can ask of a network backend
+- [`prepare_entities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/prepare_entities.md)
+  : Prepare an entity table from MSstats results
 - [`previewNetworkInBrowser()`](https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.md)
   : Preview network in browser
 - [`print(`*`<topicHierarchy>`*`)`](https://vitek-lab.github.io/MSstatsBioNet/reference/print.topicHierarchy.md)
@@ -37,5 +57,9 @@
   : Render a Cytoscape network in a Shiny application. This function is
   used to render a Cytoscape network visualization within a Shiny
   application.
+- [`select_entities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/select_entities.md)
+  : Flag the entities to query
+- [`subnetwork_query()`](https://vitek-lab.github.io/MSstatsBioNet/reference/subnetwork_query.md)
+  : How are my selected entities connected to each other?
 - [`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md)
   : Validate a network against the edge and node contract

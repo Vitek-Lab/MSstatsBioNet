@@ -148,6 +148,7 @@ input <- data.table::fread(system.file(
     package = "MSstatsBioNet"
 ))
 subnetwork <- getSubnetworkFromIndra(input)
+#> INDRA subnetwork: how are 10 selected proteins connected to each other, with no other nodes added?
 #> Warning: NOTICE: This function includes third-party software components
 #>         that are licensed under the BSD 2-Clause License. Please ensure to
 #>         include the third-party licensing agreements if redistributing this

@@ -9,9 +9,13 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/authors.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/index.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/news/index.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkBackend-class.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkQuery-class.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/backend_capabilities.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/bootstrapTopicModels.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/compareTopicModels.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/convert_ids.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetworkOutput.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/decomposeSubnetworkByTopic.html</loc></url>
@@ -21,10 +25,17 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/get_entity_properties.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/index.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/network_queries.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/prepare_entities.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/previewNetworkInBrowser.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/print.topicHierarchy.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/renderCytoscapeNetwork.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/select_entities.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/subnetwork_query.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.html</loc></url>
 </urlset>
 
