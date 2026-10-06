@@ -161,7 +161,7 @@ setMethod("convert_ids", "IndraBackend",
     function(backend, entities, ...) {
         .validate_entities(entities)
         .check_indra_id_conversions(entities)
-        members <- .grounding_inputs(entities)
+        members <- .get_grounding_inputs(entities)
         for (id_type in unique(entities$id_type)) {
             rows <- which(entities$id_type == id_type)
             groundings <- switch(id_type,
@@ -172,7 +172,7 @@ setMethod("convert_ids", "IndraBackend",
                     backend@cogex_url),
                 hgnc_symbol = .ground_text_with_gilda(
                     members[rows], backend@grounding_url, keep_only = "HGNC",
-                    organisms = as.list(unique(.entity_organisms(entities)[rows]))),
+                    organisms = as.list(unique(.get_entity_organisms(entities)[rows]))),
                 chemical_name = .ground_text_with_gilda(
                     members[rows], backend@grounding_url))
             entities$namespace[rows] <- groundings$namespace
@@ -244,7 +244,7 @@ setMethod("get_annotations", "IndraBackend",
              paste(allowed, collapse = ", "), ".", call. = FALSE)
     }
     is_protein <- entities$entity_type %in% c("protein", "ptm_site")
-    organisms <- unique(.entity_organisms(entities)[is_protein])
+    organisms <- unique(.get_entity_organisms(entities)[is_protein])
     non_human <- setdiff(organisms, "9606")
     if (length(non_human) > 0) {
         stop("IndraBackend grounds proteins to HGNC, which covers human ",
@@ -259,7 +259,7 @@ setMethod("get_annotations", "IndraBackend",
 #' \code{organism} column
 #' @keywords internal
 #' @noRd
-.entity_organisms <- function(entities) {
+.get_entity_organisms <- function(entities) {
     if ("organism" %in% colnames(entities)) {
         as.character(entities$organism)
     } else {
@@ -273,7 +273,7 @@ setMethod("get_annotations", "IndraBackend",
 #' \code{id}, or of \code{parent_id} for \code{ptm_site} rows
 #' @keywords internal
 #' @noRd
-.grounding_inputs <- function(entities) {
+.get_grounding_inputs <- function(entities) {
     inputs <- entities$id
     if ("parent_id" %in% colnames(entities)) {
         use_parent <- entities$entity_type == "ptm_site" &
@@ -313,7 +313,7 @@ setMethod("get_annotations", "IndraBackend",
 #' @keywords internal
 #' @noRd
 .ground_uniprot_with_cogex <- function(members, cogex_url) {
-    groundings <- .empty_groundings(length(members))
+    groundings <- .build_empty_groundings(length(members))
     uniprot_ids <- unique(unlist(members, use.names = FALSE))
     if (length(uniprot_ids) == 0) {
         return(groundings)
@@ -361,7 +361,7 @@ setMethod("get_annotations", "IndraBackend",
 #' @noRd
 .ground_text_with_gilda <- function(members, grounding_url, keep_only = NULL,
                                     organisms = NULL) {
-    groundings <- .empty_groundings(length(members))
+    groundings <- .build_empty_groundings(length(members))
     texts <- unique(unlist(members, use.names = FALSE))
     if (length(texts) == 0) {
         return(groundings)
@@ -400,7 +400,7 @@ setMethod("get_annotations", "IndraBackend",
 #' Ungrounded grounding columns for n rows
 #' @keywords internal
 #' @noRd
-.empty_groundings <- function(n) {
+.build_empty_groundings <- function(n) {
     data.frame(namespace = rep(NA_character_, n),
                entity_id = rep(NA_character_, n),
                entity_name = rep(NA_character_, n),

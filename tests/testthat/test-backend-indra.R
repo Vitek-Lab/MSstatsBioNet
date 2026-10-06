@@ -135,7 +135,7 @@ test_that("get_network() validates its input before calling INDRA", {
 
 # ----- convert_ids() and get_annotations() (Phase 3b of the API refactor) -----
 
-.entities <- function(ids, entity_type = "protein", id_type = "uniprot", ...) {
+.make_entities <- function(ids, entity_type = "protein", id_type = "uniprot", ...) {
     suppressWarnings(prepare_entities(
         data.frame(Protein = ids, stringsAsFactors = FALSE),
         entity_type = entity_type, id_type = id_type, ...))
@@ -179,7 +179,7 @@ test_that("convert_ids() grounds UniProt IDs to HGNC, pooling protein groups", {
     calls <- new.env()
     .mock_cogex_id_mapping(calls)
     entities <- convert_ids(indra_backend(cogex_url = "https://cogex.example.org"),
-                            .entities(c("Q00610", "P13747;P23132", "XXXX99")))
+                            .make_entities(c("Q00610", "P13747;P23132", "XXXX99")))
 
     expect_equal(entities$namespace, c("HGNC", "HGNC;HGNC", NA))
     expect_equal(entities$entity_id, c("2092", "4962;10012", NA))
@@ -194,8 +194,8 @@ test_that("convert_ids() grounds PTM sites by their parent protein", {
     calls <- new.env()
     .mock_cogex_id_mapping(calls)
     entities <- convert_ids(indra_backend(),
-                            .entities(c("P04637_S15", "P04637_S20", "Q00610"),
-                                      entity_type = "ptm_site"))
+                            .make_entities(c("P04637_S15", "P04637_S20", "Q00610"),
+                                           entity_type = "ptm_site"))
 
     expect_setequal(calls$hgnc[[1]]$ids, c("P04637", "Q00610"))
     expect_equal(entities$entity_id, c("11998", "11998", "2092"))
@@ -206,8 +206,8 @@ test_that("convert_ids() maps UniProt mnemonics to UniProt IDs first", {
     calls <- new.env()
     .mock_cogex_id_mapping(calls)
     entities <- convert_ids(indra_backend(),
-                            .entities(c("CLH1_HUMAN", "NOPE_HUMAN"),
-                                      id_type = "uniprot_mnemonic"))
+                            .make_entities(c("CLH1_HUMAN", "NOPE_HUMAN"),
+                                           id_type = "uniprot_mnemonic"))
 
     expect_equal(calls$mnemonic[[1]]$ids, c("CLH1_HUMAN", "NOPE_HUMAN"))
     expect_equal(calls$hgnc[[1]]$ids, "Q00610")
@@ -218,7 +218,7 @@ test_that("convert_ids() grounds HGNC symbols through Gilda with the entities' o
     calls <- new.env()
     .mock_gilda(calls)
     entities <- convert_ids(indra_backend(grounding_url = "https://gilda.example.org"),
-                            .entities(c("TP53", "NOTAGENE"), id_type = "hgnc_symbol"))
+                            .make_entities(c("TP53", "NOTAGENE"), id_type = "hgnc_symbol"))
 
     expect_equal(entities$namespace, c("HGNC", NA))
     expect_equal(entities$entity_id, c("11998", NA))
@@ -231,8 +231,8 @@ test_that("convert_ids() grounds chemical names through Gilda without restrictio
     calls <- new.env()
     .mock_gilda(calls)
     entities <- convert_ids(indra_backend(),
-                            .entities("glucose", entity_type = "metabolite",
-                                      id_type = "chemical_name"))
+                            .make_entities("glucose", entity_type = "metabolite",
+                                           id_type = "chemical_name"))
 
     expect_equal(entities$namespace, "CHEBI;CHEBI")
     expect_equal(entities$entity_id, "CHEBI:17234;CHEBI:4167")
@@ -263,23 +263,23 @@ test_that("convert_ids() makes no calls for an empty table", {
     local_mocked_bindings(
         .callGetHgncIdsFromUniprotIdsApi = function(uniprotIds, cogex_url) stop("called")
     )
-    entities <- convert_ids(indra_backend(), .entities(character(0)))
+    entities <- convert_ids(indra_backend(), .make_entities(character(0)))
     expect_equal(nrow(entities), 0)
 })
 
 test_that("convert_ids() rejects id types and organisms INDRA can't convert", {
     expect_error(
         convert_ids(indra_backend(),
-                    .entities("glucose", entity_type = "metabolite")),
+                    .make_entities("glucose", entity_type = "metabolite")),
         "can't convert entity_type / id_type: metabolite / uniprot"
     )
     expect_error(
         convert_ids(indra_backend(),
-                    .entities("ENSG1", entity_type = "gene", id_type = "ensembl_gene")),
+                    .make_entities("ENSG1", entity_type = "gene", id_type = "ensembl_gene")),
         "gene / ensembl_gene"
     )
     expect_error(
-        convert_ids(indra_backend(), .entities("Q00610", organism = "10090")),
+        convert_ids(indra_backend(), .make_entities("Q00610", organism = "10090")),
         "human .*Got organism: 10090"
     )
     expect_error(convert_ids(indra_backend(), data.frame(id = "a")),
@@ -290,14 +290,14 @@ test_that("convert_ids() accepts a non-human organism for chemicals", {
     calls <- new.env()
     .mock_gilda(calls)
     entities <- convert_ids(indra_backend(),
-                            .entities("glucose", entity_type = "metabolite",
-                                      id_type = "chemical_name", organism = "10090"))
+                            .make_entities("glucose", entity_type = "metabolite",
+                                           id_type = "chemical_name", organism = "10090"))
     expect_equal(entities$namespace, "CHEBI;CHEBI")
 })
 
-.annotation_entities <- function() {
-    entities <- .entities(c("P04637", "P00533_S1039", "P1;P2", "glucose", "XXXX99"),
-                          entity_type = "protein")
+.make_annotation_entities <- function() {
+    entities <- .make_entities(c("P04637", "P00533_S1039", "P1;P2", "glucose", "XXXX99"),
+                               entity_type = "protein")
     entities$entity_type[2] <- "ptm_site"
     entities$entity_type[4] <- "metabolite"
     entities$namespace <- c("HGNC", "HGNC", "HGNC;HGNC", "CHEBI", NA)
@@ -326,7 +326,7 @@ test_that("get_annotations() annotates rows with a single HGNC grounding", {
     calls <- new.env()
     .mock_annotation_apis(calls)
     entities <- get_annotations(indra_backend(cogex_url = "https://cogex.example.org"),
-                                .annotation_entities())
+                                .make_annotation_entities())
 
     expect_equal(entities$is_transcription_factor, c(TRUE, TRUE, NA, NA, NA))
     expect_equal(entities$is_kinase, c(FALSE, FALSE, NA, NA, NA))
@@ -338,7 +338,7 @@ test_that("get_annotations() annotates rows with a single HGNC grounding", {
 test_that("get_annotations() adds only the requested fields", {
     calls <- new.env()
     .mock_annotation_apis(calls)
-    entities <- get_annotations(indra_backend(), .annotation_entities(),
+    entities <- get_annotations(indra_backend(), .make_annotation_entities(),
                                 fields = "is_kinase")
 
     expect_true("is_kinase" %in% colnames(entities))
@@ -352,7 +352,7 @@ test_that("get_annotations() leaves NA where the API gives no answer", {
         .callIsKinaseApi = function(genes, cogex_url) list(TP53 = NULL, EGFR = TRUE),
         .callIsPhosphataseApi = function(genes, cogex_url) list()
     )
-    entities <- get_annotations(indra_backend(), .annotation_entities())
+    entities <- get_annotations(indra_backend(), .make_annotation_entities())
 
     expect_equal(entities$is_transcription_factor, rep(NA, 5))
     expect_equal(entities$is_kinase, c(NA, TRUE, NA, NA, NA))
@@ -363,16 +363,16 @@ test_that("get_annotations() makes no calls when no row can be annotated", {
     local_mocked_bindings(
         .callIsKinaseApi = function(genes, cogex_url) stop("called")
     )
-    entities <- get_annotations(indra_backend(), .annotation_entities()[4:5, ],
+    entities <- get_annotations(indra_backend(), .make_annotation_entities()[4:5, ],
                                 fields = "is_kinase")
     expect_equal(entities$is_kinase, c(NA, NA))
 })
 
 test_that("get_annotations() rejects unknown fields", {
-    expect_error(get_annotations(indra_backend(), .annotation_entities(),
+    expect_error(get_annotations(indra_backend(), .make_annotation_entities(),
                                  fields = c("is_kinase", "is_gpcr")),
                  "IndraBackend does not support annotation field\\(s\\): is_gpcr")
-    expect_error(get_annotations(indra_backend(), .annotation_entities(),
+    expect_error(get_annotations(indra_backend(), .make_annotation_entities(),
                                  fields = 1),
                  "fields must be a character vector")
 })
@@ -381,9 +381,9 @@ test_that("convert_ids() and get_annotations() error for a backend without them"
     where <- environment()
     setClass("BareBackend", contains = "NetworkBackend", where = where)
     on.exit(removeClass("BareBackend", where = where), add = TRUE)
-    expect_error(convert_ids(new("BareBackend"), .entities("Q00610")),
+    expect_error(convert_ids(new("BareBackend"), .make_entities("Q00610")),
                  "BareBackend does not support convert_ids\\(\\)")
-    expect_error(get_annotations(new("BareBackend"), .entities("Q00610")),
+    expect_error(get_annotations(new("BareBackend"), .make_entities("Q00610")),
                  "BareBackend does not support get_annotations\\(\\)")
 })
 
