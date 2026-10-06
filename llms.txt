@@ -166,8 +166,6 @@ licenses.
   subnetworks
 - [`deleteEdgeFromNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/deleteEdgeFromNetwork.md)
   : Delete an edge from a network edges data frame
-- [`.populateEntityInformationInDataFrame()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-populateEntityInformationInDataFrame.md)
-  : Populate Entity Information in Data Frame
 - [`.validateAnnotateProteinInfoFromIndraInput()`](https://vitek-lab.github.io/MSstatsBioNet/reference/dot-validateAnnotateProteinInfoFromIndraInput.md)
   : Validate Annotate Protein Info Input
 - [`exportNetworkToHTML()`](https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.md)
