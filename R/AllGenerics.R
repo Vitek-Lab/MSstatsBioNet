@@ -3,13 +3,16 @@
 #' Dispatches on \code{backend} and \code{query}. A missing \code{query}
 #' runs \code{subnetwork_query()}.
 #'
-#' Internal until the entity model is added (Phase 3 of the API refactor).
-#' Until then \code{entities} is the groupComparison table annotated by
-#' \code{annotateProteinInfoFromIndra()} and already filtered to the
-#' selected rows.
+#' Only the \code{included_in_query} rows of \code{entities} are queried.
+#' Every node the backend returns is matched against all rows, so a node
+#' in the data gets \code{measured = TRUE} and its statistics, and a node
+#' outside it gets \code{measured = FALSE} and \code{NA} statistics.
+#'
+#' Internal until the end of Phase 3 of the API refactor.
 #'
 #' @param backend a \code{NetworkBackend}, e.g. from \code{indra_backend()}
-#' @param entities annotated groupComparison table of the selected rows
+#' @param entities entity table from \code{prepare_entities()}, grounded by
+#' \code{convert_ids()} and flagged by \code{select_entities()}
 #' @param query a \code{NetworkQuery}, e.g. from \code{subnetwork_query()}
 #' @param interaction_types values of \code{edges$interaction} to keep
 #' (INDRA statement types, e.g. \code{"Activation"}). \code{NULL} keeps all.

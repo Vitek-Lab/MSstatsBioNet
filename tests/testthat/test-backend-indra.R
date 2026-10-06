@@ -4,11 +4,7 @@
     input <- data.table::fread(
         system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
     )
-    .filterGetSubnetworkFromIndraInput(input, pvalueCutoff = NULL,
-                                       logfc_cutoff = NULL,
-                                       force_include_other = NULL,
-                                       include_infinite_fc = FALSE,
-                                       direction = "both")
+    select_entities(.build_entities_from_annotated_input(input))
 }
 
 .mock_indra_response <- function(env = parent.frame()) {
@@ -120,16 +116,21 @@ test_that("get_network() validates its input before calling INDRA", {
         }
     )
     input <- .selected_input()
-    expect_error(get_network(indra_backend(), input[0, ]),
+    none_selected <- input
+    none_selected$included_in_query <- FALSE
+    expect_error(get_network(indra_backend(), none_selected),
                  "at least one protein")
-    no_entity_id <- as.data.frame(input)
-    no_entity_id$EntityId <- NULL
+    no_entity_id <- input
+    no_entity_id$entity_id <- NULL
     expect_error(get_network(indra_backend(), no_entity_id),
-                 "missing required column\\(s\\): EntityId")
+                 "missing required column\\(s\\): entity_id")
     expect_error(get_network(indra_backend(), input, evidence_sources = 1),
                  "evidence_sources must be a character vector")
     # The old function's sources_filter is passed on as evidence_sources
-    expect_error(getSubnetworkFromIndra(input, sources_filter = 1),
+    annotated <- data.table::fread(
+        system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
+    )
+    expect_error(getSubnetworkFromIndra(annotated, sources_filter = 1),
                  "evidence_sources must be a character vector")
 })
 

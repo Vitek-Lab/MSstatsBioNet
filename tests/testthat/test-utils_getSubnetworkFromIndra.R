@@ -154,97 +154,63 @@ describe(".filterByPtmSite", {
     })
 })
 
-describe(".filterGetSubnetworkFromIndraInput", {
-    .make_test_input <- function() {
-        data.frame(
-            Protein   = c("A", "B", "C", "D"),
-            log2FC    = c(3, -3, 0.5, Inf),
-            adj.pvalue = c(0.01, 0.01, 0.5, 0.01),
-            stringsAsFactors = FALSE
-        )
-    }
-    
-    test_that(".filterGetSubnetworkFromIndraInput filters by pvalueCutoff", {
-        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
-            .make_test_input(), pvalueCutoff = 0.05, logfc_cutoff = NULL,
-            force_include_other = NULL, include_infinite_fc = FALSE, direction = "both"
-        )
-        expect_true(all(result$adj.pvalue < 0.05))
-    })
-    
-    test_that(".filterGetSubnetworkFromIndraInput filters by logfc_cutoff", {
-        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
-            .make_test_input(), pvalueCutoff = NULL, logfc_cutoff = 1,
-            force_include_other = NULL, include_infinite_fc = FALSE, direction = "both"
-        )
-        expect_true(all(abs(result$log2FC) > 1))
-    })
-    
-    test_that(".filterGetSubnetworkFromIndraInput respects force_include_other", {
-        input <- cbind(.make_test_input(),
-                       EntityNamespace = rep("HGNC", 4),
-                       EntityId = c("1", "2", "3", "4"))
-        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
-            input, pvalueCutoff = 0.001, logfc_cutoff = 10,
-            force_include_other = c("HGNC:1"), include_infinite_fc = FALSE, direction = "both"
-        )
-        expect_true("A" %in% result$Protein)
-    })
-    
-    test_that(".filterGetSubnetworkFromIndraInput includes infinite FC when requested", {
-        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
-            .make_test_input(), pvalueCutoff = NULL, logfc_cutoff = 5,
-            force_include_other = NULL, include_infinite_fc = TRUE, direction = "both"
-        )
-        expect_true("D" %in% result$Protein)
-    })
-
-    test_that(".filterGetSubnetworkFromIndraInput excludes infinite FC proteins with adj.pvalue=0 when include_infinite_fc is FALSE", {
-        # MSstats sets adj.pvalue=0 for infinite FC proteins; they must still be excluded
+# The cutoffs of getSubnetworkFromIndra(), applied by select_entities()
+describe("getSubnetworkFromIndra cutoffs", {
+    .make_test_entities <- function(log2FC = c(3, -3, 0.5, Inf),
+                                    adj.pvalue = c(0.01, 0.01, 0.5, 0.01)) {
+        ids <- c("A", "B", "C", "D")[seq_along(log2FC)]
         input <- data.frame(
-            Protein   = c("A", "B", "D"),
-            log2FC    = c(3, -3, Inf),
-            adj.pvalue = c(0.01, 0.01, 0),
+            Protein         = ids,
+            log2FC          = log2FC,
+            adj.pvalue      = adj.pvalue,
+            EntityNamespace = "HGNC",
+            EntityId        = as.character(seq_along(ids)),
+            EntityName      = ids,
             stringsAsFactors = FALSE
         )
-        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
-            input, pvalueCutoff = 0.05, logfc_cutoff = NULL,
-            force_include_other = NULL, include_infinite_fc = FALSE, direction = "both"
-        )
-        expect_false("D" %in% result$Protein)
+        MSstatsBioNet:::.build_entities_from_annotated_input(input)
+    }
+    .selected_ids <- function(...) {
+        entities <- select_entities(...)
+        entities$id[entities$included_in_query]
+    }
+
+    test_that("pvalueCutoff keeps rows below it", {
+        expect_equal(.selected_ids(.make_test_entities(), pvalue_cutoff = 0.05),
+                     c("A", "B"))
     })
 
-    test_that(".filterGetSubnetworkFromIndraInput includes infinite FC protein via force_include_other even when include_infinite_fc is FALSE", {
-        input <- cbind(
-            data.frame(
-                Protein   = c("A", "B", "D"),
-                log2FC    = c(3, -3, Inf),
-                adj.pvalue = c(0.01, 0.01, 0),
-                stringsAsFactors = FALSE
-            ),
-            EntityNamespace = rep("HGNC", 3),
-            EntityId = c("1", "2", "4")
-        )
-        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
-            input, pvalueCutoff = 0.05, logfc_cutoff = NULL,
-            force_include_other = c("HGNC:4"), include_infinite_fc = FALSE, direction = "both"
-        )
-        expect_true("D" %in% result$Protein)
+    test_that("logfc_cutoff keeps rows above it in absolute value", {
+        expect_equal(.selected_ids(.make_test_entities(), logfc_cutoff = 1),
+                     c("A", "B"))
     })
-    
-    test_that(".filterGetSubnetworkFromIndraInput filters by direction up", {
-        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
-            .make_test_input(), pvalueCutoff = NULL, logfc_cutoff = NULL,
-            force_include_other = NULL, include_infinite_fc = FALSE, direction = "up"
-        )
-        expect_true(all(result$log2FC > 0))
+
+    test_that("force_include_other exempts a grounding from the cutoffs", {
+        expect_true("A" %in% .selected_ids(.make_test_entities(),
+                                           pvalue_cutoff = 0.001,
+                                           logfc_cutoff = 10,
+                                           force_include = "HGNC:1"))
     })
-    
-    test_that(".filterGetSubnetworkFromIndraInput filters by direction down", {
-        result <- MSstatsBioNet:::.filterGetSubnetworkFromIndraInput(
-            .make_test_input(), pvalueCutoff = NULL, logfc_cutoff = NULL,
-            force_include_other = NULL, include_infinite_fc = FALSE, direction = "down"
-        )
-        expect_true(all(result$log2FC < 0))
+
+    test_that("include_infinite_fc selects infinite fold changes", {
+        expect_true("D" %in% .selected_ids(.make_test_entities(),
+                                           logfc_cutoff = 5,
+                                           include_infinite_fc = TRUE))
+    })
+
+    test_that("infinite fold changes with adj.pvalue = 0 are excluded by default", {
+        # MSstats sets adj.pvalue = 0 for infinite fold changes
+        entities <- .make_test_entities(log2FC = c(3, -3, Inf),
+                                        adj.pvalue = c(0.01, 0.01, 0))
+        expect_false("C" %in% .selected_ids(entities, pvalue_cutoff = 0.05))
+        expect_true("C" %in% .selected_ids(entities, pvalue_cutoff = 0.05,
+                                           force_include = "HGNC:3"))
+    })
+
+    test_that("direction keeps up- or downregulated rows", {
+        expect_equal(.selected_ids(.make_test_entities(), direction = "up"),
+                     c("A", "C"))
+        expect_equal(.selected_ids(.make_test_entities(), direction = "down"),
+                     "B")
     })
 })

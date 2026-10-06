@@ -64,9 +64,17 @@
 #' deprecated \code{paperCount} (and \code{correlation} when
 #' \code{protein_level_data} is given).
 #'
-#' \code{nodes} has one row per analyte: \code{id}, \code{entity_name},
-#' \code{namespace}, \code{entity_id}, \code{site}, \code{logFC}, and
-#' \code{adj.pvalue}.
+#' \code{nodes} has one row per analyte (one per site for PTM input, all
+#' with the protein's \code{id}): \code{id}, \code{entity_type}
+#' (\code{"protein"}, \code{"ptm_site"}, \code{"metabolite"}, ...),
+#' \code{entity_name}, \code{namespace}, \code{entity_id}, \code{measured}
+#' (\code{TRUE} for analytes in \code{input}), \code{included_in_query},
+#' \code{node_role} (\code{"passed_cutoffs"}, or \code{"user_added"} for
+#' nodes that are there only through \code{force_include_other}),
+#' \code{site}, \code{has_measured_sites} (\code{TRUE} for proteins with
+#' PTM site rows), \code{logFC}, and \code{adj.pvalue}. Nodes from
+#' \code{force_include_other} that are not in \code{input} have
+#' \code{measured = FALSE} and \code{NA} statistics.
 #'
 #' @export
 #'
@@ -103,9 +111,18 @@ getSubnetworkFromIndra <- function(input,
     if (!is.null(protein_level_data)) {
         .warn_deprecated_arg("protein_level_data")
     }
-    input <- .filterGetSubnetworkFromIndraInput(input, pvalueCutoff, logfc_cutoff, force_include_other, include_infinite_fc, direction)
-    .validateGetSubnetworkFromIndraInput(input, protein_level_data, sources_filter, force_include_other)
-    subnetwork <- get_network(indra_backend(), input, subnetwork_query(),
+    .validateGetSubnetworkFromIndraInput(input, protein_level_data,
+                                         force_include_other)
+    entities <- .build_entities_from_annotated_input(input)
+    # force_include_other both exempts rows of the input from the cutoffs and
+    # adds groundings outside it to the query
+    grounding_table <- build_grounding_table(entities)
+    entities <- select_entities(
+        entities, pvalue_cutoff = pvalueCutoff, logfc_cutoff = logfc_cutoff,
+        direction = direction, include_infinite_fc = include_infinite_fc,
+        force_include = intersect(force_include_other, paste(
+            grounding_table$namespace, grounding_table$entity_id, sep = ":")))
+    subnetwork <- get_network(indra_backend(), entities, subnetwork_query(),
                               interaction_types = statement_types,
                               min_evidence = evidence_count_cutoff,
                               evidence_sources = sources_filter,
@@ -113,8 +130,10 @@ getSubnetworkFromIndra <- function(input,
     if (!is.null(protein_level_data)) {
         edges <- .addCorrelationToEdges(subnetwork$edges, protein_level_data)
         edges <- .filterEdgesDataFrame(edges, correlation_cutoff)
-        subnetwork <- list(nodes = .constructNodesDataFrame(input, edges),
-                           edges = edges)
+        nodes <- subnetwork$nodes
+        subnetwork <- list(
+            nodes = nodes[nodes$id %in% c(edges$source, edges$target), ],
+            edges = edges)
     }
     subnetwork = .filterByPtmSite(subnetwork$nodes, subnetwork$edges, filter_by_ptm_site)
     subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, evidence_count_cutoff, filter_by_curation)
