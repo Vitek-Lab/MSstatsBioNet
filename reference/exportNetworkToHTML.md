@@ -20,7 +20,7 @@ exportNetworkToHTML(
 
 - nodes:
 
-  Data frame with at minimum an `id` column. Optional columns: `log2FC`
+  Data frame with at minimum an `id` column. Optional columns: `logFC`
   (numeric), `entity_name` (character; may be semicolon-joined for
   multi-grounded rows), `entity_id` (character), `site` (character,
   underscore-separated PTM site list).

@@ -34,12 +34,12 @@ cytoscapeNetwork(nodes_min, edges_min)
 
 ``` r
 
-# ── Example 2 · log2FC colour gradient ──────────────────────────────────────
+# ── Example 2 · logFC colour gradient ───────────────────────────────────────
 # Nodes coloured on a blue (down) → grey (neutral) → red (up) scale.
 
 nodes_fc <- data.frame(
     id     = c("TP53",  "MDM2",  "CDKN1A", "BCL2",  "BAX"),
-    log2FC = c( 1.5,    -0.8,     2.1,     -1.9,     0.3),
+    logFC  = c( 1.5,    -0.8,     2.1,     -1.9,     0.3),
     stringsAsFactors = FALSE
 )
 
@@ -62,7 +62,7 @@ cytoscapeNetwork(nodes_fc, edges_fc)
 
 nodes_ptm <- data.frame(
     id     = c("EGFR",         "SRC",        "AKT1"),
-    log2FC = c( 1.2,           0.5,         -0.3),
+    logFC  = c( 1.2,           0.5,         -0.3),
     site   = c("Y1068_Y1173",  "Y416",       NA),
     stringsAsFactors = FALSE
 )
@@ -85,7 +85,7 @@ cytoscapeNetwork(nodes_ptm, edges_ptm, nodeFontSize = 14)
 nodes_entity <- data.frame(
     id          = c("ENSG001", "ENSG002", "ENSG003"),
     entity_name = c("TP53",    "MDM2",    "CDKN1A"),
-    log2FC      = c( 1.0,      -0.5,       2.0),
+    logFC       = c( 1.0,      -0.5,       2.0),
     stringsAsFactors = FALSE
 )
 

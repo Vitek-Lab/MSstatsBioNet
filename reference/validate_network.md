@@ -35,7 +35,7 @@ have `directed = FALSE`.
 
 Required node column: `id`. An `id` can repeat, once per PTM site row of
 the same protein. When present, `entity_type`, `entity_name`,
-`namespace`, `entity_id`, `site`, `log2FC`, `adj.pvalue`, `measured`,
+`namespace`, `entity_id`, `site`, `logFC`, `adj.pvalue`, `measured`,
 `included_in_query`, `node_role`, and `has_measured_sites` are
 type-checked. Nodes with `measured == FALSE` must have `NA` statistics.
 

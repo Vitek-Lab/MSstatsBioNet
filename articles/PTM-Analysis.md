@@ -108,7 +108,7 @@ subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statemen
 #>         package or utilizing the results based on this package.
 #>         See the LICENSE file for more details.
 head(subnetwork$nodes)
-#>        id entity_name namespace entity_id        site     log2FC adj.pvalue
+#>        id entity_name namespace entity_id        site      logFC adj.pvalue
 #>    <char>      <char>    <char>    <char>      <char>      <num>      <num>
 #> 1: P00533        EGFR      HGNC      3236 S1039_S1042 -0.3200363 0.28024590
 #> 2: P00533        EGFR      HGNC      3236       S1064  0.3566531 0.06863598

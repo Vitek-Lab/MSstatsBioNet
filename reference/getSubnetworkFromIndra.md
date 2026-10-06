@@ -131,7 +131,7 @@ JSON), and the deprecated `paperCount` (and `correlation` when
 `protein_level_data` is given).
 
 `nodes` has one row per analyte: `id`, `entity_name`, `namespace`,
-`entity_id`, `site`, `log2FC`, and `adj.pvalue`.
+`entity_id`, `site`, `logFC`, and `adj.pvalue`.
 
 ## Examples
 
@@ -147,7 +147,7 @@ subnetwork <- getSubnetworkFromIndra(input)
 #>         package or utilizing the results based on this package.
 #>         See the LICENSE file for more details.
 head(subnetwork$nodes)
-#>        id entity_name namespace entity_id   site    log2FC  adj.pvalue
+#>        id entity_name namespace entity_id   site     logFC  adj.pvalue
 #>    <char>      <char>    <char>    <char> <char>     <num>       <num>
 #> 1: O00217      NDUFS8      HGNC      7715   <NA> 2.0285031 0.013821932
 #> 2: O60313        OPA1      HGNC      8140   <NA> 0.9299641 0.019584180
