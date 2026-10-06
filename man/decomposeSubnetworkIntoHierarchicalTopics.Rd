@@ -12,6 +12,7 @@ decomposeSubnetworkIntoHierarchicalTopics(
   max_depth = 5,
   evidence = NULL,
   abstracts = NULL,
+  backend = NULL,
   ...
 )
 }
@@ -34,11 +35,16 @@ edges. Lower values allow an edge to appear in several sibling topics.}
 \item{evidence}{optional pre-fetched evidence data.frame, e.g.
 \code{attr(topics, "corpus")$evidence} from
 \code{\link{decomposeSubnetworkByTopic}} or \code{result$corpus$evidence}
-from a previous call of this function. Default \code{NULL} queries INDRA
-once.}
+from a previous call of this function. Default \code{NULL} queries the
+backend once.}
 
 \item{abstracts}{optional named character vector mapping PMID to abstract
 text. Only missing PMIDs are fetched from PubMed. Default \code{NULL}.}
+
+\item{backend}{the backend to get the evidence from, e.g.
+\code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+backend named in each edge's \code{backend_database}. See
+\code{\link{get_evidence}()}.}
 
 \item{...}{further arguments passed to
 \code{\link{decomposeSubnetworkByTopic}}, e.g. \code{n_top_terms},
@@ -77,7 +83,7 @@ topic subnetworks until every branch is small enough to inspect by hand
 the root and increasingly specific sub-themes towards the leaves.
 }
 \details{
-INDRA evidence and PubMed abstracts are gathered once for the input
+Edge evidence and PubMed abstracts are gathered once for the input
 subnetwork and reused for every sub-decomposition, so no further network
 requests are made during the recursion. Each sub-decomposition rebuilds its
 vocabulary and refits the NMF on only the papers supporting that branch's

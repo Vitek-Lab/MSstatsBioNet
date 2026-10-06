@@ -13,7 +13,8 @@ bootstrapTopicModels(
   min_term_count = 2,
   max_iter = 200,
   tol = 1e-04,
-  seed = 1
+  seed = 1,
+  backend = NULL
 )
 }
 \arguments{
@@ -41,6 +42,11 @@ Default 200.}
 
 \item{seed}{random seed for the reference fit, the resampling, and each
 bootstrap NMF. Default 1.}
+
+\item{backend}{the backend to get the evidence from, e.g.
+\code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+backend named in each edge's \code{backend_database}. See
+\code{\link{get_evidence}()}.}
 }
 \value{
 A list with

@@ -15,7 +15,8 @@ decomposeSubnetworkByTopic(
   seed = 1,
   include_ppi = TRUE,
   evidence = NULL,
-  abstracts = NULL
+  abstracts = NULL,
+  backend = NULL
 )
 }
 \arguments{
@@ -51,11 +52,16 @@ text-learned topics, so the PPIs do not influence the topics themselves.}
 \code{attr(topics, "corpus")$evidence} from a previous call. It is subset
 to the edges of \code{subnetwork}, so the evidence gathered for a parent
 network can be reused for any of its topic subnetworks. When \code{NULL}
-(default) the evidence is queried from INDRA.}
+(default) the evidence is queried from the backend.}
 
 \item{abstracts}{optional named character vector (or list) mapping PMID to
 abstract text, e.g. \code{attr(topics, "corpus")$abstracts}. Only PMIDs
 missing from it are fetched from PubMed. Default \code{NULL} fetches all.}
+
+\item{backend}{the backend to get the evidence from, e.g.
+\code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+backend named in each edge's \code{backend_database}. See
+\code{\link{get_evidence}()}.}
 }
 \value{
 A list of length \code{n_topics}, named \code{topic_1} ...
@@ -82,7 +88,8 @@ unsupervised non-negative matrix factorization (NMF).
 \details{
 The procedure is:
 \enumerate{
-  \item For every edge, the supporting INDRA evidence is retrieved and the
+  \item For every edge, the supporting evidence is retrieved from the
+    backend (see \code{\link{get_evidence}}) and the
     PubMed abstract of each referenced PMID is fetched. Papers (PMIDs) are
     the shared unit of analysis.
   \item Two matrices are built that share the same rows (papers):
@@ -120,7 +127,7 @@ topics <- decomposeSubnetworkByTopic(subnetwork, n_topics = 5)
 topics$topic_1$topTerms
 exportNetworkToHTML(topics$topic_1$nodes, topics$topic_1$edges)
 
-# Re-decompose a topic without re-querying INDRA / PubMed.
+# Re-decompose a topic without re-querying the backend / PubMed.
 corpus <- attr(topics, "corpus")
 topics_deeper <- decomposeSubnetworkByTopic(
     topics$topic_1, n_topics = 5,

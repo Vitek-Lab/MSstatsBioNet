@@ -45,7 +45,7 @@ make_theme_corpus <- function(edges_per_theme = 15, papers_per_theme = 8) {
 
 forbid_network <- function(env = parent.frame()) {
     testthat::local_mocked_bindings(
-        .extract_evidence_text = function(...) stop("INDRA was queried"),
+        .fetch_evidence = function(...) stop("INDRA was queried"),
         .fetch_clean_abstracts_xml = function(...) stop("PubMed was queried"),
         .env = env
     )
@@ -171,7 +171,7 @@ describe("decomposeSubnetworkIntoHierarchicalTopics", {
         corpus <- make_theme_corpus()
         calls <- c(indra = 0, pubmed = 0)
         testthat::local_mocked_bindings(
-            .extract_evidence_text = function(df) {
+            .fetch_evidence = function(edges, backend = NULL) {
                 calls[["indra"]] <<- calls[["indra"]] + 1
                 corpus$evidence
             },

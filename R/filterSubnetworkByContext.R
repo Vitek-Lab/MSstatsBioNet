@@ -49,6 +49,11 @@
 #'   "colon" and "colon-specific" but not "colonize" or "colons"; list
 #'   variants such as plurals explicitly. To exclude by keyword only, omit
 #'   \code{query}. Default \code{NULL} excludes nothing.
+#' @param backend the backend to get the evidence from, e.g.
+#'   \code{\link{indra_backend}()}. \code{NULL} (default) uses the default
+#'   backend named in each edge's \code{backend_database}. Pass a backend
+#'   built with non-default settings, such as a different URL, here.
+#'   See \code{\link{get_evidence}()}.
 #'
 #' @return A named list with four elements:
 #'   \item{nodes}{Filtered nodes dataframe (only nodes present in kept edges)}
@@ -62,7 +67,7 @@
 #'   The \code{evidence} and \code{abstracts} elements can be passed to the
 #'   same-named arguments of \code{\link{decomposeSubnetworkByTopic}} or
 #'   \code{\link{decomposeSubnetworkIntoHierarchicalTopics}}, together with the
-#'   returned list as \code{subnetwork}, so INDRA and PubMed are not queried
+#'   returned list as \code{subnetwork}, so the backend and PubMed are not queried
 #'   again.
 #'
 #' @examples
@@ -89,9 +94,11 @@ filterSubnetworkByContext <- function(nodes,
                                       query = NULL,
                                       cutoff = NULL,
                                       method = c("tag_count", "cosine"),
-                                      exclude_keywords = NULL) {
+                                      exclude_keywords = NULL,
+                                      backend = NULL) {
 
     method <- match.arg(method)
+    .check_backend_argument(backend)
 
     if (is.character(query)) query <- trimws(query)
     if (is.character(exclude_keywords)) exclude_keywords <- trimws(exclude_keywords)
@@ -140,7 +147,7 @@ filterSubnetworkByContext <- function(nodes,
         ))
     }
     
-    evidence <- .extract_evidence_text(edges)
+    evidence <- .fetch_evidence(edges, backend)
     
     if (nrow(evidence) == 0) {
         evidence$score <- if (method == "tag_count") integer(0) else numeric(0)
@@ -344,70 +351,6 @@ filterSubnetworkByContext <- function(nodes,
 
 
 
-#' Extract evidence text from edges dataframe via INDRA API
-#' @param df Edges dataframe with columns: source, target, interaction, site,
-#'           evidence_url, statement_id
-#' @return Dataframe with additional columns: text, pmid
-#' @keywords internal
-#' @noRd
-.extract_evidence_text <- function(df) {
-    
-    required_cols <- c("source", "target", "interaction", "site", "evidence_url", "statement_id")
-    missing_cols  <- setdiff(required_cols, names(df))
-    if (length(missing_cols) > 0) {
-        stop(sprintf("Missing required columns: %s", paste(missing_cols, collapse = ", ")))
-    }
-    
-    results_list  <- list()
-    result_count  <- 0
-    unique_hashes <- unique(df$statement_id)
-    n_hashes      <- length(unique_hashes)
-    
-    cat(sprintf("Processing %d unique statement hashes...\n", n_hashes))
-
-    evidence_by_hash <- .query_indra_evidence(unique_hashes)
-
-    for (hash in unique_hashes) {
-        evidence_list    <- evidence_by_hash[[as.character(hash)]]
-        if (is.null(evidence_list) || length(evidence_list) == 0) next
-
-        matching_indices <- which(df$statement_id == hash)
-        
-        for (evidence in evidence_list) {
-            if (!is.null(evidence[["text"]]) && nchar(evidence[["text"]]) > 0) {
-                for (idx in matching_indices) {
-                    result_count <- result_count + 1
-                    results_list[[result_count]] <- data.frame(
-                        source       = df$source[idx],
-                        target       = df$target[idx],
-                        interaction  = df$interaction[idx],
-                        site         = df$site[idx],
-                        evidence_url = df$evidence_url[idx],
-                        statement_id = df$statement_id[idx],
-                        text         = evidence[["text"]],
-                        pmid         = if (is.null(evidence[["pmid"]])) "" else evidence[["pmid"]],
-                        stringsAsFactors = FALSE
-                    )
-                }
-            }
-        }
-    }
-    
-    if (result_count == 0) {
-        warning("No evidence text found for any statement hash")
-        return(data.frame(
-            source = character(), target = character(), interaction = character(),
-            site = character(), evidence_url = character(), statement_id = character(),
-            text = character(), pmid = character(), stringsAsFactors = FALSE
-        ))
-    }
-    
-    results_df <- do.call(rbind, results_list)
-    cat(sprintf("\nComplete! Found %d evidence text entries.\n", nrow(results_df)))
-    return(results_df)
-}
-
-
 #' Fetch and clean PubMed abstracts via rentrez. 
 #' 
 #' PMIDs that are missing from the response (unknown IDs, or a batch whose 
@@ -494,72 +437,4 @@ filterSubnetworkByContext <- function(nodes,
     names(abstracts) <- pmids
 
     abstracts[!is.na(pmids) & nzchar(pmids)]
-}
-
-
-#' Query INDRA API for evidence text
-#'
-#' Hashes that are missing from the response (unknown hashes, or a
-#' batch whose request failed) are absent from the returned list.
-#'
-#' @param stmt_hashes Character vector of statement hash strings
-#' @param batch_size  Number of hashes to request per API call
-#' @param sleep       Seconds to pause between API calls
-#' @return Named list: statement_id -> list of evidence objects. Empty list when
-#'         no evidence could be retrieved.
-#' @keywords internal
-#' @noRd
-#' @importFrom httr POST status_code content content_type_json
-#' @importFrom jsonlite fromJSON
-.query_indra_evidence <- function(stmt_hashes, batch_size = 100, sleep = 1) {
-    url <- "https://discovery.indra.bio/api/get_evidences_for_stmt_hashes"
-
-    stmt_hashes <- unique(as.character(stmt_hashes))
-    if (length(stmt_hashes) == 0) return(list())
-
-    batches   <- split(stmt_hashes, ceiling(seq_along(stmt_hashes) / batch_size))
-    n_batches <- length(batches)
-    results   <- list()
-
-    cat(sprintf("Fetching evidence for %d hashes in %d batch(es) of up to %d...\n",
-                length(stmt_hashes), n_batches, batch_size))
-
-    for (i in seq_along(batches)) {
-        batch <- batches[[i]]
-
-        parsed <- tryCatch({
-            response <- POST(
-                url,
-                body   = list(stmt_hashes = I(batch)),
-                encode = "json",
-                content_type_json()
-            )
-
-            if (status_code(response) != 200) {
-                warning(sprintf("API returned status %d for stmt_hashes: %s",
-                                status_code(response),
-                                paste(batch, collapse = ", ")))
-                NULL
-            } else {
-                content(response, as = "parsed")
-            }
-        }, error = function(e) {
-            warning(sprintf("Error querying stmt_hashes %s: %s",
-                            paste(batch, collapse = ", "), e$message))
-            return(NULL)
-        })
-
-        cat(sprintf("Progress: %d/%d batches (%.1f%%)\n",
-                    i, n_batches, (i / n_batches) * 100))
-
-        if (!is.null(parsed)) {
-            matched <- intersect(names(parsed), batch)
-            results[matched] <- parsed[matched]
-        }
-
-        if (i < n_batches) Sys.sleep(sleep)
-    }
-
-    cat("Done fetching evidence!\n")
-    results
 }

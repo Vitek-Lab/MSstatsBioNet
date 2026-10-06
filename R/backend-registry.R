@@ -1,0 +1,87 @@
+#' Default backend for each backend_database value
+#'
+#' Used when a function that takes a finished network is called with
+#' \code{backend = NULL}: each edge goes to the backend named in its
+#' \code{backend_database}, built with default settings.
+#' @keywords internal
+#' @noRd
+BACKEND_CONSTRUCTORS <- list(
+    INDRA = function() indra_backend()
+)
+
+#' Check a backend argument
+#' @param backend \code{NULL} or a \code{NetworkBackend}
+#' @return \code{NULL}, invisibly; errors otherwise
+#' @keywords internal
+#' @noRd
+.check_backend_argument <- function(backend) {
+    if (!is.null(backend) && !methods::is(backend, "NetworkBackend")) {
+        stop("`backend` must be NULL or a NetworkBackend, e.g. from ",
+             "indra_backend().", call. = FALSE)
+    }
+    invisible(NULL)
+}
+
+#' Split edges by the backend that answers for them
+#'
+#' With \code{backend = NULL}, the edges are split by
+#' \code{backend_database} and each group gets that value's default backend
+#' from \code{BACKEND_CONSTRUCTORS}. A given \code{backend} takes all edges.
+#'
+#' @param edges edges data.frame
+#' @param backend \code{NULL} or a \code{NetworkBackend}
+#' @return list of \code{list(backend =, edges =)}, one per backend, in
+#'   order of first appearance in \code{edges}
+#' @keywords internal
+#' @noRd
+.split_edges_by_backend <- function(edges, backend = NULL) {
+    .check_backend_argument(backend)
+    if (!is.null(backend)) {
+        return(list(list(backend = backend, edges = edges)))
+    }
+    if (!"backend_database" %in% names(edges)) {
+        stop("`edges` has no `backend_database` column, so the backend ",
+             "can't be chosen. Pass `backend`, e.g. ",
+             "`backend = indra_backend()`.", call. = FALSE)
+    }
+    databases <- as.character(edges$backend_database)
+    if (anyNA(databases) || any(!nzchar(databases))) {
+        stop("`backend_database` is missing for some edges. Pass ",
+             "`backend`, e.g. `backend = indra_backend()`.", call. = FALSE)
+    }
+    unknown <- setdiff(unique(databases), names(BACKEND_CONSTRUCTORS))
+    if (length(unknown) > 0) {
+        stop("No default backend for backend_database ",
+             paste0("\"", unknown, "\"", collapse = ", "),
+             ". Pass `backend` to choose one.", call. = FALSE)
+    }
+    lapply(unique(databases), function(database) {
+        list(backend = BACKEND_CONSTRUCTORS[[database]](),
+             edges = edges[databases == database, , drop = FALSE])
+    })
+}
+
+#' Get the evidence of edges from the backend of each edge
+#'
+#' Calls \code{get_evidence()} once per backend, see
+#' \code{.split_edges_by_backend()}, and stacks the results.
+#'
+#' @param edges edges data.frame
+#' @param backend \code{NULL} or a \code{NetworkBackend}
+#' @return evidence data.frame, as from \code{get_evidence()}
+#' @keywords internal
+#' @noRd
+.fetch_evidence <- function(edges, backend = NULL) {
+    groups <- .split_edges_by_backend(edges, backend)
+    if (length(groups) == 0) {
+        warning("No evidence text found for any statement hash")
+        return(.build_empty_evidence_table())
+    }
+    evidence <- lapply(groups, function(group) {
+        get_evidence(group$backend, group$edges)
+    })
+    if (length(evidence) == 1) {
+        return(evidence[[1]])
+    }
+    do.call(rbind, evidence)
+}
