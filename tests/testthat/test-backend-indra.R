@@ -441,7 +441,20 @@ test_that("backend_capabilities() describes the INDRA backend", {
                     c("is_transcription_factor", "is_kinase", "is_phosphatase"))
     expect_true(all(c("Activation", "Complex") %in%
                     capabilities$interaction_types))
-    expect_equal(capabilities$max_nodes[["subnetwork"]], 400)
+    expect_equal(capabilities$max_nodes[["subnetwork"]], 399)
+})
+
+test_that("the subnetwork query accepts max_nodes groundings and no more", {
+    max_nodes <- backend_capabilities(indra_backend())$max_nodes[["subnetwork"]]
+    .groundings <- function(n) {
+        data.frame(namespace = "HGNC", entity_id = as.character(seq_len(n)))
+    }
+    expect_silent(MSstatsBioNet:::.validateIndraSubnetworkInput(
+        .groundings(max_nodes), evidence_sources = NULL,
+        include_entities = NULL))
+    expect_error(MSstatsBioNet:::.validateIndraSubnetworkInput(
+        .groundings(max_nodes + 1), evidence_sources = NULL,
+        include_entities = NULL), "less than 400 proteins")
 })
 
 test_that("backend_capabilities() errors for a backend without a method", {

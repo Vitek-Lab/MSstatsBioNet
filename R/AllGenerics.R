@@ -47,15 +47,17 @@
 #'     "extdata/groupComparisonModel.csv",
 #'     package = "MSstatsBioNet"
 #' ))
-#' indra <- indra_backend()
 #' entities <- prepare_entities(input, entity_type = "protein",
 #'                              id_type = "uniprot")
+#' \donttest{
+#' indra <- indra_backend()
 #' entities <- convert_ids(indra, entities)
 #' entities <- select_entities(entities, pvalue_cutoff = 0.05)
 #' network <- get_network(indra, entities, subnetwork_query(),
 #'                        interaction_types = "Complex")
 #' head(network$nodes)
 #' head(network$edges)
+#' }
 setGeneric("get_network",
     function(backend, entities, query = subnetwork_query(),
              interaction_types = NULL, min_evidence = 1,

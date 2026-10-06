@@ -74,10 +74,11 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
 
 #' Largest number of groundings one INDRA query takes, by query type
 #'
-#' CoGEx \code{indra_subnetwork_relations} takes fewer than 400.
+#' CoGEx \code{indra_subnetwork_relations} takes fewer than 400, so at most
+#' 399.
 #' @keywords internal
 #' @noRd
-INDRA_MAX_NODES <- c(subnetwork = 400)
+INDRA_MAX_NODES <- c(subnetwork = 399)
 
 #' @rdname backend_capabilities
 #' @export
@@ -179,7 +180,7 @@ ENTITY_TYPE_NAMES <- list(
     unique_groundings <- unique(paste(groundings$namespace,
                                       groundings$entity_id, sep = ":"))
     num_proteins <- length(unique_groundings) + length(include_entities)
-    if (num_proteins >= INDRA_MAX_NODES[["subnetwork"]]) {
+    if (num_proteins > INDRA_MAX_NODES[["subnetwork"]]) {
         stop("Invalid Input Error: INDRA query must contain less than 400 proteins.  Consider lowering your p-value cutoff")
     }
     if (nrow(groundings) == 0) {
