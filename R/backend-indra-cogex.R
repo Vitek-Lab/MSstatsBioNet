@@ -120,9 +120,9 @@
 #' @noRd
 .addAdditionalMetadataToIndraEdge <- function(edge, grounding_lookup) {
     edge$evidence_url <- .indraStatementUrl(edge$statement_id)
-    # Map each grounded INDRA endpoint back to the node of its entity row,
-    # matching namespace and identifier, so a multi-grounded row is found
-    # by any of its groundings.
+    # Map the statement's source and target back to the nodes of their
+    # entity rows, matching namespace and identifier, so a multi-grounded row
+    # is found by any of its groundings.
     edge$source_node_id <- .find_node_id_for_grounding(
         grounding_lookup, edge$source_ns, edge$source_id, edge$source_name)
     edge$target_node_id <- .find_node_id_for_grounding(

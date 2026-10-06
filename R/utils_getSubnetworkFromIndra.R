@@ -153,7 +153,7 @@
     return(list(nodes = nodes, edges = edges))
 }
 
-#' Add the correlation between each edge's endpoints
+#' Add the correlation between each edge's source and target
 #' @param edges edges data frame
 #' @param protein_level_data output of dataProcess
 #' @return edges with a correlation column

@@ -176,7 +176,7 @@ validate_network <- function(network) {
         .check_columns(nodes, OPTIONAL_NODE_COLUMNS, "nodes", required = FALSE),
         .check_edge_values(edges),
         .check_node_values(nodes),
-        .check_endpoints(nodes, edges)
+        .check_edges_reach_nodes(nodes, edges)
     )
     if (length(problems) > 0) {
         stop("Network does not meet the edge and node contract (v",
@@ -339,19 +339,19 @@ validate_network <- function(network) {
     problems
 }
 
-#' Check that every edge endpoint is a node
+#' Check that the source and target of every edge are nodes
 #' @keywords internal
 #' @noRd
-.check_endpoints <- function(nodes, edges) {
+.check_edges_reach_nodes <- function(nodes, edges) {
     if (!all(c("source", "target") %in% colnames(edges)) ||
         !"id" %in% colnames(nodes)) {
         return(character(0))
     }
-    missing_endpoints <- setdiff(unique(c(edges$source, edges$target)),
+    missing_node_ids <- setdiff(unique(c(edges$source, edges$target)),
                                  nodes$id)
-    if (length(missing_endpoints) == 0) {
+    if (length(missing_node_ids) == 0) {
         return(character(0))
     }
-    paste0("edge endpoint(s) not found in nodes$id: ",
-           paste(missing_endpoints, collapse = ", "))
+    paste0("edge source(s) or target(s) not found in nodes$id: ",
+           paste(missing_node_ids, collapse = ", "))
 }

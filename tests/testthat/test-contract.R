@@ -193,7 +193,7 @@ test_that("validate_network checks the site format", {
     expect_error(validate_network(network), "edges\\$site must look like 'S148'")
 })
 
-test_that("validate_network requires every edge endpoint to be a node", {
+test_that("validate_network requires every edge source and target to be a node", {
     network <- .valid_network()
     network$edges$target[2] <- "D"
     expect_error(validate_network(network), "not found in nodes\\$id: D")

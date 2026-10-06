@@ -5,8 +5,8 @@
 * New function `validate_network()` checks a `list(nodes, edges)` network
 against the edge and node contract (v1.0): required columns and types, the
 statement-type and entity-type vocabularies, value ranges, `NA` statistics
-on nodes that are not in the input data, and that every edge endpoint is a node. It stops with
-an error listing every problem found.
+on nodes that are not in the input data, and that every edge's source and
+target are nodes. It stops with an error listing every problem found.
 
 ## Breaking changes
 

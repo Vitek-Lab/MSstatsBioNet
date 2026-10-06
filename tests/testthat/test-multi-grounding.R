@@ -96,7 +96,7 @@ test_that(".find_entity_rows_for_grounding prefers rows in the query", {
     expect_equal(MSstatsBioNet:::.find_entity_rows_for_grounding(grounding_lookup, "HGNC", "1097"), 2L)
 })
 
-test_that(".addAdditionalMetadataToIndraEdge recovers original Protein from a multi-grounded endpoint", {
+test_that(".addAdditionalMetadataToIndraEdge recovers original Protein from a multi-grounded source", {
     grounding_lookup <- MSstatsBioNet:::.build_grounding_lookup(.multi_grounded_entities())
     edge <- list(
         source_id = "17234", source_ns = "CHEBI", source_name = "glucose",
@@ -114,7 +114,7 @@ test_that(".build_network_nodes emits the node contract columns", {
     edges <- data.frame(source = c("FOO"), target = c("BAR"),
                         stringsAsFactors = FALSE)
     nodes <- MSstatsBioNet:::.build_network_nodes(
-        grounding_lookup, edges, MSstatsBioNet:::.list_statement_endpoints(list(), grounding_lookup))
+        grounding_lookup, edges, MSstatsBioNet:::.list_backend_nodes(list(), grounding_lookup))
     expect_equal(colnames(nodes),
                  c("id", "entity_type", "entity_name", "namespace", "entity_id",
                    "measured", "included_in_query", "node_role", "site",
