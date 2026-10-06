@@ -33,11 +33,15 @@ as `"S148"`, `;`-joined when there are several, or `NA`), `confidence`
 of the symmetric statement types `"Complex"` and `"Association"` must
 have `directed = FALSE`.
 
-Required node column: `id`. An `id` can repeat, once per PTM site row of
-the same protein. When present, `entity_type`, `entity_name`,
-`namespace`, `entity_id`, `site`, `logFC`, `adj.pvalue`, `measured`,
-`included_in_query`, `node_role`, and `has_measured_sites` are
-type-checked. Nodes with `measured == FALSE` must have `NA` statistics.
+Required node columns: `id`, `entity_type` (e.g. `"protein"`,
+`"ptm_site"`, `"metabolite"`, `"family"`), `entity_name`, `namespace`
+and `entity_id` (the grounding, `NA` when unknown), `measured` (logical:
+the node is in the input data), `included_in_query` (logical: the node
+was part of the query), and `node_role` (why the node is in the network,
+e.g. `"passed_cutoffs"` or `"user_added"`). An `id` can repeat, once per
+PTM site row of the same protein. When present, `site`,
+`has_measured_sites`, `logFC`, and `adj.pvalue` are type-checked. Nodes
+with `measured == FALSE` must have `NA` statistics.
 
 Confidence values are comparable within one `backend_database`, not
 across sources.
@@ -46,7 +50,16 @@ across sources.
 
 ``` r
 network <- list(
-    nodes = data.frame(id = c("CHK1_HUMAN", "CDC25A_HUMAN")),
+    nodes = data.frame(
+        id = c("CHK1_HUMAN", "CDC25A_HUMAN"),
+        entity_type = "protein",
+        entity_name = c("CHEK1", "CDC25A"),
+        namespace = "HGNC",
+        entity_id = c("1925", "1725"),
+        measured = TRUE,
+        included_in_query = TRUE,
+        node_role = "passed_cutoffs"
+    ),
     edges = data.frame(
         source = "CHK1_HUMAN",
         target = "CDC25A_HUMAN",

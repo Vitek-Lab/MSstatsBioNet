@@ -172,9 +172,17 @@ the contract checked by <code><a href="validate_network.html">validate_network</
 <code>evidence_sources</code> (evidence count per source, as JSON), and the
 deprecated <code>paperCount</code> (and <code>correlation</code> when
 <code>protein_level_data</code> is given).</p>
-<p><code>nodes</code> has one row per analyte: <code>id</code>, <code>entity_name</code>,
-<code>namespace</code>, <code>entity_id</code>, <code>site</code>, <code>logFC</code>, and
-<code>adj.pvalue</code>.</p>
+<p><code>nodes</code> has one row per analyte (one per site for PTM input, all
+with the protein's <code>id</code>): <code>id</code>, <code>entity_type</code>
+(<code>"protein"</code>, <code>"ptm_site"</code>, <code>"metabolite"</code>, ...),
+<code>entity_name</code>, <code>namespace</code>, <code>entity_id</code>, <code>measured</code>
+(<code>TRUE</code> for analytes in <code>input</code>), <code>included_in_query</code>,
+<code>node_role</code> (<code>"passed_cutoffs"</code>, or <code>"user_added"</code> for
+nodes that are there only through <code>force_include_other</code>),
+<code>site</code>, <code>has_measured_sites</code> (<code>TRUE</code> for proteins with
+PTM site rows), <code>logFC</code>, and <code>adj.pvalue</code>. Nodes from
+<code>force_include_other</code> that are not in <code>input</code> have
+<code>measured = FALSE</code> and <code>NA</code> statistics.</p>
     </div>
 
     <div class="section level2">
@@ -190,43 +198,42 @@ deprecated <code>paperCount</code> (and <code>correlation</code> when
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         package or utilizing the results based on this package.</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>         See the LICENSE file for more details.</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        id entity_name namespace entity_id   site     logFC  adj.pvalue</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    &lt;char&gt;      &lt;char&gt;    &lt;char&gt;    &lt;char&gt; &lt;char&gt;     &lt;num&gt;       &lt;num&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1: O00217      NDUFS8      HGNC      7715   &lt;NA&gt; 2.0285031 0.013821932</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2: O60313        OPA1      HGNC      8140   &lt;NA&gt; 0.9299641 0.019584180</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3: O75306      NDUFS2      HGNC      7708   &lt;NA&gt; 2.4745040 0.004457034</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4: P05023      ATP1A1      HGNC       799   &lt;NA&gt; 1.8391155 0.003251073</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5: P05067         APP      HGNC       620   &lt;NA&gt; 0.7360012 0.020306662</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6: P05090        APOD      HGNC       612   &lt;NA&gt; 0.5683951 0.013715050</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       id entity_type entity_name namespace entity_id measured included_in_query</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 O00217     protein      NDUFS8      HGNC      7715     TRUE              TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 O60313     protein        OPA1      HGNC      8140     TRUE              TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 O75306     protein      NDUFS2      HGNC      7708     TRUE              TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 P05023     protein      ATP1A1      HGNC       799     TRUE              TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 P05067     protein         APP      HGNC       620     TRUE              TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 P05090     protein        APOD      HGNC       612     TRUE              TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        node_role site has_measured_sites     logFC  adj.pvalue</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 passed_cutoffs &lt;NA&gt;              FALSE 2.0285031 0.013821932</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 passed_cutoffs &lt;NA&gt;              FALSE 0.9299641 0.019584180</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 passed_cutoffs &lt;NA&gt;              FALSE 2.4745040 0.004457034</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 passed_cutoffs &lt;NA&gt;              FALSE 1.8391155 0.003251073</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 passed_cutoffs &lt;NA&gt;              FALSE 0.7360012 0.020306662</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 passed_cutoffs &lt;NA&gt;              FALSE 0.5683951 0.013715050</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   source target interaction directed site confidence evidence_count</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 O75306 P08574     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 P05067 O60313  Activation     TRUE &lt;NA&gt;  0.3668029              2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 P05023 O75306     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 O60313 O00217     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 O75306 P05067     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 P05362 P05067     Complex    FALSE &lt;NA&gt;  0.6549329             13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   source target    interaction directed site confidence evidence_count</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 O75306 O00217        Complex    FALSE &lt;NA&gt;  0.7981153              3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 P08574 O75306        Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 P05067 O60313 DecreaseAmount     TRUE &lt;NA&gt;  0.4850742              3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 P05067 P05362 IncreaseAmount     TRUE &lt;NA&gt;  0.5028536              3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 P05067 P05090 IncreaseAmount     TRUE &lt;NA&gt;  0.4715316              2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 P08574 P05023        Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                               evidence_url</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   https://db.indra.bio/statements/from_hash/6349003830434161?format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   https://db.indra.bio/statements/from_hash/3948742039105656?format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  https://db.indra.bio/statements/from_hash/-5813063534036006?format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 https://db.indra.bio/statements/from_hash/-19747883270157675?format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  https://db.indra.bio/statements/from_hash/22463147519060585?format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 https://db.indra.bio/statements/from_hash/-20220236678417803?format=html</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         statement_id backend_database query_type            evidence_sources</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   6349003830434161            INDRA subnetwork              {"biogrid": 1}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   3948742039105656            INDRA subnetwork                {"reach": 2}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  -5813063534036006            INDRA subnetwork              {"biogrid": 1}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 -19747883270157675            INDRA subnetwork              {"biogrid": 1}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  22463147519060585            INDRA subnetwork              {"biogrid": 1}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 -20220236678417803            INDRA subnetwork {"sparser": 10, "reach": 3}</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   paperCount</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5          1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  https://db.indra.bio/statements/from_hash/35453498871697150?format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   https://db.indra.bio/statements/from_hash/6349003830434161?format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 https://db.indra.bio/statements/from_hash/-14390698362022978?format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  https://db.indra.bio/statements/from_hash/29503060009374668?format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  https://db.indra.bio/statements/from_hash/13542679335950199?format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 https://db.indra.bio/statements/from_hash/-27854856016676857?format=html</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         statement_id backend_database query_type evidence_sources paperCount</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  35453498871697150            INDRA subnetwork   {"biogrid": 3}          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   6349003830434161            INDRA subnetwork   {"biogrid": 1}          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 -14390698362022978            INDRA subnetwork     {"reach": 3}          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  29503060009374668            INDRA subnetwork     {"reach": 3}          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  13542679335950199            INDRA subnetwork     {"reach": 2}          1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 -27854856016676857            INDRA subnetwork   {"biogrid": 1}          1</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

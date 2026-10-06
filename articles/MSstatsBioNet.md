@@ -40,23 +40,23 @@ input = data.table::fread(system.file(
 
 library(MSstatsConvert)
 msstats_imported = FragPipetoMSstatsFormat(input, use_log_file = FALSE)
-#> INFO  [2026-10-06 17:17:50] ** Raw data from FragPipe imported successfully.
-#> INFO  [2026-10-06 17:17:50] ** Using annotation extracted from quantification data.
-#> INFO  [2026-10-06 17:17:50] ** Run labels were standardized to remove symbols such as '.' or '%'.
-#> INFO  [2026-10-06 17:17:50] ** The following options are used:
+#> INFO  [2026-10-06 20:11:12] ** Raw data from FragPipe imported successfully.
+#> INFO  [2026-10-06 20:11:12] ** Using annotation extracted from quantification data.
+#> INFO  [2026-10-06 20:11:12] ** Run labels were standardized to remove symbols such as '.' or '%'.
+#> INFO  [2026-10-06 20:11:12] ** The following options are used:
 #>   - Features will be defined by the columns: PeptideSequence, PrecursorCharge, FragmentIon, ProductCharge
 #>   - Shared peptides will be removed.
 #>   - Proteins with single feature will not be removed.
 #>   - Features with less than 3 measurements across runs will be removed.
-#> INFO  [2026-10-06 17:17:50] ** Features with all missing measurements across runs are removed.
-#> INFO  [2026-10-06 17:17:50] ** Shared peptides are removed.
-#> INFO  [2026-10-06 17:17:50] ** Multiple measurements in a feature and a run are summarized by summaryforMultipleRows: max
-#> INFO  [2026-10-06 17:17:50] ** Features with one or two measurements across runs are removed.
-#> INFO  [2026-10-06 17:17:50] ** Run annotation merged with quantification data.
-#> INFO  [2026-10-06 17:17:50] ** Features with one or two measurements across runs are removed.
-#> INFO  [2026-10-06 17:17:50] ** Fractionation handled.
-#> INFO  [2026-10-06 17:17:50] ** Updated quantification data to make balanced design. Missing values are marked by NA
-#> INFO  [2026-10-06 17:17:50] ** Finished preprocessing. The dataset is ready to be processed by the dataProcess function.
+#> INFO  [2026-10-06 20:11:12] ** Features with all missing measurements across runs are removed.
+#> INFO  [2026-10-06 20:11:12] ** Shared peptides are removed.
+#> INFO  [2026-10-06 20:11:12] ** Multiple measurements in a feature and a run are summarized by summaryforMultipleRows: max
+#> INFO  [2026-10-06 20:11:12] ** Features with one or two measurements across runs are removed.
+#> INFO  [2026-10-06 20:11:12] ** Run annotation merged with quantification data.
+#> INFO  [2026-10-06 20:11:12] ** Features with one or two measurements across runs are removed.
+#> INFO  [2026-10-06 20:11:12] ** Fractionation handled.
+#> INFO  [2026-10-06 20:11:12] ** Updated quantification data to make balanced design. Missing values are marked by NA
+#> INFO  [2026-10-06 20:11:12] ** Finished preprocessing. The dataset is ready to be processed by the dataProcess function.
 head(msstats_imported)
 #>   ProteinName PeptideSequence PrecursorCharge FragmentIon ProductCharge
 #> 1      P05023   AVAGDASESALLK               2         b12             1
@@ -99,35 +99,35 @@ library(MSstats)
 #> 
 #>     savePlot
 QuantData <- dataProcess(msstats_imported, use_log_file = FALSE)
-#> INFO  [2026-10-06 17:17:52] ** Log2 intensities under cutoff = 9.2885  were considered as censored missing values.
-#> INFO  [2026-10-06 17:17:52] ** Log2 intensities = NA were considered as censored missing values.
-#> INFO  [2026-10-06 17:17:52] ** Use top100 features that have highest average of log2(intensity) across runs.
-#> INFO  [2026-10-06 17:17:52] 
+#> INFO  [2026-10-06 20:11:13] ** Log2 intensities under cutoff = 9.2885  were considered as censored missing values.
+#> INFO  [2026-10-06 20:11:13] ** Log2 intensities = NA were considered as censored missing values.
+#> INFO  [2026-10-06 20:11:13] ** Use top100 features that have highest average of log2(intensity) across runs.
+#> INFO  [2026-10-06 20:11:13] 
 #>  # proteins: 10
 #>  # peptides per protein: 1-8
 #>  # features per peptide: 7-12
-#> INFO  [2026-10-06 17:17:52] 
+#> INFO  [2026-10-06 20:11:13] 
 #>                     NAT T
 #>              # runs   5 5
 #>     # bioreplicates   5 5
 #>  # tech. replicates   1 1
-#> INFO  [2026-10-06 17:17:52] Some features are completely missing in at least one condition:  
+#> INFO  [2026-10-06 20:11:13] Some features are completely missing in at least one condition:  
 #>  ELEAEIQQLR_2_b5_1,
 #>  ELEAEIQQLR_2_b8_1,
 #>  NLEAVETLGSTSTIC(UniMod:4)SDK_3_b13_2,
 #>  NLEAVETLGSTSTIC(UniMod:4)SDK_3_b3_1,
 #>  NLEAVETLGSTSTIC(UniMod:4)SDK_3_b4_1 ...
-#> INFO  [2026-10-06 17:17:52]  == Start the summarization per subplot...
+#> INFO  [2026-10-06 20:11:13]  == Start the summarization per subplot...
 #>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
-#> INFO  [2026-10-06 17:17:52]  == Summarization is done.
+#> INFO  [2026-10-06 20:11:13]  == Summarization is done.
 model <- groupComparison(
     contrast.matrix = "pairwise",
     data = QuantData,
     use_log_file = FALSE
 )
-#> INFO  [2026-10-06 17:17:52]  == Start to test and get inference in whole plot ...
+#> INFO  [2026-10-06 20:11:13]  == Start to test and get inference in whole plot ...
 #>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
-#> INFO  [2026-10-06 17:17:52]  == Comparisons for all proteins are done.
+#> INFO  [2026-10-06 20:11:14]  == Comparisons for all proteins are done.
 head(model$ComparisonResult)
 #>   Protein    Label     log2FC        SE     Tvalue DF       pvalue  adj.pvalue
 #> 1  O00217 NAT vs T  2.0285031 0.4364177   4.648077  4 0.0096753522 0.013821932
@@ -218,42 +218,42 @@ subnetwork <- getSubnetworkFromIndra(
 #>         package or utilizing the results based on this package.
 #>         See the LICENSE file for more details.
 head(subnetwork$nodes)
-#>       id entity_name namespace entity_id site     logFC  adj.pvalue
-#> 1 O00217      NDUFS8      HGNC      7715 <NA> 2.0285031 0.013821932
-#> 3 O60313        OPA1      HGNC      8140 <NA> 0.9299641 0.019584179
-#> 5 O75306      NDUFS2      HGNC      7708 <NA> 2.4745040 0.004457034
-#> 6 P05023      ATP1A1      HGNC       799 <NA> 1.8391155 0.003251073
-#> 7 P05067         APP      HGNC       620 <NA> 0.7360012 0.020306662
-#> 8 P05090        APOD      HGNC       612 <NA> 0.5683951 0.013715050
+#>       id entity_type entity_name namespace entity_id measured included_in_query
+#> 1 O00217     protein      NDUFS8      HGNC      7715     TRUE              TRUE
+#> 2 O60313     protein        OPA1      HGNC      8140     TRUE              TRUE
+#> 3 O75306     protein      NDUFS2      HGNC      7708     TRUE              TRUE
+#> 4 P05023     protein      ATP1A1      HGNC       799     TRUE              TRUE
+#> 5 P05067     protein         APP      HGNC       620     TRUE              TRUE
+#> 6 P05090     protein        APOD      HGNC       612     TRUE              TRUE
+#>        node_role site has_measured_sites     logFC  adj.pvalue
+#> 1 passed_cutoffs <NA>              FALSE 2.0285031 0.013821932
+#> 2 passed_cutoffs <NA>              FALSE 0.9299641 0.019584179
+#> 3 passed_cutoffs <NA>              FALSE 2.4745040 0.004457034
+#> 4 passed_cutoffs <NA>              FALSE 1.8391155 0.003251073
+#> 5 passed_cutoffs <NA>              FALSE 0.7360012 0.020306662
+#> 6 passed_cutoffs <NA>              FALSE 0.5683951 0.013715050
 head(subnetwork$edges)
-#>   source target interaction directed site confidence evidence_count
-#> 1 O75306 P08574     Complex    FALSE <NA>  0.8302067              1
-#> 2 P05067 O60313  Activation     TRUE <NA>  0.3668029              2
-#> 3 P05023 O75306     Complex    FALSE <NA>  0.8302067              1
-#> 4 O60313 O00217     Complex    FALSE <NA>  0.8302067              1
-#> 5 O75306 P05067     Complex    FALSE <NA>  0.8302067              1
-#> 6 P05362 P05067     Complex    FALSE <NA>  0.6549329             13
+#>   source target    interaction directed site confidence evidence_count
+#> 1 O75306 O00217        Complex    FALSE <NA>  0.7981153              3
+#> 2 P08574 O75306        Complex    FALSE <NA>  0.8302067              1
+#> 3 P05067 O60313 DecreaseAmount     TRUE <NA>  0.4850742              3
+#> 4 P05067 P05362 IncreaseAmount     TRUE <NA>  0.5028536              3
+#> 5 P05067 P05090 IncreaseAmount     TRUE <NA>  0.4715316              2
+#> 6 P08574 P05023        Complex    FALSE <NA>  0.8302067              1
 #>                                                               evidence_url
-#> 1   https://db.indra.bio/statements/from_hash/6349003830434161?format=html
-#> 2   https://db.indra.bio/statements/from_hash/3948742039105656?format=html
-#> 3  https://db.indra.bio/statements/from_hash/-5813063534036006?format=html
-#> 4 https://db.indra.bio/statements/from_hash/-19747883270157675?format=html
-#> 5  https://db.indra.bio/statements/from_hash/22463147519060585?format=html
-#> 6 https://db.indra.bio/statements/from_hash/-20220236678417803?format=html
-#>         statement_id backend_database query_type            evidence_sources
-#> 1   6349003830434161            INDRA subnetwork              {"biogrid": 1}
-#> 2   3948742039105656            INDRA subnetwork                {"reach": 2}
-#> 3  -5813063534036006            INDRA subnetwork              {"biogrid": 1}
-#> 4 -19747883270157675            INDRA subnetwork              {"biogrid": 1}
-#> 5  22463147519060585            INDRA subnetwork              {"biogrid": 1}
-#> 6 -20220236678417803            INDRA subnetwork {"sparser": 10, "reach": 3}
-#>   paperCount
-#> 1          1
-#> 2          1
-#> 3          1
-#> 4          1
-#> 5          1
-#> 6          1
+#> 1  https://db.indra.bio/statements/from_hash/35453498871697150?format=html
+#> 2   https://db.indra.bio/statements/from_hash/6349003830434161?format=html
+#> 3 https://db.indra.bio/statements/from_hash/-14390698362022978?format=html
+#> 4  https://db.indra.bio/statements/from_hash/29503060009374668?format=html
+#> 5  https://db.indra.bio/statements/from_hash/13542679335950199?format=html
+#> 6 https://db.indra.bio/statements/from_hash/-27854856016676857?format=html
+#>         statement_id backend_database query_type evidence_sources paperCount
+#> 1  35453498871697150            INDRA subnetwork   {"biogrid": 3}          1
+#> 2   6349003830434161            INDRA subnetwork   {"biogrid": 1}          1
+#> 3 -14390698362022978            INDRA subnetwork     {"reach": 3}          1
+#> 4  29503060009374668            INDRA subnetwork     {"reach": 3}          1
+#> 5  13542679335950199            INDRA subnetwork     {"reach": 2}          1
+#> 6 -27854856016676857            INDRA subnetwork   {"biogrid": 1}          1
 ```
 
 This package is distributed under the

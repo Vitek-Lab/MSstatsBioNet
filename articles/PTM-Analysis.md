@@ -108,43 +108,49 @@ subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statemen
 #>         package or utilizing the results based on this package.
 #>         See the LICENSE file for more details.
 head(subnetwork$nodes)
-#>        id entity_name namespace entity_id        site      logFC adj.pvalue
-#>    <char>      <char>    <char>    <char>      <char>      <num>      <num>
-#> 1: P00533        EGFR      HGNC      3236 S1039_S1042 -0.3200363 0.28024590
-#> 2: P00533        EGFR      HGNC      3236       S1064  0.3566531 0.06863598
-#> 3: P00533        EGFR      HGNC      3236   S991_S995 -0.1229037 0.57907374
-#> 4: P00533        EGFR      HGNC      3236        T693 -0.0233444 0.96083634
-#> 5: P00533        EGFR      HGNC      3236   T693_S695 -0.1659957 0.58809108
-#> 6: P00533        EGFR      HGNC      3236       Y1110  0.2106324 0.25258914
+#>       id entity_type entity_name namespace entity_id measured included_in_query
+#> 1 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE
+#> 2 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE
+#> 3 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE
+#> 4 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE
+#> 5 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE
+#> 6 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE
+#>    node_role        site has_measured_sites      logFC adj.pvalue
+#> 1 user_added S1039_S1042               TRUE -0.3200363 0.28024590
+#> 2 user_added       S1064               TRUE  0.3566531 0.06863598
+#> 3 user_added   S991_S995               TRUE -0.1229037 0.57907374
+#> 4 user_added        T693               TRUE -0.0233444 0.96083634
+#> 5 user_added   T693_S695               TRUE -0.1659957 0.58809108
+#> 6 user_added       Y1110               TRUE  0.2106324 0.25258914
 head(subnetwork$edges)
 #>   source target     interaction directed site confidence evidence_count
-#> 1 Q13480 P00533 Phosphorylation     TRUE <NA>  0.5517375              2
-#> 2 P00533 P28482 Phosphorylation     TRUE <NA>  0.7432122              6
-#> 3 P00533 Q13480 Phosphorylation     TRUE Y317  0.5316003              1
-#> 4 P00533 Q13480 Phosphorylation     TRUE <NA>  0.8859041             24
+#> 1 P28482 P00533 Phosphorylation     TRUE T693  0.7828815              5
+#> 2 P00533 Q13480 Phosphorylation     TRUE Y589  0.8034668              4
+#> 3 P28482 Q13480 Phosphorylation     TRUE S551  0.6600850              2
+#> 4 P28482 P00533 Phosphorylation     TRUE <NA>  0.8417233              4
 #> 5 P00533 Q13480 Phosphorylation     TRUE Y659  0.8030378             12
-#> 6 P28482 Q13480 Phosphorylation     TRUE S454  0.6590674              3
+#> 6 P00533 Q13480 Phosphorylation     TRUE Y317  0.5316003              1
 #>                                                               evidence_url
-#> 1 https://db.indra.bio/statements/from_hash/-16511170354231919?format=html
-#> 2   https://db.indra.bio/statements/from_hash/4046712837468004?format=html
-#> 3  https://db.indra.bio/statements/from_hash/16300905780198239?format=html
-#> 4 https://db.indra.bio/statements/from_hash/-27721131241182418?format=html
+#> 1 https://db.indra.bio/statements/from_hash/-27349256206351689?format=html
+#> 2   https://db.indra.bio/statements/from_hash/8278162666099689?format=html
+#> 3  https://db.indra.bio/statements/from_hash/-4764665757498136?format=html
+#> 4  https://db.indra.bio/statements/from_hash/16405949435170631?format=html
 #> 5  https://db.indra.bio/statements/from_hash/28792790420132101?format=html
-#> 6   https://db.indra.bio/statements/from_hash/7148668566491587?format=html
+#> 6  https://db.indra.bio/statements/from_hash/16300905780198239?format=html
 #>         statement_id backend_database query_type
-#> 1 -16511170354231919            INDRA subnetwork
-#> 2   4046712837468004            INDRA subnetwork
-#> 3  16300905780198239            INDRA subnetwork
-#> 4 -27721131241182418            INDRA subnetwork
+#> 1 -27349256206351689            INDRA subnetwork
+#> 2   8278162666099689            INDRA subnetwork
+#> 3  -4764665757498136            INDRA subnetwork
+#> 4  16405949435170631            INDRA subnetwork
 #> 5  28792790420132101            INDRA subnetwork
-#> 6   7148668566491587            INDRA subnetwork
-#>                                                    evidence_sources paperCount
-#> 1                                        {"sparser": 1, "reach": 1}          1
-#> 2                           {"sparser": 2, "reach": 3, "rlimsp": 1}          1
-#> 3                                                     {"rlimsp": 1}          1
-#> 4 {"reach": 14, "sparser": 5, "trips": 1, "bel_lc": 1, "rlimsp": 3}          1
-#> 5              {"pc": 1, "pe": 1, "hprd": 8, "psp": 1, "signor": 1}          1
-#> 6                                          {"hprd": 2, "signor": 1}          1
+#> 6  16300905780198239            INDRA subnetwork
+#>                                             evidence_sources paperCount
+#> 1 {"sparser": 1, "reach": 1, "pe": 1, "psp": 1, "signor": 1}          1
+#> 2                {"pe": 1, "hprd": 1, "psp": 1, "signor": 1}          1
+#> 3                                   {"hprd": 1, "signor": 1}          1
+#> 4                                 {"sparser": 2, "reach": 2}          1
+#> 5       {"pc": 1, "pe": 1, "hprd": 8, "psp": 1, "signor": 1}          1
+#> 6                                              {"rlimsp": 1}          1
 ```
 
 ### Network Visualization
