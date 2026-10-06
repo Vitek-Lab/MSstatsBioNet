@@ -416,3 +416,101 @@ test_that("annotateProteinInfoFromIndra() grounds through convert_ids() and get_
                    "EntityId", "EntityName", "IsTranscriptionFactor",
                    "IsKinase", "IsPhosphatase"))
 })
+
+# ----- Exported API (Phase 3d of the API refactor) -----
+
+test_that("the new API is exported", {
+    exports <- getNamespaceExports("MSstatsBioNet")
+    expect_true(all(c("prepare_entities", "select_entities", "indra_backend",
+                      "convert_ids", "get_entity_properties",
+                      "subnetwork_query", "get_network",
+                      "backend_capabilities") %in% exports))
+    # Helpers stay internal until a caller needs them
+    expect_false(any(c("build_grounding_table", "parse_ptm_sites") %in% exports))
+})
+
+test_that("backend_capabilities() describes the INDRA backend", {
+    capabilities <- backend_capabilities(indra_backend())
+    expect_named(capabilities, c("query_types", "id_conversions",
+                                 "entity_properties", "interaction_types",
+                                 "max_nodes"))
+    expect_equal(capabilities$query_types, "subnetwork")
+    expect_equal(capabilities$id_conversions$protein,
+                 c("uniprot", "uniprot_mnemonic", "hgnc_symbol"))
+    expect_setequal(capabilities$entity_properties,
+                    c("is_transcription_factor", "is_kinase", "is_phosphatase"))
+    expect_true(all(c("Activation", "Complex") %in%
+                    capabilities$interaction_types))
+    expect_equal(capabilities$max_nodes[["subnetwork"]], 400)
+})
+
+test_that("backend_capabilities() errors for a backend without a method", {
+    where <- environment()
+    setClass("BackendWithoutCapabilities", contains = "NetworkBackend",
+             where = where)
+    on.exit(removeClass("BackendWithoutCapabilities", where = where),
+            add = TRUE)
+    expect_error(backend_capabilities(new("BackendWithoutCapabilities")),
+                 "BackendWithoutCapabilities does not describe its backend_capabilities")
+})
+
+test_that("get_network() drops edges below min_confidence", {
+    .mock_indra_response()
+    input <- .selected_input()
+    all_edges <- suppressMessages(get_network(indra_backend(), input))$edges
+    cutoff <- stats::median(all_edges$confidence)
+    network <- suppressMessages(get_network(indra_backend(), input,
+                                            min_confidence = cutoff))
+    expect_true(all(network$edges$confidence >= cutoff))
+    expect_equal(nrow(network$edges), sum(all_edges$confidence >= cutoff))
+    expect_true(all(network$nodes$id %in%
+                    c(network$edges$source, network$edges$target)))
+})
+
+test_that("min_confidence drops edges with no confidence score, with a message", {
+    edges <- data.frame(confidence = c(0.9, NA, 0.2, NA))
+    expect_message(kept <- .filter_by_min_confidence(edges, 0.5),
+                   "Dropping 2 edge\\(s\\) with no confidence score")
+    expect_equal(kept$confidence, 0.9)
+    expect_identical(.filter_by_min_confidence(edges, NULL), edges)
+})
+
+test_that("get_network() checks min_confidence before calling INDRA", {
+    local_mocked_bindings(
+        .callIndraCogexApi = function(ns, ids, fio, cogex_url) {
+            stop("INDRA should not be called")
+        }
+    )
+    input <- .selected_input()
+    for (bad in list(-0.1, 1.5, "0.5", c(0.1, 0.2), NA_real_)) {
+        expect_error(suppressMessages(get_network(indra_backend(), input,
+                                                  min_confidence = bad)),
+                     "min_confidence must be a single number between 0 and 1")
+    }
+})
+
+test_that("get_network() prints the question it asks, with counts", {
+    .mock_indra_response()
+    input <- .selected_input()
+    n_selected <- sum(input$included_in_query & !is.na(input$entity_id))
+    expect_message(
+        get_network(indra_backend(), input),
+        paste0("INDRA subnetwork: how are ", n_selected, " selected proteins ",
+               "connected to each other, with no other nodes added\\?"))
+    expect_message(
+        get_network(indra_backend(), input, include_entities = "HGNC:1097"),
+        "selected proteins and 1 added entity connected")
+})
+
+test_that(".describe_entity_count() names the entity types", {
+    expect_equal(.describe_entity_count(rep("protein", 42), "selected"),
+                 "42 selected proteins")
+    expect_equal(.describe_entity_count("ptm_site", "selected"),
+                 "1 selected PTM site")
+    expect_equal(.describe_entity_count(c("family", "family"), "selected"),
+                 "2 selected families")
+    expect_equal(.describe_entity_count(c("protein", "metabolite"), "selected"),
+                 "2 selected entities")
+    expect_equal(.describe_entity_count(rep("protein", 1200), "selected"),
+                 "1,200 selected proteins")
+})

@@ -1,7 +1,6 @@
 # The entity table: one row per analyte in the MSstats results. Built by
 # prepare_entities(), grounded by convert_ids(), flagged by
-# select_entities(), and read by get_network(). Phase 3 of the API
-# refactor; internal until the end of Phase 3.
+# select_entities(), and read by get_network().
 
 #' Input identifier systems for entities$id_type
 #'
@@ -44,21 +43,33 @@ REQUIRED_ENTITY_COLUMNS <- c(
 
 #' Prepare an entity table from MSstats results
 #'
-#' Builds the table that \code{convert_ids()} grounds,
-#' \code{select_entities()} flags, and \code{get_network()} queries. It has
-#' one row per analyte, and keeps every analyte, not only the significant
-#' ones, so that nodes returned by a backend can be marked as measured.
+#' Builds the table that \code{\link{convert_ids}()} grounds,
+#' \code{\link{select_entities}()} flags, and \code{\link{get_network}()}
+#' queries. It has one row per analyte, and keeps every analyte, not only
+#' the significant ones, so that nodes returned by a backend can be
+#' recognized as being in the input.
+#'
+#' For PTM sites (\code{entity_type = "ptm_site"}), the site is parsed
+#' from the end of each identifier, e.g. \code{"P00533_S1039_S1042"} gives
+#' parent \code{"P00533"} and site \code{"S1039_S1042"}. A
+#' \code{GlobalProtein} column, as MSstatsPTM writes, overrides the parsed
+#' parent.
 #'
 #' @param df output of \code{groupComparison()}'s \code{ComparisonResult}
 #' table, or any table with one row per analyte.
 #' @param id_column name of the column holding the analyte identifiers.
 #' @param entity_type one of the entity types (\code{"protein"},
-#' \code{"ptm_site"}, \code{"metabolite"}, ...), or the name of a column of
-#' \code{df} holding one per row.
+#' \code{"gene"}, \code{"transcript"}, \code{"ptm_site"},
+#' \code{"metabolite"}, \code{"lipid"}, \code{"drug"}, \code{"complex"},
+#' \code{"family"}, \code{"other"}), or the name of a column of \code{df}
+#' holding one per row.
 #' @param id_type the identifier system of \code{id_column}
 #' (\code{"uniprot"}, \code{"uniprot_mnemonic"}, \code{"hgnc_symbol"},
-#' \code{"chemical_name"}, ...), or the name of a column of \code{df}
-#' holding one per row. For PTM sites, the identifier system of the parent
+#' \code{"ensembl_protein"}, \code{"ensembl_gene"}, \code{"entrez"},
+#' \code{"chemical_name"}, \code{"inchikey"}, \code{"hmdb"},
+#' \code{"chebi"}, \code{"chembl"}), or the name of a column of \code{df}
+#' holding one per row. Which of them a backend can convert is listed by
+#' \code{backend_capabilities(backend)$id_conversions}. For PTM sites, the identifier system of the parent
 #' protein. \code{"chemical_name"} is a metabolite, lipid, or drug name,
 #' common or IUPAC (e.g. \code{"glucose"}), grounded by text matching.
 #' @param organism NCBI taxon ID, as a string.
@@ -73,9 +84,22 @@ REQUIRED_ENTITY_COLUMNS <- c(
 #' (all \code{NA} until \code{convert_ids()}), \code{included_in_query}
 #' (\code{TRUE} until \code{select_entities()}), \code{site} and
 #' \code{parent_id} (for \code{ptm_site} rows), \code{organism}, and
-#' \code{logFC} and \code{adj.pvalue} when \code{df} has them.
-#' @keywords internal
-#' @noRd
+#' \code{logFC} and \code{adj.pvalue} when \code{df} has them. Other
+#' columns of \code{df} are not copied; join them back on \code{id}.
+#' @export
+#' @examples
+#' input <- data.table::fread(system.file(
+#'     "extdata/groupComparisonModel.csv",
+#'     package = "MSstatsBioNet"
+#' ))
+#' entities <- prepare_entities(input, entity_type = "protein",
+#'                              id_type = "uniprot")
+#' head(entities)
+#'
+#' # MSstatsPTM results: the parent protein and site are parsed from the id
+#' ptm <- data.frame(Protein = c("P00533_S1039_S1042", "P04637_S15"),
+#'                   log2FC = c(1.2, -0.8), adj.pvalue = c(0.01, 0.2))
+#' prepare_entities(ptm, entity_type = "ptm_site", id_type = "uniprot")
 prepare_entities <- function(df, id_column = "Protein", entity_type, id_type,
                              organism = "9606", label = NULL,
                              logfc_column = NULL) {
@@ -248,12 +272,13 @@ build_grounding_table <- function(entities, namespaces = NULL) {
 
 #' Flag the entities to query
 #'
-#' Sets \code{included_in_query} from the statistical cutoffs. Rows that
-#' fail are kept, so that \code{get_network()} can still mark them as
-#' measured when a backend returns them. Rows with a missing
+#' Sets \code{included_in_query} from the statistical cutoffs. Only these
+#' rows are sent to the backend by \code{\link{get_network}()}. Rows that
+#' fail are kept, so that \code{get_network()} can still recognize them as
+#' being in the input when a backend returns them. Rows with a missing
 #' \code{adj.pvalue} are not selected.
 #'
-#' @param entities entity table from \code{prepare_entities()}
+#' @param entities entity table from \code{\link{prepare_entities}()}
 #' @param pvalue_cutoff keep rows with \code{adj.pvalue} below this.
 #' \code{NULL} applies no cutoff.
 #' @param logfc_cutoff keep rows with \code{abs(logFC)} above this, on the
@@ -272,8 +297,17 @@ build_grounding_table <- function(entities, namespaces = NULL) {
 #' @return \code{entities} with \code{included_in_query} set, and
 #' \code{user_added} (\code{TRUE} for rows selected only through
 #' \code{force_include}).
-#' @keywords internal
-#' @noRd
+#' @export
+#' @examples
+#' input <- data.table::fread(system.file(
+#'     "extdata/groupComparisonModel.csv",
+#'     package = "MSstatsBioNet"
+#' ))
+#' entities <- prepare_entities(input, entity_type = "protein",
+#'                              id_type = "uniprot")
+#' entities <- select_entities(entities, pvalue_cutoff = 0.01,
+#'                             direction = "up")
+#' table(entities$included_in_query)
 select_entities <- function(entities, pvalue_cutoff = NULL,
                             logfc_cutoff = NULL,
                             direction = c("both", "up", "down"),

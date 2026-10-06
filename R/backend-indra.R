@@ -10,35 +10,51 @@ GILDA_API_URL <- "https://grounding.indra.bio"
 
 #' Create an INDRA backend
 #'
-#' Internal until the end of Phase 3 of the API refactor.
+#' INDRA is a knowledge graph of mechanisms (activations, phosphorylations,
+#' complexes, ...) assembled from the literature and curated databases. The
+#' backend queries INDRA CoGEx for networks and grounds gene symbols and
+#' chemical names with Gilda, INDRA's grounding service.
+#' \code{backend_capabilities(indra_backend())} lists what it supports.
+#'
+#' This function includes third-party software components that are licensed
+#' under the BSD 2-Clause License. Include the third-party licensing
+#' agreements if redistributing this package or results based on it. See
+#' the LICENSE file for details.
+#'
 #' @param cogex_url base URL of INDRA CoGEx
 #' @param grounding_url base URL of Gilda
-#' @return an \code{IndraBackend} object
+#' @return an \code{IndraBackend} object, to pass to
+#' \code{\link{convert_ids}()}, \code{\link{get_entity_properties}()}, and
+#' \code{\link{get_network}()}
+#' @seealso \code{\link{NetworkBackend-class}}
 #' @importFrom methods new
-#' @keywords internal
-#' @noRd
+#' @export
+#' @examples
+#' indra <- indra_backend()
+#' backend_capabilities(indra)$query_types
 indra_backend <- function(cogex_url = INDRA_API_URL,
                           grounding_url = GILDA_API_URL) {
     new("IndraBackend", cogex_url = cogex_url, grounding_url = grounding_url)
 }
 
-#' INDRA subnetwork query
-#'
-#' Sends the groundings of the \code{included_in_query} rows to CoGEx
-#' \code{indra_subnetwork_relations}, filters the statements, and normalizes
-#' them to the edge contract. The source and target of each statement are
-#' matched back to the rows of \code{entities} by grounding, so nodes carry
-#' their statistics. Backend nodes that match no row (from
-#' \code{include_entities}) become latent nodes.
-#' @keywords internal
-#' @noRd
+# INDRA subnetwork query. Sends the groundings of the included_in_query rows
+# to CoGEx indra_subnetwork_relations, filters the statements, and
+# normalizes them to the edge contract. The source and target of each
+# statement are matched back to the rows of entities by grounding, so nodes
+# carry their statistics. Backend nodes that match no row (from
+# include_entities) become latent nodes.
+#' @rdname get_network
+#' @export
 setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
     function(backend, entities, query, interaction_types = NULL,
-             min_evidence = 1, evidence_sources = NULL,
-             include_entities = NULL, ...) {
+             min_evidence = 1, min_confidence = NULL,
+             evidence_sources = NULL, include_entities = NULL, ...) {
         groundings <- .get_groundings_to_query(entities)
         .validateIndraSubnetworkInput(groundings, evidence_sources,
                                       include_entities)
+        .check_min_confidence(min_confidence)
+        message(.describe_subnetwork_question(entities, groundings,
+                                              include_entities))
         statements <- .callIndraCogexApi(groundings$namespace,
                                          groundings$entity_id,
                                          include_entities, backend@cogex_url)
@@ -46,6 +62,7 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
                                            min_evidence, evidence_sources)
         grounding_lookup <- .build_grounding_lookup(entities)
         edges <- .constructEdgesDataFrame(statements, grounding_lookup)
+        edges <- .filter_by_min_confidence(edges, min_confidence)
         edges <- .filterEdgesDataFrame(edges)
         nodes <- .build_network_nodes(
             grounding_lookup, edges,
@@ -54,6 +71,79 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
         validate_network(network)
         network
     })
+
+#' Largest number of groundings one INDRA query takes, by query type
+#'
+#' CoGEx \code{indra_subnetwork_relations} takes fewer than 400.
+#' @keywords internal
+#' @noRd
+INDRA_MAX_NODES <- c(subnetwork = 400)
+
+#' @rdname backend_capabilities
+#' @export
+setMethod("backend_capabilities", "IndraBackend",
+    function(backend) {
+        list(query_types       = "subnetwork",
+             id_conversions    = INDRA_ID_CONVERSIONS,
+             entity_properties = names(INDRA_ENTITY_PROPERTIES),
+             interaction_types = INTERACTION_TYPES,
+             max_nodes         = INDRA_MAX_NODES)
+    })
+
+#' The question a subnetwork query asks, with the entity counts
+#'
+#' Printed by \code{get_network()}, e.g. "INDRA subnetwork: how are 42
+#' selected proteins connected to each other, with no other nodes added?".
+#' @param entities entity table
+#' @param groundings groundings of the rows to query, from
+#' \code{.get_groundings_to_query()}
+#' @param include_entities groundings added to the query
+#' @return a single string
+#' @keywords internal
+#' @noRd
+.describe_subnetwork_question <- function(entities, groundings,
+                                          include_entities) {
+    queried_types <- entities$entity_type[entities$id %in% groundings$id]
+    selected <- .describe_entity_count(queried_types, "selected")
+    if (length(include_entities) > 0) {
+        selected <- paste0(selected, " and ", length(include_entities),
+                           " added ",
+                           if (length(include_entities) == 1) "entity"
+                           else "entities")
+    }
+    paste0("INDRA subnetwork: how are ", selected, " connected to each ",
+           "other, with no other nodes added?")
+}
+
+#' Names of entity types in messages, singular and plural
+#' @keywords internal
+#' @noRd
+ENTITY_TYPE_NAMES <- list(
+    protein    = c("protein", "proteins"),
+    gene       = c("gene", "genes"),
+    transcript = c("transcript", "transcripts"),
+    ptm_site   = c("PTM site", "PTM sites"),
+    metabolite = c("metabolite", "metabolites"),
+    lipid      = c("lipid", "lipids"),
+    drug       = c("drug", "drugs"),
+    complex    = c("complex", "complexes"),
+    family     = c("family", "families"),
+    other      = c("entity", "entities")
+)
+
+#' Count entities by type in words, e.g. "42 selected proteins"
+#' @param entity_types entity type of each entity
+#' @param adjective word before the type, e.g. "selected"
+#' @return a single string. Several types are counted as "entities".
+#' @keywords internal
+#' @noRd
+.describe_entity_count <- function(entity_types, adjective) {
+    types <- unique(entity_types)
+    names <- if (length(types) == 1) ENTITY_TYPE_NAMES[[types]] else
+        ENTITY_TYPE_NAMES$other
+    noun <- if (length(entity_types) == 1) names[1] else names[2]
+    paste(format(length(entity_types), big.mark = ","), adjective, noun)
+}
 
 #' Groundings of the entities to query
 #'
@@ -89,7 +179,7 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
     unique_groundings <- unique(paste(groundings$namespace,
                                       groundings$entity_id, sep = ":"))
     num_proteins <- length(unique_groundings) + length(include_entities)
-    if (num_proteins >= 400) {
+    if (num_proteins >= INDRA_MAX_NODES[["subnetwork"]]) {
         stop("Invalid Input Error: INDRA query must contain less than 400 proteins.  Consider lowering your p-value cutoff")
     }
     if (nrow(groundings) == 0) {
@@ -436,18 +526,15 @@ INDRA_ENTITY_PROPERTIES <- list(
                                    entity_types = c("protein", "ptm_site"))
 )
 
-#' INDRA identifier conversion
-#'
-#' Groups rows by \code{id_type} and makes one batch of calls per group:
-#' \code{uniprot} through CoGEx's UniProt-to-HGNC mapping,
-#' \code{uniprot_mnemonic} through CoGEx's mnemonic-to-UniProt mapping
-#' first, \code{hgnc_symbol} through Gilda restricted to HGNC and the
-#' row's organism, and \code{chemical_name} through Gilda with no namespace
-#' restriction. Each \code{";"}-separated member of an identifier (a protein
-#' group) is grounded on its own, and the groundings are pooled onto the
-#' row.
-#' @keywords internal
-#' @noRd
+# INDRA identifier conversion. Groups rows by id_type and makes one batch of
+# calls per group: uniprot through CoGEx's UniProt-to-HGNC mapping,
+# uniprot_mnemonic through CoGEx's mnemonic-to-UniProt mapping first,
+# hgnc_symbol through Gilda restricted to HGNC and the row's organism, and
+# chemical_name through Gilda with no namespace restriction. Each
+# ";"-separated member of an identifier (a protein group) is grounded on its
+# own, and the groundings are pooled onto the row.
+#' @rdname convert_ids
+#' @export
 setMethod("convert_ids", "IndraBackend",
     function(backend, entities, ...) {
         .validate_entities(entities)
@@ -473,14 +560,12 @@ setMethod("convert_ids", "IndraBackend",
         entities
     })
 
-#' INDRA entity properties
-#'
-#' Supports the properties in \code{INDRA_ENTITY_PROPERTIES}. They are
-#' looked up by gene symbol, so only rows with a single HGNC grounding get
-#' values; rows with several groundings (a protein group, or an ambiguous
-#' name) are \code{NA}.
-#' @keywords internal
-#' @noRd
+# INDRA entity properties. Supports the properties in
+# INDRA_ENTITY_PROPERTIES. They are looked up by gene symbol, so only rows
+# with a single HGNC grounding get values; rows with several groundings (a
+# protein group, or an ambiguous name) are NA.
+#' @rdname get_entity_properties
+#' @export
 setMethod("get_entity_properties", "IndraBackend",
     function(backend, entities, properties = NULL, ...) {
         .validate_entities(entities)

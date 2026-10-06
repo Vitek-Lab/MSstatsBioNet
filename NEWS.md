@@ -2,6 +2,35 @@
 
 ## New features
 
+* A new API for building networks from MSstats results, which separates
+the steps that `annotateProteinInfoFromIndra()` and
+`getSubnetworkFromIndra()` combine, and works for proteins, PTM sites, and
+metabolites:
+    * `prepare_entities()` builds an entity table with one row per analyte,
+    its entity type (`"protein"`, `"ptm_site"`, `"metabolite"`, ...),
+    identifier system, organism, and statistics. It copies `log2FC`,
+    `log10FC`, or `logFC` to `logFC`, parses PTM sites, and stops when the
+    input has several comparisons in `Label` unless `label` names one.
+    * `indra_backend()` creates the INDRA backend, and
+    `backend_capabilities()` lists what a backend supports.
+    * `convert_ids()` grounds the entity table (CoGEx for UniProt IDs and
+    mnemonics, Gilda for gene symbols and chemical names), and
+    `get_entity_properties()` adds `is_transcription_factor`, `is_kinase`,
+    and `is_phosphatase`.
+    * `select_entities()` flags the rows that pass the cutoffs, and drops
+    none, so that nodes in the input are recognized even when they fail
+    the cutoffs.
+    * `get_network(backend, entities, query = subnetwork_query())` queries
+    the backend and returns `nodes` and `edges` that meet the contract. It
+    takes `interaction_types`, `min_evidence`, `min_confidence` (new: drops
+    edges below it, and edges with no score), `evidence_sources`, and
+    `include_entities`. It prints the question it asks as a message, e.g.
+    "INDRA subnetwork: how are 42 selected proteins connected to each
+    other, with no other nodes added?".
+    * `?network_queries` describes the questions a query can ask, with a
+    glossary. `subnetwork_query()` is the first; more are planned.
+    * The S4 classes `NetworkBackend`, `IndraBackend`, `NetworkQuery`, and
+    `SubnetworkQuery` are exported, so other packages can add backends.
 * New function `validate_network()` checks a `list(nodes, edges)` network
 against the edge and node contract (v1.0): required columns and types, the
 statement-type and entity-type vocabularies, value ranges, `NA` statistics
@@ -92,29 +121,18 @@ release and be removed in the one after.
 
 * `getSubnetworkFromIndra()` now runs through an internal INDRA backend
 object and the S4 generic `get_network()`, the first step toward supporting
-network databases other than INDRA. Its output is unchanged. The new
-functions are not exported yet.
+network databases other than INDRA.
 * The error for a non-character `sources_filter` in
 `getSubnetworkFromIndra()` now reads "evidence_sources must be a character
 vector", the name of the argument in the new API.
-* Added internal functions for the entity table that the new API takes as
-input: `prepare_entities()` (one row per analyte, with its entity type,
-identifier system, and organism; copies `log2FC`, `log10FC`, or `logFC` to
-`logFC`; stops when the input has several comparisons in `Label` and
-`label` doesn't name one), `parse_ptm_sites()`, `build_grounding_table()`, and
-`select_entities()` (flags rows that pass the cutoffs and drops none).
-Nothing calls them yet.
-* `annotateProteinInfoFromIndra()` now runs through two internal generics
-of the new API: `convert_ids()`, which grounds an entity table through the
-INDRA backend (CoGEx for UniProt IDs and mnemonics, Gilda for gene symbols
-and chemical names), and `get_entity_properties()`, which adds the
-`is_transcription_factor`, `is_kinase`, and `is_phosphatase` columns. Its
-output is unchanged. The INDRA backend now also holds the Gilda URL, and
+* `annotateProteinInfoFromIndra()` now runs through `convert_ids()` and
+`get_entity_properties()`. Its output is unchanged. The INDRA backend now also holds the Gilda URL, and
 the organism of the entity table is passed to Gilda in place of a
 hard-coded human taxon ID.
 * `getSubnetworkFromIndra()` builds an entity table from `input`, flags
 the rows to query with `select_entities()`, and passes all rows to
 `get_network()`, which matches the nodes INDRA returns against every row.
+Like `get_network()`, it now prints the question it asks as a message.
 
 # MSstatsBioNet 0.99.0
 
