@@ -94,6 +94,13 @@
   [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
   now reads “evidence_sources must be a character vector”, the name of
   the argument in the new API.
+- Added internal functions for the entity table that the new API takes
+  as input: `prepare_entities()` (one row per analyte, with its entity
+  type, identifier system, and organism; copies `log2FC`, `log10FC`, or
+  `logFC` to `logFC`; stops when the input has several comparisons in
+  `Label` and `label` doesn’t name one), `parse_ptm_sites()`,
+  `build_grounding_table()`, and `select_entities()` (flags rows that
+  pass the cutoffs and drops none). Nothing calls them yet.
 
 ## MSstatsBioNet 0.99.0
 

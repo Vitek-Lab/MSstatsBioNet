@@ -74,6 +74,7 @@
 <ul><li>
 <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> now runs through an internal INDRA backend object and the S4 generic <code>get_network()</code>, the first step toward supporting network databases other than INDRA. Its output is unchanged. The new functions are not exported yet.</li>
 <li>The error for a non-character <code>sources_filter</code> in <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> now reads “evidence_sources must be a character vector”, the name of the argument in the new API.</li>
+<li>Added internal functions for the entity table that the new API takes as input: <code>prepare_entities()</code> (one row per analyte, with its entity type, identifier system, and organism; copies <code>log2FC</code>, <code>log10FC</code>, or <code>logFC</code> to <code>logFC</code>; stops when the input has several comparisons in <code>Label</code> and <code>label</code> doesn’t name one), <code>parse_ptm_sites()</code>, <code>build_grounding_table()</code>, and <code>select_entities()</code> (flags rows that pass the cutoffs and drops none). Nothing calls them yet.</li>
 </ul></div>
 </div>
     <div class="section level2">
