@@ -37,6 +37,39 @@ stops with an error instead of returning a network that breaks the contract.
 `site`). Nodes built by hand for them must use these names.
 * `cytoscapeNetwork()` now errors when `displayLabelType` is not `"id"` or
 `"entity_name"`. Other values used to fall back to `"id"` silently.
+* The nodes returned by `getSubnetworkFromIndra()` say whether each node
+was measured and why it is in the network. New columns: `entity_type`
+(`"protein"`, `"ptm_site"`, `"metabolite"`, `"family"`, ...), `measured`
+(`TRUE` for analytes in `input`), `included_in_query`, `node_role`
+(`"passed_cutoffs"`, or `"user_added"` for nodes there only through
+`force_include_other`), and `has_measured_sites` (`TRUE` for proteins with
+PTM site rows). `nodes` is now always a data.frame, also when `input` is a
+data.table.
+* Nodes added through `force_include_other` that are not in `input` have
+`NA` for `logFC` and `adj.pvalue`, and `measured = FALSE`. They used to get
+`logFC = 0` and `adj.pvalue = 1`, which looked like a measured protein with
+no change. They now also carry INDRA's namespace and identifier, and an
+`entity_type` from the namespace (FamPlex families are `"family"`).
+* INDRA statements between identifiers that are equal but in different
+namespaces (`HGNC:1234` and `CHEBI:1234`) are no longer merged into one
+edge. The order of the edge rows can differ from earlier versions.
+* When an INDRA node matches rows of `input` that belong to different
+nodes, a message names it. It keeps INDRA's name as its `id`, as before,
+and now has `NA` statistics.
+* `getSubnetworkFromIndra()` stops when `input` has more than one
+comparison in its `Label` column, or repeats a `Protein` value. Filter
+`input` to one comparison first.
+* PTM sites are parsed from the end of each `;`-separated member of
+`Protein`: `CLH1_HUMAN_S148` gives site `S148` (was `HUMAN_S148`),
+`P1_S148;P2_T5` gives sites `S148;T5` (was `S148;P2_T5`), and an
+identifier whose last part is not a site (`P1_S148_extra`) has none. A PTM
+row without a `GlobalProtein` column is drawn on its parent protein's node
+(`P1`), not on a node of its own (`P1_S148`).
+* The message about rows with no grounding now counts only the rows that
+pass the cutoffs, since only those are sent to INDRA.
+* `validate_network()` requires the node columns `entity_type`,
+`entity_name`, `namespace`, `entity_id`, `measured`, `included_in_query`,
+and `node_role`.
 
 ## Deprecated
 
@@ -79,6 +112,9 @@ and chemical names), and `get_entity_properties()`, which adds the
 output is unchanged. The INDRA backend now also holds the Gilda URL, and
 the organism of the entity table is passed to Gilda in place of a
 hard-coded human taxon ID.
+* `getSubnetworkFromIndra()` builds an entity table from `input`, flags
+the rows to query with `select_entities()`, and passes all rows to
+`get_network()`, which matches the nodes INDRA returns against every row.
 
 # MSstatsBioNet 0.99.0
 

@@ -10,7 +10,7 @@ GILDA_API_URL <- "https://grounding.indra.bio"
 
 #' Create an INDRA backend
 #'
-#' Internal until the entity model is added (Phase 3 of the API refactor).
+#' Internal until the end of Phase 3 of the API refactor.
 #' @param cogex_url base URL of INDRA CoGEx
 #' @param grounding_url base URL of Gilda
 #' @return an \code{IndraBackend} object
@@ -24,60 +24,323 @@ indra_backend <- function(cogex_url = INDRA_API_URL,
 
 #' INDRA subnetwork query
 #'
-#' Sends the selected rows' groundings to CoGEx
+#' Sends the groundings of the \code{included_in_query} rows to CoGEx
 #' \code{indra_subnetwork_relations}, filters the statements, and normalizes
-#' them to the edge contract. Nodes are the selected rows that an edge
-#' reaches, plus any \code{include_entities} endpoints.
+#' them to the edge contract. Edge endpoints are matched back to the rows of
+#' \code{entities} by grounding, so nodes carry their statistics. Endpoints
+#' that match no row (from \code{include_entities}) become latent nodes.
 #' @keywords internal
 #' @noRd
 setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
     function(backend, entities, query, interaction_types = NULL,
              min_evidence = 1, evidence_sources = NULL,
              include_entities = NULL, ...) {
-        .validateIndraSubnetworkInput(entities, evidence_sources,
+        groundings <- .get_query_groundings(entities)
+        .validateIndraSubnetworkInput(groundings, evidence_sources,
                                       include_entities)
-        res <- .callIndraCogexApi(entities$EntityNamespace, entities$EntityId,
+        res <- .callIndraCogexApi(groundings$namespace, groundings$entity_id,
                                   include_entities, backend@cogex_url)
         res <- .filterIndraResponse(res, interaction_types, min_evidence,
                                     evidence_sources)
-        edges <- .constructEdgesDataFrame(res, entities)
+        endpoint_index <- .build_endpoint_index(entities)
+        edges <- .constructEdgesDataFrame(res, endpoint_index)
         edges <- .filterEdgesDataFrame(edges)
-        network <- list(nodes = .constructNodesDataFrame(entities, edges),
-                        edges = edges)
+        nodes <- .build_network_nodes(
+            endpoint_index, edges,
+            .collect_indra_endpoints(res, endpoint_index))
+        network <- list(nodes = nodes, edges = edges)
         validate_network(network)
         network
     })
 
-#' Validate the input of the INDRA subnetwork query
-#' @param input annotated groupComparison table of the selected rows
-#' @param evidence_sources evidence sources filter
-#' @param force_include_other character vector of identifiers to include in
-#' the network
+#' Groundings of the entities to query
+#'
+#' Rows with \code{included_in_query} but no grounding can't be sent to a
+#' backend, so they are left out with a message.
+#' @param entities entity table
+#' @return the \code{build_grounding_table()} of the \code{included_in_query}
+#' rows
 #' @keywords internal
 #' @noRd
-.validateIndraSubnetworkInput <- function(input, evidence_sources, force_include_other) {
-    required_cols <- c("Protein", "log2FC", "adj.pvalue",
-                       "EntityNamespace", "EntityId", "EntityName")
-    missing_cols <- setdiff(required_cols, colnames(input))
-    if (length(missing_cols) > 0) {
-        stop("Invalid Input Error: input is missing required column(s): ",
-             paste(missing_cols, collapse = ", "), ".")
+.get_query_groundings <- function(entities) {
+    .validate_entities(entities)
+    selected <- entities[entities$included_in_query, , drop = FALSE]
+    ungrounded <- is.na(selected$namespace) | is.na(selected$entity_id)
+    if (any(ungrounded)) {
+        message("Dropping ", sum(ungrounded),
+                " row(s) with no entity grounding (NA entity_id).")
     }
-    ids_split <- unlist(strsplit(as.character(input$EntityId),        ";"), use.names = FALSE)
-    nss_split <- unlist(strsplit(as.character(input$EntityNamespace), ";"), use.names = FALSE)
-    unique_pairs <- unique(paste(nss_split, ids_split, sep = ":"))
-    num_proteins = length(unique_pairs) +
-        ifelse(!is.null(force_include_other), length(force_include_other), 0)
+    build_grounding_table(selected[!ungrounded, , drop = FALSE])
+}
+
+#' Validate the input of the INDRA subnetwork query
+#' @param groundings grounding table of the rows to query, from
+#' \code{.get_query_groundings()}
+#' @param evidence_sources evidence sources filter
+#' @param include_entities character vector of \code{"namespace:identifier"}
+#' groundings to add to the query
+#' @keywords internal
+#' @noRd
+.validateIndraSubnetworkInput <- function(groundings, evidence_sources,
+                                          include_entities) {
+    unique_pairs <- unique(paste(groundings$namespace, groundings$entity_id,
+                                 sep = ":"))
+    num_proteins <- length(unique_pairs) + length(include_entities)
     if (num_proteins >= 400) {
         stop("Invalid Input Error: INDRA query must contain less than 400 proteins.  Consider lowering your p-value cutoff")
     }
-    if (nrow(input) == 0) {
+    if (nrow(groundings) == 0) {
         stop("Invalid Input Error: Input must contain at least one protein after filtering.")
     }
     if (!is.null(evidence_sources)) {
         if (!is.character(evidence_sources)) {
             stop("evidence_sources must be a character vector")
         }
+    }
+}
+
+#' Entity types of the namespaces INDRA returns
+#'
+#' Used for latent nodes, which have no entity row to take a type from.
+#' Namespaces not listed are \code{"other"}.
+#' @keywords internal
+#' @noRd
+INDRA_NAMESPACE_ENTITY_TYPES <- c(
+    HGNC      = "protein",
+    UP        = "protein",
+    UPPRO     = "protein",
+    FPLX      = "family",
+    CHEBI     = "metabolite",
+    HMDB      = "metabolite",
+    PUBCHEM   = "metabolite",
+    LIPIDMAPS = "lipid",
+    CHEMBL    = "drug",
+    DRUGBANK  = "drug"
+)
+
+#' The entity type of a namespace
+#' @param namespaces character vector of namespaces
+#' @return character vector of entity types, \code{"other"} for unknown or
+#' \code{NA} namespaces
+#' @keywords internal
+#' @noRd
+.get_namespace_entity_types <- function(namespaces) {
+    types <- unname(INDRA_NAMESPACE_ENTITY_TYPES[as.character(namespaces)])
+    types[is.na(types)] <- "other"
+    types
+}
+
+#' The node ID of each entity row
+#'
+#' A PTM site is drawn on its parent protein's node, so \code{ptm_site} rows
+#' get their \code{parent_id}. Other rows keep their \code{id}.
+#' @param entities entity table
+#' @return character vector, one per row
+#' @keywords internal
+#' @noRd
+.get_node_ids <- function(entities) {
+    node_ids <- entities$id
+    if ("parent_id" %in% colnames(entities)) {
+        use_parent <- entities$entity_type == "ptm_site" &
+            !is.na(entities$parent_id)
+        node_ids[use_parent] <- entities$parent_id[use_parent]
+    }
+    node_ids
+}
+
+#' Index the entity rows by grounding
+#' @param entities entity table
+#' @return list with \code{entities}, their \code{node_ids}, and \code{rows}:
+#' for each \code{"namespace:identifier"} grounding, the entity rows that
+#' have it
+#' @keywords internal
+#' @noRd
+.build_endpoint_index <- function(entities) {
+    long <- build_grounding_table(entities)
+    keys <- paste(long$namespace, long$entity_id, sep = ":")
+    list(entities = entities,
+         node_ids = .get_node_ids(entities),
+         rows = split(match(long$id, entities$id), keys))
+}
+
+#' Find the entity rows of a backend node
+#'
+#' Prefers rows in the query. Measured rows outside it are matched only
+#' when no queried row has the grounding, so that an unselected row with
+#' the same grounding (an isoform, say) doesn't make the match ambiguous.
+#' @param index from \code{.build_endpoint_index()}
+#' @param namespace,entity_id the node's grounding
+#' @return integer vector of entity rows, empty when none match
+#' @keywords internal
+#' @noRd
+.match_endpoint_rows <- function(index, namespace, entity_id) {
+    rows <- index$rows[[paste(namespace, entity_id, sep = ":")]]
+    if (is.null(rows)) {
+        return(integer(0))
+    }
+    queried <- rows[index$entities$included_in_query[rows]]
+    if (length(queried) > 0) queried else rows
+}
+
+#' The node ID of a backend node
+#' @param index from \code{.build_endpoint_index()}
+#' @param namespace,entity_id the node's grounding
+#' @param name the backend's name for the node
+#' @return the node ID of the matching entity rows, or \code{name} when
+#' none match or they belong to several nodes
+#' @keywords internal
+#' @noRd
+.match_endpoint_node_id <- function(index, namespace, entity_id, name) {
+    node_ids <- unique(index$node_ids[
+        .match_endpoint_rows(index, namespace, entity_id)])
+    if (length(node_ids) == 1) node_ids else name
+}
+
+#' Collect the endpoints of INDRA statements
+#' @param res filtered INDRA response
+#' @param index from \code{.build_endpoint_index()}
+#' @return data.frame with one row per distinct node \code{id}:
+#' \code{namespace}, \code{entity_id}, \code{entity_name} from INDRA
+#' @keywords internal
+#' @noRd
+.collect_indra_endpoints <- function(res, index) {
+    endpoints <- lapply(res, function(statement) {
+        data.frame(
+            namespace   = c(statement$source_ns, statement$target_ns),
+            entity_id   = as.character(c(statement$source_id,
+                                         statement$target_id)),
+            entity_name = c(statement$source_name, statement$target_name),
+            stringsAsFactors = FALSE)
+    })
+    endpoints <- do.call(rbind, c(list(.build_empty_groundings(0)), endpoints))
+    endpoints$id <- vapply(seq_len(nrow(endpoints)), function(i) {
+        .match_endpoint_node_id(index, endpoints$namespace[i],
+                                endpoints$entity_id[i],
+                                endpoints$entity_name[i])
+    }, character(1))
+    endpoints[!duplicated(endpoints$id), , drop = FALSE]
+}
+
+#' Column order of the nodes that get_network() returns
+#' @keywords internal
+#' @noRd
+NODE_COLUMN_ORDER <- c("id", "entity_type", "entity_name", "namespace",
+                       "entity_id", "measured", "included_in_query",
+                       "node_role", "site", "has_measured_sites", "logFC",
+                       "adj.pvalue")
+
+#' Build the nodes of a subnetwork from the entity table
+#'
+#' Nodes reached by an edge get one row per entity row: the rows in the
+#' query, or, for a node reached only through \code{include_entities}, all
+#' of its rows. These are \code{measured}, with their statistics. The other
+#' endpoints are built by \code{.build_other_endpoint_nodes()}.
+#' @param index from \code{.build_endpoint_index()}
+#' @param edges edges data.frame
+#' @param endpoints from \code{.collect_indra_endpoints()}
+#' @return nodes data.frame with the columns in \code{NODE_COLUMN_ORDER}
+#' @keywords internal
+#' @noRd
+.build_network_nodes <- function(index, edges, endpoints) {
+    entities <- index$entities
+    node_ids <- index$node_ids
+    reached <- unique(c(edges$source, edges$target))
+    queried_node_ids <- unique(node_ids[entities$included_in_query])
+    keep <- node_ids %in% reached &
+        (entities$included_in_query | !node_ids %in% queried_node_ids)
+    rows <- entities[keep, , drop = FALSE]
+    user_added <- .get_entity_column(rows, "user_added", FALSE) %in% TRUE
+    measured_nodes <- data.frame(
+        id                = node_ids[keep],
+        entity_type       = rows$entity_type,
+        entity_name       = rows$entity_name,
+        namespace         = rows$namespace,
+        entity_id         = rows$entity_id,
+        measured          = rep(TRUE, nrow(rows)),
+        included_in_query = rep(TRUE, nrow(rows)),
+        node_role         = ifelse(rows$included_in_query & !user_added,
+                                   "passed_cutoffs", "user_added"),
+        site              = .get_entity_column(rows, "site", NA_character_),
+        logFC             = .get_entity_column(rows, "logFC", NA_real_),
+        adj.pvalue        = .get_entity_column(rows, "adj.pvalue", NA_real_),
+        stringsAsFactors  = FALSE
+    )
+    other <- endpoints[endpoints$id %in% setdiff(reached, node_ids), ,
+                       drop = FALSE]
+    nodes <- rbind(measured_nodes, .build_other_endpoint_nodes(index, other))
+    nodes$has_measured_sites <- nodes$id %in%
+        node_ids[entities$entity_type == "ptm_site"]
+    nodes$entity_name <- ifelse(is.na(nodes$entity_name), nodes$id,
+                                nodes$entity_name)
+    nodes <- nodes[, NODE_COLUMN_ORDER]
+    rownames(nodes) <- NULL
+    nodes
+}
+
+#' Build nodes for endpoints that are not one entity's node
+#'
+#' An endpoint that matches no entity row is latent: \code{measured =
+#' FALSE}, \code{NA} statistics, and an \code{entity_type} from its
+#' namespace. In a subnetwork query it can only come from
+#' \code{include_entities}, so it is \code{"user_added"}. An endpoint that
+#' matches rows of several nodes is measured, but it isn't known which
+#' row's statistics apply, so they are \code{NA}, and a message names it.
+#' @param index from \code{.build_endpoint_index()}
+#' @param endpoints rows of \code{.collect_indra_endpoints()}
+#' @return nodes data.frame without \code{has_measured_sites}
+#' @keywords internal
+#' @noRd
+.build_other_endpoint_nodes <- function(index, endpoints) {
+    entities <- index$entities
+    matched <- lapply(seq_len(nrow(endpoints)), function(i) {
+        .match_endpoint_rows(index, endpoints$namespace[i],
+                             endpoints$entity_id[i])
+    })
+    ambiguous <- lengths(matched) > 0
+    if (any(ambiguous)) {
+        message(sum(ambiguous), " node(s) from the backend match entities ",
+                "of several nodes and are shown under the backend's name, ",
+                "without statistics: ",
+                .list_values_for_message(endpoints$id[ambiguous]), ".")
+    }
+    entity_types <- .get_namespace_entity_types(endpoints$namespace)
+    node_roles <- rep("user_added", nrow(endpoints))
+    user_added <- .get_entity_column(entities, "user_added", FALSE) %in% TRUE
+    for (i in which(ambiguous)) {
+        types <- unique(entities$entity_type[matched[[i]]])
+        if (length(types) == 1) {
+            entity_types[i] <- types
+        }
+        rows <- matched[[i]]
+        if (any(entities$included_in_query[rows] & !user_added[rows])) {
+            node_roles[i] <- "passed_cutoffs"
+        }
+    }
+    n <- nrow(endpoints)
+    data.frame(
+        id                = endpoints$id,
+        entity_type       = entity_types,
+        entity_name       = endpoints$entity_name,
+        namespace         = endpoints$namespace,
+        entity_id         = endpoints$entity_id,
+        measured          = ambiguous,
+        included_in_query = rep(TRUE, n),
+        node_role         = node_roles,
+        site              = rep(NA_character_, n),
+        logFC             = rep(NA_real_, n),
+        adj.pvalue        = rep(NA_real_, n),
+        stringsAsFactors  = FALSE
+    )
+}
+
+#' An optional entity column, or a default when the table has none
+#' @keywords internal
+#' @noRd
+.get_entity_column <- function(entities, column, default) {
+    if (column %in% colnames(entities)) {
+        entities[[column]]
+    } else {
+        rep(default, nrow(entities))
     }
 }
 

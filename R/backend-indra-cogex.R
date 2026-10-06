@@ -111,52 +111,21 @@
     return(res)
 }
 
-#' Row-level membership check for a (namespace, id) endpoint
-#'
-#' Splits each row's \code{EntityNamespace}/\code{EntityId} on \code{";"}
-#' and returns \code{TRUE} for rows whose grounding list contains the
-#' (\code{edge_ns}, \code{edge_id}) pair. Used to map an INDRA edge
-#' endpoint back to the original \code{Protein} value.
-#' @keywords internal
-#' @noRd
-.rowMatchesEndpoint <- function(input, edge_ns, edge_id) {
-    row_ns <- strsplit(as.character(input$EntityNamespace), ";")
-    row_id <- strsplit(as.character(input$EntityId),        ";")
-    vapply(seq_along(row_ns), function(i) {
-        rns <- row_ns[[i]]; rid <- row_id[[i]]
-        if (length(rns) != length(rid) || length(rns) == 0) return(FALSE)
-        any(rns == edge_ns & rid == edge_id)
-    }, logical(1))
-}
-
 #' Add additional metadata to an edge
 #' @param edge object representation of an INDRA statement
-#' @param input filtered groupComparison result
+#' @param index entity rows by grounding, from \code{.build_endpoint_index()}
 #' @return edge with additional metadata
 #' @keywords internal
 #' @noRd
-.addAdditionalMetadataToIndraEdge <- function(edge, input) {
+.addAdditionalMetadataToIndraEdge <- function(edge, index) {
     edge$evidence_url <- .indraStatementUrl(edge$statement_id)
-
-    # Map the grounded INDRA endpoint back to the original Protein value.
-    # Membership-test against each row's semicolon-split (namespace, id)
-    # pairs, using INDRA's source_ns/target_ns for namespace-aware disambiguation.
-    matched_rows_source <- input[.rowMatchesEndpoint(input, edge$source_ns, edge$source_id), ]
-    node_ids_source <- unique(matched_rows_source$Protein)
-    if (length(node_ids_source) != 1) {
-        edge$source_node_id <- edge$source_name
-    } else {
-        edge$source_node_id <- node_ids_source
-    }
-
-    matched_rows_target <- input[.rowMatchesEndpoint(input, edge$target_ns, edge$target_id), ]
-    node_ids_target <- unique(matched_rows_target$Protein)
-    if (length(node_ids_target) != 1) {
-        edge$target_node_id <- edge$target_name
-    } else {
-        edge$target_node_id <- node_ids_target
-    }
-
+    # Map each grounded INDRA endpoint back to the node of its entity row,
+    # matching namespace and identifier, so a multi-grounded row is found
+    # by any of its groundings.
+    edge$source_node_id <- .match_endpoint_node_id(
+        index, edge$source_ns, edge$source_id, edge$source_name)
+    edge$target_node_id <- .match_endpoint_node_id(
+        index, edge$target_ns, edge$target_id, edge$target_name)
     return(edge)
 }
 
@@ -173,17 +142,20 @@
 
 #' Collapse duplicate INDRA statements into a mapping of edge to metadata
 #' @param res INDRA response
-#' @param input filtered groupComparison result
+#' @param index entity rows by grounding, from \code{.build_endpoint_index()}
 #' @importFrom jsonlite fromJSON
 #' @importFrom r2r hashmap keys
 #' @return processed edge to metadata mapping
 #' @keywords internal
 #' @noRd
-.collapseDuplicateEdgesIntoEdgeToMetadataMapping <- function(res, input) {
+.collapseDuplicateEdgesIntoEdgeToMetadataMapping <- function(res, index) {
     edgeToMetadataMapping <- hashmap()
 
     for (edge in res) {
-        key <- paste(edge$source_id, edge$target_id, edge$data$stmt_type, sep = "_")
+        # Identifiers are only unique within a namespace (HGNC:1234 is not
+        # CHEBI:1234)
+        key <- paste(edge$source_ns, edge$source_id, edge$target_ns,
+                     edge$target_id, edge$data$stmt_type, sep = "_")
         json_object <- fromJSON(edge$data$stmt_json)
         # matches_hash is a JSON string, so it keeps full precision. The
         # numeric data$stmt_hash does not: hashes exceed 2^53.
@@ -196,7 +168,7 @@
         }
         if (!key %in% keys(edgeToMetadataMapping) ||
             edge$data$evidence_count > edgeToMetadataMapping[[key]]$data$evidence_count) {
-            edge <- .addAdditionalMetadataToIndraEdge(edge, input)
+            edge <- .addAdditionalMetadataToIndraEdge(edge, index)
             edge$data$paper_count <- 1 # TODO: fix paper count
             edgeToMetadataMapping[[key]] <- edge
         }
@@ -207,14 +179,14 @@
 
 #' Construct edges data.frame from INDRA response
 #' @param res INDRA response
-#' @param input filtered groupComparison result
+#' @param index entity rows by grounding, from \code{.build_endpoint_index()}
 #' @importFrom r2r query keys
 #' @importFrom jsonlite fromJSON
 #' @return edge data.frame
 #' @keywords internal
 #' @noRd
-.constructEdgesDataFrame <- function(res, input) {
-    res <- .collapseDuplicateEdgesIntoEdgeToMetadataMapping(res, input)
+.constructEdgesDataFrame <- function(res, index) {
+    res <- .collapseDuplicateEdgesIntoEdgeToMetadataMapping(res, index)
     statements <- lapply(keys(res), function(x) query(res, x))
     interaction <- vapply(statements, function(x) x$data$stmt_type, "")
     edges <- data.frame(

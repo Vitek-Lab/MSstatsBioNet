@@ -129,8 +129,9 @@ test_that("getSubnetworkFromIndra returns edges and nodes that meet the contract
     )
     expect_equal(
         colnames(subnetwork$nodes),
-        c("id", "entity_name", "namespace", "entity_id", "site", "logFC",
-          "adj.pvalue")
+        c("id", "entity_type", "entity_name", "namespace", "entity_id",
+          "measured", "included_in_query", "node_role", "site",
+          "has_measured_sites", "logFC", "adj.pvalue")
     )
 })
 
@@ -193,11 +194,182 @@ test_that("getSubnetworkFromIndra subtracts incorrect curations when filter_by_c
 
 # ----- Golden output (pinned after Phase 1 of the API refactor) -----
 
-# Phase 2 moves the INDRA code behind a backend object and must reproduce
-# this output exactly. Regenerate the fixture with
-# _fixtures/make_golden_subnetwork.R only when a change is intended.
+# Later phases must reproduce this output exactly. Regenerate the fixture
+# with _fixtures/make_golden_subnetwork.R only when a change is intended
+# (last: Phase 3c, node status columns).
 test_that("getSubnetworkFromIndra reproduces the pinned golden output", {
     suppressWarnings(subnetwork <- .run_mocked_subnetwork(statement_types = NULL))
     golden <- readRDS(test_path("_fixtures", "golden_subnetwork.rds"))
     expect_identical(subnetwork, golden)
+})
+
+# ----- Node status (Phase 3c of the API refactor) -----
+
+# A minimal INDRA statement, as .callIndraCogexApi() returns it
+.make_statement <- function(source, target, stmt_type = "Activation",
+                            hash = "1", evidence_count = 1L) {
+    list(
+        data = list(belief = 0.9, evidence_count = evidence_count,
+                    source_counts = '{"reach": 1}',
+                    stmt_json = paste0('{"matches_hash": "', hash, '"}'),
+                    stmt_type = stmt_type),
+        source_ns = source[1], source_id = source[2], source_name = source[3],
+        target_ns = target[1], target_id = target[2], target_name = target[3]
+    )
+}
+
+# Annotated input: Protein, statistics, and groundings
+.make_annotated_input <- function(Protein, EntityNamespace, EntityId,
+                                  log2FC = rep(1, length(Protein)),
+                                  adj.pvalue = rep(0.01, length(Protein)),
+                                  ...) {
+    data.frame(Protein = Protein, log2FC = log2FC, adj.pvalue = adj.pvalue,
+               EntityNamespace = EntityNamespace, EntityId = EntityId,
+               EntityName = paste0("name_", Protein), ...,
+               stringsAsFactors = FALSE)
+}
+
+.run_with_statements <- function(input, statements, ...) {
+    local_mocked_bindings(
+        .callIndraCogexApi = function(ns, ids, fio, cogex_url) statements,
+        .env = parent.frame()
+    )
+    suppressWarnings(getSubnetworkFromIndra(input, ...))
+}
+
+test_that("nodes in the input are measured, with their statistics", {
+    suppressWarnings(subnetwork <- .run_mocked_subnetwork())
+    nodes <- subnetwork$nodes
+    input <- data.table::fread(
+        system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
+    )
+    expect_true(all(nodes$measured))
+    expect_true(all(nodes$included_in_query))
+    expect_true(all(nodes$node_role == "passed_cutoffs"))
+    expect_true(all(nodes$entity_type == "protein"))
+    expect_false(any(nodes$has_measured_sites))
+    expect_equal(nodes$logFC, input$log2FC[match(nodes$id, input$Protein)])
+    expect_equal(nodes$adj.pvalue,
+                 input$adj.pvalue[match(nodes$id, input$Protein)])
+})
+
+test_that("force_include_other outside the input gives latent nodes with NA statistics", {
+    input <- .make_annotated_input(c("A", "B"), "HGNC", c("1", "2"))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"), hash = "1"),
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "99", "GENEZ"), hash = "2"),
+        .make_statement(c("FPLX", "AKT", "AKT"), c("HGNC", "2", "GENEB"), hash = "3")
+    )
+    subnetwork <- .run_with_statements(input, statements,
+                                       force_include_other = c("HGNC:99", "FPLX:AKT"))
+    nodes <- subnetwork$nodes
+    expect_setequal(nodes$id, c("A", "B", "GENEZ", "AKT"))
+    latent <- nodes[nodes$id %in% c("GENEZ", "AKT"), ]
+    expect_false(any(latent$measured))
+    expect_true(all(is.na(latent$logFC)))
+    expect_true(all(is.na(latent$adj.pvalue)))
+    expect_true(all(latent$included_in_query))
+    expect_true(all(latent$node_role == "user_added"))
+    expect_equal(latent$entity_type[latent$id == "AKT"], "family")
+    expect_equal(latent$entity_type[latent$id == "GENEZ"], "protein")
+    expect_equal(latent$namespace[latent$id == "GENEZ"], "HGNC")
+    expect_equal(latent$entity_id[latent$id == "GENEZ"], "99")
+    expect_equal(latent$entity_name[latent$id == "GENEZ"], "GENEZ")
+})
+
+test_that("force_include_other in the input keeps the row's statistics, as user_added", {
+    input <- .make_annotated_input(c("A", "B"), "HGNC", c("1", "2"),
+                                   log2FC = c(2, 0.01),
+                                   adj.pvalue = c(0.001, 0.9))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB")))
+    subnetwork <- .run_with_statements(input, statements, pvalueCutoff = 0.05,
+                                       force_include_other = "HGNC:2")
+    nodes <- subnetwork$nodes
+    b <- nodes[nodes$id == "B", ]
+    expect_true(b$measured)
+    expect_equal(b$logFC, 0.01)
+    expect_equal(b$adj.pvalue, 0.9)
+    expect_equal(b$node_role, "user_added")
+    expect_equal(nodes$node_role[nodes$id == "A"], "passed_cutoffs")
+})
+
+test_that("a node is matched to the rows in the query before other rows", {
+    # A2 grounds like A but fails the cutoff, so it doesn't make A ambiguous
+    input <- .make_annotated_input(c("A", "A2", "B"), "HGNC", c("1", "1", "2"),
+                                   adj.pvalue = c(0.01, 0.9, 0.01))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB")))
+    subnetwork <- .run_with_statements(input, statements, pvalueCutoff = 0.05)
+    expect_equal(subnetwork$edges$source, "A")
+    expect_setequal(subnetwork$nodes$id, c("A", "B"))
+})
+
+test_that("a node matching rows of several nodes keeps INDRA's name and NA statistics", {
+    input <- .make_annotated_input(c("A1", "A2", "B"), "HGNC", c("1", "1", "2"))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB")))
+    expect_message(
+        subnetwork <- .run_with_statements(input, statements),
+        "1 node\\(s\\) from the backend match entities of several nodes.*GENEA")
+    genea <- subnetwork$nodes[subnetwork$nodes$id == "GENEA", ]
+    expect_true(genea$measured)
+    expect_true(is.na(genea$logFC))
+    expect_equal(genea$node_role, "passed_cutoffs")
+    expect_silent(validate_network(subnetwork))
+})
+
+test_that("statements between identifiers shared by two namespaces stay separate edges", {
+    # HGNC:2 and CHEBI:2 are different entities with the same identifier
+    input <- .make_annotated_input(c("A", "B", "glucose"),
+                                   c("HGNC", "HGNC", "CHEBI"), c("1", "2", "2"))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"), hash = "1"),
+        .make_statement(c("HGNC", "1", "GENEA"), c("CHEBI", "2", "glucose"), hash = "2")
+    )
+    subnetwork <- .run_with_statements(input, statements)
+    expect_equal(nrow(subnetwork$edges), 2)
+    expect_setequal(subnetwork$edges$target, c("B", "glucose"))
+    expect_equal(subnetwork$nodes$entity_type[subnetwork$nodes$id == "glucose"],
+                 "metabolite")
+})
+
+test_that("PTM site rows become rows of the protein's node, with has_measured_sites", {
+    input <- .make_annotated_input(c("P1_S10", "P1_S20", "P2"), "HGNC",
+                                   c("1", "1", "2"), log2FC = c(1, 2, 3),
+                                   GlobalProtein = c("P1", "P1", "P2"))
+    statements <- list(
+        .make_statement(c("HGNC", "2", "GENEB"), c("HGNC", "1", "GENEA")))
+    subnetwork <- .run_with_statements(input, statements)
+    nodes <- subnetwork$nodes
+    p1 <- nodes[nodes$id == "P1", ]
+    expect_equal(p1$site, c("S10", "S20"))
+    expect_equal(p1$logFC, c(1, 2))
+    expect_true(all(p1$entity_type == "ptm_site"))
+    expect_true(all(p1$has_measured_sites))
+    expect_true(all(p1$measured))
+    expect_false(nodes$has_measured_sites[nodes$id == "P2"])
+    expect_equal(subnetwork$edges$target, "P1")
+})
+
+test_that("rows in the query with no grounding are dropped with a message", {
+    input <- .make_annotated_input(c("A", "B", "C"), c("HGNC", "HGNC", NA),
+                                   c("1", "2", NA))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB")))
+    expect_message(.run_with_statements(input, statements),
+                   "Dropping 1 row\\(s\\) with no entity grounding")
+})
+
+test_that("getSubnetworkFromIndra stops on input with several comparisons", {
+    input <- .make_annotated_input(c("A", "B"), "HGNC", c("1", "2"),
+                                   Label = c("T vs C", "U vs C"))
+    expect_error(getSubnetworkFromIndra(input),
+                 "input has 2 comparisons in its Label column: T vs C, U vs C")
+})
+
+test_that("getSubnetworkFromIndra checks force_include_other's type", {
+    input <- .make_annotated_input(c("A", "B"), "HGNC", c("1", "2"))
+    expect_error(getSubnetworkFromIndra(input, force_include_other = 1),
+                 "force_include_other must be a character vector")
 })

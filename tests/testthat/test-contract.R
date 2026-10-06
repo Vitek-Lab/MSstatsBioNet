@@ -2,7 +2,13 @@
     list(
         nodes = data.frame(
             id = c("A", "B", "C"),
+            entity_type = "protein",
             entity_name = c("CHEK1", "CDC25A", "TP53"),
+            namespace = "HGNC",
+            entity_id = c("1925", "1725", "11998"),
+            measured = TRUE,
+            included_in_query = TRUE,
+            node_role = "passed_cutoffs",
             logFC  = c(1.2, -0.5, NA),
             adj.pvalue = c(0.01, 0.2, NA),
             stringsAsFactors = FALSE
@@ -56,6 +62,19 @@ test_that("validate_network reports a missing nodes$id column", {
     network <- .valid_network()
     network$nodes$id <- NULL
     expect_error(validate_network(network), "nodes is missing required column")
+})
+
+test_that("validate_network requires the node status columns", {
+    network <- .valid_network()
+    network$nodes$measured <- NULL
+    network$nodes$node_role <- NULL
+    expect_error(validate_network(network),
+                 "nodes is missing required column\\(s\\): measured, node_role")
+
+    network <- .valid_network()
+    network$nodes$included_in_query <- c("yes", "yes", "no")
+    expect_error(validate_network(network),
+                 "nodes\\$included_in_query must be logical")
 })
 
 test_that("validate_network checks column types", {
@@ -194,7 +213,7 @@ test_that("validate_network accepts one node row per PTM site of a protein", {
     expect_silent(validate_network(network))
 })
 
-test_that("validate_network checks node vocabularies when the columns exist", {
+test_that("validate_network checks node vocabularies", {
     network <- .valid_network()
     network$nodes$entity_type <- c("protein", "protein", "enzyme")
     expect_error(validate_network(network),

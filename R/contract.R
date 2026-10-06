@@ -68,25 +68,23 @@ REQUIRED_EDGE_COLUMNS <- c(
 )
 
 #' Required node columns and their types
-#'
-#' entity_type, measured, included_in_query and node_role become required
-#' once getSubnetworkFromIndra() sets them. Until then they are checked only
-#' when present (OPTIONAL_NODE_COLUMNS).
 #' @keywords internal
 #' @noRd
-REQUIRED_NODE_COLUMNS <- c(id = "character")
+REQUIRED_NODE_COLUMNS <- c(
+    id                = "character",
+    entity_type       = "character",
+    entity_name       = "character",
+    namespace         = "character",
+    entity_id         = "character",
+    measured          = "logical",
+    included_in_query = "logical",
+    node_role         = "character"
+)
 
 #' Optional node columns, type-checked when present
 #' @keywords internal
 #' @noRd
 OPTIONAL_NODE_COLUMNS <- c(
-    entity_type        = "character",
-    entity_name        = "character",
-    namespace          = "character",
-    entity_id          = "character",
-    measured           = "logical",
-    included_in_query  = "logical",
-    node_role          = "character",
     site               = "character",
     has_measured_sites = "logical",
     logFC              = "numeric",
@@ -111,12 +109,17 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' Edges of the symmetric statement types \code{"Complex"} and
 #' \code{"Association"} must have \code{directed = FALSE}.
 #'
-#' Required node column: \code{id}. An \code{id} can repeat, once per PTM
-#' site row of the same protein. When present, \code{entity_type},
-#' \code{entity_name}, \code{namespace}, \code{entity_id}, \code{site},
-#' \code{logFC}, \code{adj.pvalue}, \code{measured},
-#' \code{included_in_query}, \code{node_role}, and \code{has_measured_sites}
-#' are type-checked.
+#' Required node columns: \code{id}, \code{entity_type} (e.g.
+#' \code{"protein"}, \code{"ptm_site"}, \code{"metabolite"},
+#' \code{"family"}), \code{entity_name}, \code{namespace} and
+#' \code{entity_id} (the grounding, \code{NA} when unknown),
+#' \code{measured} (logical: the node is in the input data),
+#' \code{included_in_query} (logical: the node was part of the query), and
+#' \code{node_role} (why the node is in the network, e.g.
+#' \code{"passed_cutoffs"} or \code{"user_added"}). An \code{id} can repeat,
+#' once per PTM site row of the same protein. When present, \code{site},
+#' \code{has_measured_sites}, \code{logFC}, and \code{adj.pvalue} are
+#' type-checked.
 #' Nodes with \code{measured == FALSE} must have \code{NA} statistics.
 #'
 #' Confidence values are comparable within one \code{backend_database}, not
@@ -131,7 +134,16 @@ OPTIONAL_NODE_COLUMNS <- c(
 #'
 #' @examples
 #' network <- list(
-#'     nodes = data.frame(id = c("CHK1_HUMAN", "CDC25A_HUMAN")),
+#'     nodes = data.frame(
+#'         id = c("CHK1_HUMAN", "CDC25A_HUMAN"),
+#'         entity_type = "protein",
+#'         entity_name = c("CHEK1", "CDC25A"),
+#'         namespace = "HGNC",
+#'         entity_id = c("1925", "1725"),
+#'         measured = TRUE,
+#'         included_in_query = TRUE,
+#'         node_role = "passed_cutoffs"
+#'     ),
 #'     edges = data.frame(
 #'         source = "CHK1_HUMAN",
 #'         target = "CDC25A_HUMAN",

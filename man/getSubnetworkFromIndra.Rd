@@ -97,9 +97,17 @@ the contract checked by \code{\link{validate_network}}.
 deprecated \code{paperCount} (and \code{correlation} when
 \code{protein_level_data} is given).
 
-\code{nodes} has one row per analyte: \code{id}, \code{entity_name},
-\code{namespace}, \code{entity_id}, \code{site}, \code{logFC}, and
-\code{adj.pvalue}.
+\code{nodes} has one row per analyte (one per site for PTM input, all
+with the protein's \code{id}): \code{id}, \code{entity_type}
+(\code{"protein"}, \code{"ptm_site"}, \code{"metabolite"}, ...),
+\code{entity_name}, \code{namespace}, \code{entity_id}, \code{measured}
+(\code{TRUE} for analytes in \code{input}), \code{included_in_query},
+\code{node_role} (\code{"passed_cutoffs"}, or \code{"user_added"} for
+nodes that are there only through \code{force_include_other}),
+\code{site}, \code{has_measured_sites} (\code{TRUE} for proteins with
+PTM site rows), \code{logFC}, and \code{adj.pvalue}. Nodes from
+\code{force_include_other} that are not in \code{input} have
+\code{measured = FALSE} and \code{NA} statistics.
 }
 \description{
 Using differential abundance results from MSstats, this function retrieves
