@@ -55,10 +55,7 @@
 annotateProteinInfoFromIndra <- function(df, proteinIdType) {
         .validateAnnotateProteinInfoFromIndraInput(df, proteinIdType)
         df <- .populateUniprotIdsInDataFrame(df, proteinIdType)
-        df <- .populateEntityInformationInDataFrame(df, proteinIdType)
-        df <- .populateTranscriptionFactorInfoInDataFrame(df, proteinIdType)
-        df <- .populateKinaseInfoInDataFrame(df, proteinIdType)
-        df <- .populatePhophataseInfoInDataFrame(df, proteinIdType)
+        df <- .populateEntityInformationWithIndraBackend(df, proteinIdType)
         return(df)
 }
 
@@ -77,40 +74,6 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
                 stop("Invalid proteinIdType '", proteinIdType, "'. ",
                      "Must be one of: ", paste(allowed, collapse = ", "), ".")
         }
-}
-
-#' Split a protein group into its member identifiers
-#'
-#' A \code{Protein} value may name a protein group -- several identifiers
-#' for the same quantified analyte joined by \code{";"}. Splits on
-#' \code{";"}, trims surrounding whitespace and drops empty members, so a
-#' plain single identifier comes back as a length-one vector.
-#'
-#' @param x A length-one character value, possibly \code{NA}.
-#' @return A character vector of member identifiers, empty when the input
-#'         holds none.
-#' @keywords internal
-#' @noRd
-.splitProteinGroup <- function(x) {
-        if (length(x) == 0 || is.na(x)) {
-                return(character(0))
-        }
-        members <- trimws(unlist(strsplit(as.character(x), ";", fixed = TRUE),
-                                 use.names = FALSE))
-        return(members[nzchar(members)])
-}
-
-#' Join protein group members back into a single value
-#'
-#' @param members A character vector of member identifiers.
-#' @return The members joined by \code{";"}, or \code{NA} when empty.
-#' @keywords internal
-#' @noRd
-.joinProteinGroup <- function(members) {
-        if (length(members) == 0) {
-                return(NA_character_)
-        }
-        return(paste(members, collapse = ";"))
 }
 
 #' Strip the PTM site suffix from identifiers
@@ -168,213 +131,43 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
         return(df)
 }
 
-#' Populate Entity Information in Data Frame
+#' Populate the grounding and annotation columns through the INDRA backend
 #'
-#' Initialises the three entity grounding columns and dispatches to the
-#' appropriate populator: the INDRA cogex path for UniProt-based inputs,
-#' the Gilda grounding path for name-based inputs (HGNC name / metabolite).
+#' Builds an entity table with one row per distinct grounding key, runs
+#' \code{convert_ids()} and \code{get_annotations()} on it, and copies the
+#' results back to every row of \code{df} with that key. The key is
+#' \code{UniprotId} for UniProt-based inputs and \code{GlobalProtein}
+#' otherwise, so PTM rows are grounded by their stripped parent identifier.
 #'
-#' @param df A data frame containing protein information.
+#' @param df A data frame with populated \code{GlobalProtein} and
+#'        \code{UniprotId} columns.
 #' @param proteinIdType A character string specifying the type of protein ID.
-#' @return A data frame with populated entity grounding columns.
-.populateEntityInformationInDataFrame <- function(df, proteinIdType) {
-        df$EntityNamespace <- NA_character_
-        df$EntityId        <- NA_character_
-        df$EntityName      <- NA_character_
-        if (proteinIdType == "Uniprot" || proteinIdType == "Uniprot_Mnemonic") {
-                df <- .populateEntityInformationWithIndraCogex(df)
-        } else {
-                df <- .populateEntityInformationWithGilda(df, proteinIdType)
-        }
-        return(df)
-}
-
-#' Populate entity grounding columns via INDRA cogex APIs
-#'
-#' Converts each \code{UniprotId} member to an HGNC id via the INDRA cogex
-#' endpoint, then looks up the canonical HGNC name. Sets
-#' \code{EntityNamespace = "HGNC"} for any row whose UniProt resolved.
-#'
-#' @param df A data frame with a populated \code{UniprotId} column, whose
-#'        values may be semicolon-joined protein groups.
-#' @return The data frame with EntityNamespace, EntityId, EntityName set
-#'         for resolved rows.
+#' @return The data frame with EntityNamespace, EntityId, EntityName,
+#'         IsTranscriptionFactor, IsKinase, and IsPhosphatase set.
+#' @keywords internal
 #' @noRd
-.populateEntityInformationWithIndraCogex <- function(df) {
-        groupMembers <- lapply(df$UniprotId, .splitProteinGroup)
-        validUniprots <- unique(unlist(groupMembers, use.names = FALSE))
-        if (length(validUniprots) == 0) {
-                return(df)
-        }
-        hgncMapping <- .callGetHgncIdsFromUniprotIdsApi(as.list(validUniprots))
-        validHgncs <- unique(as.character(unlist(hgncMapping, use.names = FALSE)))
-        nameMapping <- list()
-        if (length(validHgncs) > 0) {
-                nameResponse <- .callGetHgncNamesFromHgncIdsApi(as.list(validHgncs))
-                if (!is.null(nameResponse)) {
-                        nameMapping <- nameResponse
-                }
-        }
-        for (i in seq_along(groupMembers)) {
-                entityIds <- unique(as.character(
-                        unlist(hgncMapping[groupMembers[[i]]], use.names = FALSE)))
-                if (length(entityIds) == 0) {
-                        next
-                }
-                entityNames <- vapply(nameMapping[entityIds], function(entityName) {
-                        if (is.null(entityName)) NA_character_ else as.character(entityName)[1]
-                }, character(1), USE.NAMES = FALSE)
-                df$EntityNamespace[i] <- .joinProteinGroup(rep("HGNC", length(entityIds)))
-                df$EntityId[i]        <- .joinProteinGroup(entityIds)
-                if (!all(is.na(entityNames))) {
-                        df$EntityName[i] <- .joinProteinGroup(entityNames)
-                }
-        }
-        return(df)
-}
-
-#' Populate entity grounding columns via Gilda
-#'
-#' Grounds each \code{GlobalProtein} member text through Gilda. For
-#' \code{"Hgnc_Name"} the response is filtered to HGNC candidates
-#' (and restricted to human via the organism filter); for
-#' \code{"Metabolite"} every grounding namespace Gilda returns is kept.
-#' Multi-grounded inputs are semicolon-joined and positionally aligned
-#' across all three Entity columns; a protein group pools the groundings
-#' of all its members into that same representation.
-#'
-#' @param df A data frame with a \code{GlobalProtein} column, whose values
-#'        may be semicolon-joined protein groups.
-#' @param proteinIdType One of \code{"Hgnc_Name"} or \code{"Metabolite"}.
-#' @return The data frame with EntityNamespace, EntityId, EntityName set
-#'         for resolved rows.
-#' @noRd
-.populateEntityInformationWithGilda <- function(df, proteinIdType) {
-        keep_only <- if (proteinIdType == "Hgnc_Name") "HGNC"          else NULL
-        organisms <- if (proteinIdType == "Hgnc_Name") list("9606")    else NULL
-        groupMembers <- lapply(df$GlobalProtein, .splitProteinGroup)
-        textInputs <- unique(unlist(groupMembers, use.names = FALSE))
-        if (length(textInputs) == 0) {
-                return(df)
-        }
-        grounding_map <- .callGroundEntitiesFromGildaApi(
-                as.list(textInputs),
-                keep_only = keep_only,
-                organisms = organisms)
-        if (is.null(grounding_map)) {
-                return(df)
-        }
-        for (i in seq_along(groupMembers)) {
-                namespaces <- character(0)
-                entityIds <- character(0)
-                entityNames <- character(0)
-                for (g in grounding_map[groupMembers[[i]]]) {
-                        if (is.null(g)) {
-                                next
-                        }
-                        stopifnot(length(g$ns) == length(g$id),
-                                  length(g$ns) == length(g$name))
-                        namespaces  <- c(namespaces,  as.character(g$ns))
-                        entityIds   <- c(entityIds,   as.character(g$id))
-                        entityNames <- c(entityNames, as.character(g$name))
-                }
-                keep <- !duplicated(paste(namespaces, entityIds, sep = ":"))
-                if (!any(keep)) {
-                        next
-                }
-                df$EntityNamespace[i] <- .joinProteinGroup(namespaces[keep])
-                df$EntityId[i]        <- .joinProteinGroup(entityIds[keep])
-                df$EntityName[i]      <- .joinProteinGroup(entityNames[keep])
-        }
-        return(df)
-}
-
-#' Populate Transcription Factor Info in Data Frame
-#'
-#' Rows carrying more than one grounding -- a semicolon-joined
-#' \code{EntityName}, from a protein group or an ambiguous input -- are
-#' skipped, because the flag describes a single gene.
-#'
-#' @param df A data frame containing protein information.
-#' @param proteinIdType The proteinIdType supplied by the caller. Gene-only
-#'        flags are \code{NA} (no API call) when this is \code{"Metabolite"}.
-#' @return A data frame with populated transcription factor information.
-#' @noRd
-.populateTranscriptionFactorInfoInDataFrame <- function(df, proteinIdType) {
-        df$IsTranscriptionFactor <- NA
-        if (proteinIdType == "Metabolite") {
-                return(df)
-        }
-        validNameMask <- !is.na(df$EntityName) & !grepl(";", df$EntityName)
-        validNames <- unique(df$EntityName[validNameMask])
-        if (length(validNames) > 0) {
-                validNamesList <- as.list(validNames)
-                charMapping <- .callIsTranscriptionFactorApi(validNamesList)
-                for (entityName in names(charMapping)) {
-                        if (!is.null(charMapping[[entityName]])) {
-                                df$IsTranscriptionFactor[which(df$EntityName == entityName)] <- charMapping[[entityName]]
-                        }
-                }
-        }
-        return(df)
-}
-
-#' Populate Kinase Info in Data Frame
-#'
-#' Rows carrying more than one grounding -- a semicolon-joined
-#' \code{EntityName}, from a protein group or an ambiguous input -- are
-#' skipped, because the flag describes a single gene.
-#'
-#' @param df A data frame containing protein information.
-#' @param proteinIdType The proteinIdType supplied by the caller. Gene-only
-#'        flags are \code{NA} (no API call) when this is \code{"Metabolite"}.
-#' @return A data frame with populated kinase information.
-#' @noRd
-.populateKinaseInfoInDataFrame <- function(df, proteinIdType) {
-        df$IsKinase <- NA
-        if (proteinIdType == "Metabolite") {
-                return(df)
-        }
-        validNameMask <- !is.na(df$EntityName) & !grepl(";", df$EntityName)
-        validNames <- unique(df$EntityName[validNameMask])
-        if (length(validNames) > 0) {
-                validNamesList <- as.list(validNames)
-                charMapping <- .callIsKinaseApi(validNamesList)
-                for (entityName in names(charMapping)) {
-                        if (!is.null(charMapping[[entityName]])) {
-                                df$IsKinase[which(df$EntityName == entityName)] <- charMapping[[entityName]]
-                        }
-                }
-        }
-        return(df)
-}
-
-#' Populate Phosphatase Info in Data Frame
-#'
-#' Rows carrying more than one grounding -- a semicolon-joined
-#' \code{EntityName}, from a protein group or an ambiguous input -- are
-#' skipped, because the flag describes a single gene.
-#'
-#' @param df A data frame containing protein information.
-#' @param proteinIdType The proteinIdType supplied by the caller. Gene-only
-#'        flags are \code{NA} (no API call) when this is \code{"Metabolite"}.
-#' @return A data frame with populated phosphatase information.
-#' @noRd
-.populatePhophataseInfoInDataFrame <- function(df, proteinIdType) {
-        df$IsPhosphatase <- NA
-        if (proteinIdType == "Metabolite") {
-                return(df)
-        }
-        validNameMask <- !is.na(df$EntityName) & !grepl(";", df$EntityName)
-        validNames <- unique(df$EntityName[validNameMask])
-        if (length(validNames) > 0) {
-                validNamesList <- as.list(validNames)
-                charMapping <- .callIsPhosphataseApi(validNamesList)
-                for (entityName in names(charMapping)) {
-                        if (!is.null(charMapping[[entityName]])) {
-                                df$IsPhosphatase[which(df$EntityName == entityName)] <- charMapping[[entityName]]
-                        }
-                }
-        }
+.populateEntityInformationWithIndraBackend <- function(df, proteinIdType) {
+        usesUniprot <- proteinIdType %in% c("Uniprot", "Uniprot_Mnemonic")
+        keys <- as.character(if (usesUniprot) df$UniprotId else df$GlobalProtein)
+        hasMembers <- lengths(lapply(keys, .splitProteinGroup)) > 0
+        entities <- prepare_entities(
+                data.frame(Protein = unique(keys[hasMembers]),
+                           stringsAsFactors = FALSE),
+                entity_type = if (proteinIdType == "Metabolite") "metabolite" else "protein",
+                id_type = switch(proteinIdType,
+                                 Uniprot = "uniprot",
+                                 Uniprot_Mnemonic = "uniprot",
+                                 Hgnc_Name = "hgnc_symbol",
+                                 Metabolite = "chemical_name"))
+        backend <- indra_backend()
+        entities <- convert_ids(backend, entities)
+        entities <- get_annotations(backend, entities)
+        row <- match(keys, entities$id)
+        df$EntityNamespace       <- entities$namespace[row]
+        df$EntityId              <- entities$entity_id[row]
+        df$EntityName            <- entities$entity_name[row]
+        df$IsTranscriptionFactor <- entities$is_transcription_factor[row]
+        df$IsKinase              <- entities$is_kinase[row]
+        df$IsPhosphatase         <- entities$is_phosphatase[row]
         return(df)
 }

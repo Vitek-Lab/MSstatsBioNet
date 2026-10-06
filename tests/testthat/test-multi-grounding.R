@@ -161,7 +161,7 @@ test_that(".validateGetSubnetworkFromIndraInput counts unique (ns, id) pairs AFT
 test_that("annotateProteinInfoFromIndra with Metabolite mocks Gilda and skips gene-only flags", {
     df <- data.frame(Protein = c("glucose", "FOO"))
     local_mocked_bindings(
-        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL) {
+        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL, grounding_url) {
             list(
                 glucose = list(ns = "CHEBI",
                                id = "17234",
@@ -205,7 +205,7 @@ test_that("annotateProteinInfoFromIndra(Metabolite) -> getSubnetworkFromIndra E2
     df <- data.table::fread(fixture_path)
 
     local_mocked_bindings(
-        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL) {
+        .callGroundEntitiesFromGildaApi = function(textInputs, keep_only = NULL, organisms = NULL, grounding_url) {
             result <- list()
             for (i in seq_along(textInputs)) {
                 text_i <- as.character(textInputs[[i]])

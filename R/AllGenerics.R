@@ -50,3 +50,55 @@ setMethod("get_network", signature("NetworkBackend", "NetworkQuery"),
         stop(class(backend), " does not support ", class(query), ".",
              call. = FALSE)
     })
+
+#' Ground entities in a backend's namespaces
+#'
+#' Fills in \code{namespace}, \code{entity_id}, and \code{entity_name} from
+#' each row's \code{id} (\code{parent_id} for \code{ptm_site} rows), read
+#' as the identifier system in \code{id_type}. Rows that don't ground are
+#' left \code{NA}.
+#'
+#' Internal until the end of Phase 3 of the API refactor.
+#'
+#' @param backend a \code{NetworkBackend}, e.g. from \code{indra_backend()}
+#' @param entities entity table from \code{prepare_entities()}
+#' @param ... passed to methods
+#' @return \code{entities} with the grounding columns filled in
+#' @keywords internal
+#' @noRd
+setGeneric("convert_ids",
+    function(backend, entities, ...) standardGeneric("convert_ids"),
+    signature = "backend")
+
+setMethod("convert_ids", "NetworkBackend",
+    function(backend, entities, ...) {
+        stop(class(backend), " does not support convert_ids().",
+             call. = FALSE)
+    })
+
+#' Annotate entities with a backend's information about them
+#'
+#' Adds one column per field, e.g. \code{is_kinase}. A field is \code{NA}
+#' for rows whose \code{entity_type} it doesn't apply to, and for rows the
+#' backend has no answer for.
+#'
+#' Internal until the end of Phase 3 of the API refactor.
+#'
+#' @param backend a \code{NetworkBackend}, e.g. from \code{indra_backend()}
+#' @param entities entity table, grounded by \code{convert_ids()}
+#' @param fields the fields to add. \code{NULL} adds every field the backend
+#' supports.
+#' @param ... passed to methods
+#' @return \code{entities} with one column per field
+#' @keywords internal
+#' @noRd
+setGeneric("get_annotations",
+    function(backend, entities, fields = NULL, ...)
+        standardGeneric("get_annotations"),
+    signature = "backend")
+
+setMethod("get_annotations", "NetworkBackend",
+    function(backend, entities, fields = NULL, ...) {
+        stop(class(backend), " does not support get_annotations().",
+             call. = FALSE)
+    })
