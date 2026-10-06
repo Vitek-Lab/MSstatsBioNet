@@ -8,12 +8,18 @@ INDRA_API_URL <- "https://discovery.indra.bio"
 #' @noRd
 GILDA_API_URL <- "https://grounding.indra.bio"
 
+#' Base URL of the INDRA database, which holds the curations
+#' @keywords internal
+#' @noRd
+INDRA_DB_URL <- "https://db.indra.bio"
+
 #' Create an INDRA backend
 #'
 #' INDRA is a knowledge graph of mechanisms (activations, phosphorylations,
 #' complexes, ...) assembled from the literature and curated databases. The
 #' backend queries INDRA CoGEx for networks and grounds gene symbols and
-#' chemical names with Gilda, INDRA's grounding service.
+#' chemical names with Gilda, INDRA's grounding service. Curations, which
+#' mark evidence as correct or incorrect, come from the INDRA database.
 #' \code{backend_capabilities(indra_backend())} lists what it supports.
 #'
 #' This function includes third-party software components that are licensed
@@ -23,9 +29,12 @@ GILDA_API_URL <- "https://grounding.indra.bio"
 #'
 #' @param cogex_url base URL of INDRA CoGEx
 #' @param grounding_url base URL of Gilda
+#' @param curation_url base URL of the INDRA database, which holds the
+#' curations
 #' @return an \code{IndraBackend} object, to pass to
-#' \code{\link{convert_ids}()}, \code{\link{get_entity_properties}()}, and
-#' \code{\link{get_network}()}
+#' \code{\link{convert_ids}()}, \code{\link{get_entity_properties}()},
+#' \code{\link{get_network}()}, \code{\link{get_evidence}()}, and
+#' \code{\link{get_curations}()}
 #' @seealso \code{\link{NetworkBackend-class}}
 #' @importFrom methods new
 #' @export
@@ -33,8 +42,10 @@ GILDA_API_URL <- "https://grounding.indra.bio"
 #' indra <- indra_backend()
 #' backend_capabilities(indra)$query_types
 indra_backend <- function(cogex_url = INDRA_API_URL,
-                          grounding_url = GILDA_API_URL) {
-    new("IndraBackend", cogex_url = cogex_url, grounding_url = grounding_url)
+                          grounding_url = GILDA_API_URL,
+                          curation_url = INDRA_DB_URL) {
+    new("IndraBackend", cogex_url = cogex_url, grounding_url = grounding_url,
+        curation_url = curation_url)
 }
 
 # INDRA subnetwork query. Sends the groundings of the included_in_query rows
@@ -106,6 +117,28 @@ setMethod("get_evidence", "IndraBackend",
         evidence_by_statement <- .query_indra_evidence(statement_ids,
                                                        backend@cogex_url)
         .build_indra_evidence_table(edges, evidence_by_statement)
+    })
+
+# INDRA curations. Asks the INDRA database for the curations of each unique
+# statement hash, one request per hash, and counts the evidence curated as
+# anything other than correct.
+#' @rdname get_curations
+#' @export
+setMethod("get_curations", "IndraBackend",
+    function(backend, edges, ...) {
+        if (!"statement_id" %in% names(edges)) {
+            stop("Missing required columns: statement_id")
+        }
+        statement_ids <- unique(as.character(edges$statement_id))
+        incorrect_counts <- integer(length(statement_ids))
+        for (i in seq_along(statement_ids)) {
+            if (i > 1) Sys.sleep(0.1)
+            incorrect_counts[i] <- as.integer(.get_incorrect_curation_count(
+                statement_ids[i], backend@curation_url))
+        }
+        data.frame(statement_id = statement_ids,
+                   incorrect_count = incorrect_counts,
+                   stringsAsFactors = FALSE)
     })
 
 #' Edge columns that get_evidence() copies to its output

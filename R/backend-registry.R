@@ -85,3 +85,65 @@ BACKEND_CONSTRUCTORS <- list(
     }
     do.call(rbind, evidence)
 }
+
+#' Count the incorrect evidence of each edge, from the backend of each edge
+#'
+#' Calls \code{get_curations()} once per backend, see
+#' \code{.split_edges_by_backend()}, and matches the counts back to the
+#' edges within each backend, since two backends can share a
+#' \code{statement_id}. Statements a backend returns no count for count 0,
+#' after \code{.check_curation_table()} has ruled out a \code{statement_id}
+#' that can't match, such as a number.
+#'
+#' @param edges edges data.frame
+#' @param backend \code{NULL} or a \code{NetworkBackend}
+#' @return integer vector, one count per row of \code{edges}
+#' @keywords internal
+#' @noRd
+.count_incorrect_evidence <- function(edges, backend = NULL) {
+    incorrect_counts <- integer(nrow(edges))
+    edges$.edge_row <- seq_len(nrow(edges))
+    for (group in .split_edges_by_backend(edges, backend)) {
+        curations <- get_curations(group$backend, group$edges)
+        .check_curation_table(curations, group$backend)
+        counts <- curations$incorrect_count[match(
+            as.character(group$edges$statement_id),
+            as.character(curations$statement_id))]
+        counts[is.na(counts)] <- 0L
+        incorrect_counts[group$edges$.edge_row] <- as.integer(counts)
+    }
+    incorrect_counts
+}
+
+#' Check the table a get_curations() method returned
+#'
+#' A numeric \code{statement_id} matches no edge (INDRA hashes above 2^53
+#' lose precision as numbers), so every edge would silently count 0
+#' incorrect evidence. Errors naming the backend.
+#'
+#' @param curations output of \code{get_curations()}
+#' @param backend the backend that returned it
+#' @return \code{NULL}, invisibly; errors otherwise
+#' @keywords internal
+#' @noRd
+.check_curation_table <- function(curations, backend) {
+    problem <- if (!is.data.frame(curations) ||
+                   !all(c("statement_id", "incorrect_count") %in%
+                        names(curations))) {
+        "a data.frame with columns statement_id and incorrect_count"
+    } else if (!is.character(curations$statement_id) ||
+               anyNA(curations$statement_id)) {
+        "a character statement_id with no NA"
+    } else if (!is.numeric(curations$incorrect_count) ||
+               anyNA(curations$incorrect_count) ||
+               any(curations$incorrect_count < 0) ||
+               any(curations$incorrect_count !=
+                   round(curations$incorrect_count))) {
+        "an incorrect_count of non-negative whole numbers"
+    }
+    if (!is.null(problem)) {
+        stop("get_curations() for ", class(backend), " must return ",
+             problem, ".", call. = FALSE)
+    }
+    invisible(NULL)
+}

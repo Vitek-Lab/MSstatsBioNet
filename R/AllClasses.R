@@ -8,10 +8,13 @@
 #' extending \code{NetworkBackend} and writing methods for the generics.
 #'
 #' \code{IndraBackend} queries INDRA CoGEx for networks and grounds names
-#' with Gilda, INDRA's grounding service.
+#' with Gilda, INDRA's grounding service. Curations come from the INDRA
+#' database.
 #'
 #' @slot cogex_url base URL of INDRA CoGEx
 #' @slot grounding_url base URL of Gilda
+#' @slot curation_url base URL of the INDRA database, which holds the
+#'   curations
 #'
 #' @seealso \code{\link{indra_backend}()}, \code{\link{backend_capabilities}()}
 #' @name NetworkBackend-class
@@ -24,10 +27,11 @@ setClass("NetworkBackend", representation("VIRTUAL"))
 
 setClass("IndraBackend", contains = "NetworkBackend",
          representation(cogex_url = "character",
-                        grounding_url = "character"))
+                        grounding_url = "character",
+                        curation_url = "character"))
 
 setValidity("IndraBackend", function(object) {
-    for (slot_name in c("cogex_url", "grounding_url")) {
+    for (slot_name in c("cogex_url", "grounding_url", "curation_url")) {
         url <- methods::slot(object, slot_name)
         if (length(url) != 1 || is.na(url) || !nzchar(url)) {
             return(paste(slot_name, "must be a single non-empty string"))

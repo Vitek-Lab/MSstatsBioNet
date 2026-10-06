@@ -38,7 +38,9 @@
 #' network, regardless if those ids are in the input data. Should be formatted
 #' as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".
 #' @param filter_by_curation logical, whether to filter out statements that
-#' have been curated as incorrect in INDRA.  Default is FALSE.
+#' have been curated as incorrect in INDRA.  Default is FALSE. Runs
+#' \code{\link{filter_by_curation}()} with
+#' \code{min_evidence = evidence_count_cutoff}.
 #' @param filter_by_ptm_site logical, whether to filter edges based on whether the 
 #' site information from INDRA matches with the PTM site in the input.  Default is FALSE.  
 #' Only applicable for differential PTM abundance results.
@@ -136,7 +138,12 @@ getSubnetworkFromIndra <- function(input,
             edges = edges)
     }
     subnetwork = .filterByPtmSite(subnetwork$nodes, subnetwork$edges, filter_by_ptm_site)
-    subnetwork = .filterByCuration(subnetwork$nodes, subnetwork$edges, evidence_count_cutoff, filter_by_curation)
+    if (filter_by_curation) {
+        # the call finds the exported function, not this logical argument
+        subnetwork <- filter_by_curation(subnetwork,
+                                         min_evidence = evidence_count_cutoff,
+                                         backend = indra_backend())
+    }
     validate_network(subnetwork)
     warning(
         "NOTICE: This function includes third-party software components

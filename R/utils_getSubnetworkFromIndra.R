@@ -91,57 +91,6 @@
     return(edges)
 }
 
-#' @importFrom httr GET status_code content
-#' @importFrom jsonlite fromJSON
-.get_incorrect_curation_count <- function(stmt_hash) {
-    stmt_hash_char <- as.character(stmt_hash)
-    url <- paste0("https://db.indra.bio/curation/list/", stmt_hash_char)
-
-    tryCatch({
-        response <- GET(url)
-        if (status_code(response) == 200) {
-            curations <- fromJSON(content(response, "text", encoding = "UTF-8"))
-            if (length(curations) == 0) {
-                return(0)
-            }
-            incorrect_curations <- curations[curations$tag != "correct", ]
-            unique_incorrect <- length(unique(incorrect_curations$source_hash))
-            
-            return(unique_incorrect)
-        } else {
-            warning(paste("API request failed for hash", stmt_hash_char, 
-                          "with status code", status_code(response)))
-            return(0)
-        }
-    }, error = function(e) {
-        warning(paste("Error processing hash", stmt_hash_char, ":", e$message))
-        return(0)
-    })
-}
-
-#' Subtract evidence curated as incorrect in INDRA, then re-apply the cutoff
-#' @param nodes nodes data frame
-#' @param edges edges data frame
-#' @param evidence_count_cutoff minimum evidence count per edge
-#' @param filter_by_curation logical; if FALSE, nodes and edges are returned
-#' unchanged
-#' @return list of nodes and edges
-#' @keywords internal
-#' @noRd
-.filterByCuration = function(nodes, edges, evidence_count_cutoff, filter_by_curation) {
-    if (filter_by_curation) {
-        incorrect_counts <- numeric(nrow(edges))
-        for (i in seq_len(nrow(edges))) {
-            incorrect_counts[i] <- .get_incorrect_curation_count(edges$statement_id[i])
-            Sys.sleep(0.1)
-        }
-        edges$evidence_count <- as.integer(edges$evidence_count - incorrect_counts)
-        edges <- edges[edges$evidence_count >= evidence_count_cutoff, ]
-        nodes <- nodes[nodes$id %in% c(edges$source, edges$target), ]
-    }
-    return(list(nodes = nodes, edges = edges))
-}
-
 .filterByPtmSite = function(nodes, edges, filter_by_ptm_site) {
     if (filter_by_ptm_site && nrow(nodes[!is.na(nodes$site), ]) > 0) {
         ptm_overlap <- .ptmOverlap(edges, nodes)

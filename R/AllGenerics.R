@@ -228,6 +228,53 @@ setMethod("get_evidence", "NetworkBackend",
              call. = FALSE)
     })
 
+#' Get the curations of edges from a backend
+#'
+#' Curators mark single pieces of evidence for a statement as correct or
+#' incorrect. \code{get_curations()} counts, for each statement, the
+#' evidence curated as incorrect. INDRA curations come from the INDRA
+#' database, with one request per statement. Most users call
+#' \code{\link{filter_by_curation}()}, which subtracts these counts from
+#' \code{evidence_count}.
+#'
+#' @inheritParams get_evidence
+#' @param edges the \code{edges} of a network from
+#' \code{\link{get_network}()}. Needs the column \code{statement_id}.
+#' @return data.frame with one row per unique \code{statement_id} and the
+#' columns \code{statement_id} (character) and \code{incorrect_count}
+#' (integer). A failed request warns and counts as 0. A method for another
+#' backend may leave out statements with no curations, which
+#' \code{\link{filter_by_curation}()} counts as 0, but must return
+#' \code{statement_id} as character: \code{filter_by_curation()} errors
+#' otherwise, since a numeric hash can lose precision and match no edge.
+#' @seealso \code{\link{filter_by_curation}()}
+#' @export
+#' @examples
+#' \donttest{
+#' input <- data.table::fread(system.file(
+#'     "extdata/groupComparisonModel.csv",
+#'     package = "MSstatsBioNet"
+#' ))
+#' indra <- indra_backend()
+#' entities <- prepare_entities(input, entity_type = "protein",
+#'                              id_type = "uniprot")
+#' entities <- convert_ids(indra, entities)
+#' entities <- select_entities(entities, pvalue_cutoff = 0.05)
+#' network <- get_network(indra, entities, interaction_types = "Complex")
+#' get_curations(indra, head(network$edges, 2))
+#' }
+setGeneric("get_curations",
+    function(backend, edges, ...) standardGeneric("get_curations"),
+    signature = "backend")
+
+#' @rdname get_curations
+#' @export
+setMethod("get_curations", "NetworkBackend",
+    function(backend, edges, ...) {
+        stop(class(backend), " does not support get_curations().",
+             call. = FALSE)
+    })
+
 #' What a backend supports
 #'
 #' Lists the queries, identifier conversions, entity properties, and

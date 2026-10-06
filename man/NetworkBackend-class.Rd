@@ -14,7 +14,8 @@ extending \code{NetworkBackend} and writing methods for the generics.
 }
 \details{
 \code{IndraBackend} queries INDRA CoGEx for networks and grounds names
-with Gilda, INDRA's grounding service.
+with Gilda, INDRA's grounding service. Curations come from the INDRA
+database.
 }
 \section{Slots}{
 
@@ -22,6 +23,9 @@ with Gilda, INDRA's grounding service.
 \item{\code{cogex_url}}{base URL of INDRA CoGEx}
 
 \item{\code{grounding_url}}{base URL of Gilda}
+
+\item{\code{curation_url}}{base URL of the INDRA database, which holds the
+curations}
 }}
 
 \seealso{

@@ -4,23 +4,32 @@
 \alias{indra_backend}
 \title{Create an INDRA backend}
 \usage{
-indra_backend(cogex_url = INDRA_API_URL, grounding_url = GILDA_API_URL)
+indra_backend(
+  cogex_url = INDRA_API_URL,
+  grounding_url = GILDA_API_URL,
+  curation_url = INDRA_DB_URL
+)
 }
 \arguments{
 \item{cogex_url}{base URL of INDRA CoGEx}
 
 \item{grounding_url}{base URL of Gilda}
+
+\item{curation_url}{base URL of the INDRA database, which holds the
+curations}
 }
 \value{
 an \code{IndraBackend} object, to pass to
-\code{\link{convert_ids}()}, \code{\link{get_entity_properties}()}, and
-\code{\link{get_network}()}
+\code{\link{convert_ids}()}, \code{\link{get_entity_properties}()},
+\code{\link{get_network}()}, \code{\link{get_evidence}()}, and
+\code{\link{get_curations}()}
 }
 \description{
 INDRA is a knowledge graph of mechanisms (activations, phosphorylations,
 complexes, ...) assembled from the literature and curated databases. The
 backend queries INDRA CoGEx for networks and grounds gene symbols and
-chemical names with Gilda, INDRA's grounding service.
+chemical names with Gilda, INDRA's grounding service. Curations, which
+mark evidence as correct or incorrect, come from the INDRA database.
 \code{backend_capabilities(indra_backend())} lists what it supports.
 }
 \details{

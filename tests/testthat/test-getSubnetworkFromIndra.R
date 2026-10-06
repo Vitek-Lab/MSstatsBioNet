@@ -178,11 +178,13 @@ test_that("getSubnetworkFromIndra returns character node IDs when fread reads th
 })
 
 test_that("getSubnetworkFromIndra subtracts incorrect curations when filter_by_curation = TRUE", {
-    local_mocked_bindings(.get_incorrect_curation_count = function(stmt_hash) 1)
+    local_mocked_bindings(
+        .get_incorrect_curation_count = function(statement_id, curation_url) 1
+    )
     suppressWarnings({
         uncurated <- .run_mocked_subnetwork(statement_types = "Activation")
-        curated <- .run_mocked_subnetwork(statement_types = "Activation",
-                                          filter_by_curation = TRUE)
+        curated <- suppressMessages(.run_mocked_subnetwork(
+            statement_types = "Activation", filter_by_curation = TRUE))
     })
     kept <- uncurated$edges$evidence_count - 1L >= 1L
     expect_equal(curated$edges$statement_id, uncurated$edges$statement_id[kept])
@@ -190,6 +192,19 @@ test_that("getSubnetworkFromIndra subtracts incorrect curations when filter_by_c
                  uncurated$edges$evidence_count[kept] - 1L)
     expect_true(all(curated$nodes$id %in%
                     c(curated$edges$source, curated$edges$target)))
+})
+
+test_that("filter_by_curation() output of a real network meets the contract", {
+    local_mocked_bindings(
+        .get_incorrect_curation_count = function(statement_id, curation_url) 1
+    )
+    suppressWarnings(network <- .run_mocked_subnetwork(
+        statement_types = "Activation"))
+    result <- suppressMessages(filter_by_curation(network))
+    expect_silent(validate_network(result))
+    expect_lt(nrow(result$edges), nrow(network$edges))
+    expect_true(all(result$nodes$id %in%
+                    c(result$edges$source, result$edges$target)))
 })
 
 # ----- Golden output (pinned after Phase 1 of the API refactor) -----
