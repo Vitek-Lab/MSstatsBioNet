@@ -74,8 +74,8 @@ Nothing calls them yet.
 * `annotateProteinInfoFromIndra()` now runs through two internal generics
 of the new API: `convert_ids()`, which grounds an entity table through the
 INDRA backend (CoGEx for UniProt IDs and mnemonics, Gilda for gene symbols
-and chemical names), and `get_annotations()`, which adds the
-`is_transcription_factor`, `is_kinase`, and `is_phosphatase` fields. Its
+and chemical names), and `get_entity_properties()`, which adds the
+`is_transcription_factor`, `is_kinase`, and `is_phosphatase` columns. Its
 output is unchanged. The INDRA backend now also holds the Gilda URL, and
 the organism of the entity table is passed to Gilda in place of a
 hard-coded human taxon ID.

@@ -242,8 +242,8 @@
     return(edges)
 }
 
-# CoGEx ID-mapping and annotation calls, used by convert_ids() and
-# get_annotations(). Moved from utils_annotateProteinInfoFromIndra.R in
+# CoGEx ID-mapping and entity-property calls, used by convert_ids() and
+# get_entity_properties(). Moved from utils_annotateProteinInfoFromIndra.R in
 # Phase 3 of the API refactor.
 
 #' Call API to get UniProt IDs from UniProt mnemonic IDs

@@ -130,13 +130,13 @@ INDRA_ID_CONVERSIONS <- list(
     drug       = "chemical_name"
 )
 
-#' Annotation fields of the INDRA backend
+#' Entity properties of the INDRA backend
 #'
 #' \code{api} names the CoGEx call, which takes a list of HGNC gene symbols.
-#' A PTM site gets the annotation of its parent protein.
+#' A PTM site gets the properties of its parent protein.
 #' @keywords internal
 #' @noRd
-INDRA_ANNOTATION_FIELDS <- list(
+INDRA_ENTITY_PROPERTIES <- list(
     is_transcription_factor = list(api = ".callIsTranscriptionFactorApi",
                                    entity_types = c("protein", "ptm_site")),
     is_kinase               = list(api = ".callIsKinaseApi",
@@ -182,24 +182,24 @@ setMethod("convert_ids", "IndraBackend",
         entities
     })
 
-#' INDRA annotations
+#' INDRA entity properties
 #'
-#' Supports the fields in \code{INDRA_ANNOTATION_FIELDS}. They are looked
-#' up by gene symbol, so only rows with a single HGNC grounding are
-#' annotated; rows with several groundings (a protein group, or an
-#' ambiguous name) are \code{NA}.
+#' Supports the properties in \code{INDRA_ENTITY_PROPERTIES}. They are
+#' looked up by gene symbol, so only rows with a single HGNC grounding get
+#' values; rows with several groundings (a protein group, or an ambiguous
+#' name) are \code{NA}.
 #' @keywords internal
 #' @noRd
-setMethod("get_annotations", "IndraBackend",
-    function(backend, entities, fields = NULL, ...) {
+setMethod("get_entity_properties", "IndraBackend",
+    function(backend, entities, properties = NULL, ...) {
         .validate_entities(entities)
-        fields <- .resolve_annotation_fields(backend, fields,
-                                             names(INDRA_ANNOTATION_FIELDS))
+        properties <- .resolve_entity_properties(
+            backend, properties, names(INDRA_ENTITY_PROPERTIES))
         # A ";"-joined namespace (several groundings) never equals "HGNC"
         single_hgnc <- entities$namespace %in% "HGNC" &
             !is.na(entities$entity_name)
-        for (field in fields) {
-            spec <- INDRA_ANNOTATION_FIELDS[[field]]
+        for (property in properties) {
+            spec <- INDRA_ENTITY_PROPERTIES[[property]]
             queried <- single_hgnc & entities$entity_type %in% spec$entity_types
             values <- rep(NA, nrow(entities))
             genes <- unique(entities$entity_name[queried])
@@ -214,7 +214,7 @@ setMethod("get_annotations", "IndraBackend",
                     }
                 }
             }
-            entities[[field]] <- values
+            entities[[property]] <- values
         }
         entities
     })
@@ -407,25 +407,25 @@ setMethod("get_annotations", "IndraBackend",
                stringsAsFactors = FALSE)
 }
 
-#' Check the fields asked of get_annotations()
+#' Check the properties asked of get_entity_properties()
 #' @param backend the backend, for the message
-#' @param fields requested fields, or \code{NULL} for all
-#' @param supported the fields the backend supports
-#' @return the fields to add
+#' @param properties requested properties, or \code{NULL} for all
+#' @param supported the properties the backend supports
+#' @return the properties to add
 #' @keywords internal
 #' @noRd
-.resolve_annotation_fields <- function(backend, fields, supported) {
-    if (is.null(fields)) {
+.resolve_entity_properties <- function(backend, properties, supported) {
+    if (is.null(properties)) {
         return(supported)
     }
-    if (!is.character(fields) || anyNA(fields)) {
-        stop("fields must be a character vector.", call. = FALSE)
+    if (!is.character(properties) || anyNA(properties)) {
+        stop("properties must be a character vector.", call. = FALSE)
     }
-    unknown <- setdiff(fields, supported)
+    unknown <- setdiff(properties, supported)
     if (length(unknown) > 0) {
-        stop(class(backend), " does not support annotation field(s): ",
+        stop(class(backend), " does not support these entity properties: ",
              .list_values_for_message(unknown), ". Supported: ",
              paste(supported, collapse = ", "), ".", call. = FALSE)
     }
-    unique(fields)
+    unique(properties)
 }

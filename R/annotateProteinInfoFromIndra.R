@@ -134,7 +134,7 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 #' Populate the grounding and annotation columns through the INDRA backend
 #'
 #' Builds an entity table with one row per distinct grounding key, runs
-#' \code{convert_ids()} and \code{get_annotations()} on it, and copies the
+#' \code{convert_ids()} and \code{get_entity_properties()} on it, and copies the
 #' results back to every row of \code{df} with that key. The key is
 #' \code{UniprotId} for UniProt-based inputs and \code{GlobalProtein}
 #' otherwise, so PTM rows are grounded by their stripped parent identifier.
@@ -161,7 +161,7 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
                                  Metabolite = "chemical_name"))
         backend <- indra_backend()
         entities <- convert_ids(backend, entities)
-        entities <- get_annotations(backend, entities)
+        entities <- get_entity_properties(backend, entities)
         row <- match(keys, entities$id)
         df$EntityNamespace       <- entities$namespace[row]
         df$EntityId              <- entities$entity_id[row]

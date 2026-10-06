@@ -76,29 +76,29 @@ setMethod("convert_ids", "NetworkBackend",
              call. = FALSE)
     })
 
-#' Annotate entities with a backend's information about them
+#' Add a backend's properties of each entity
 #'
-#' Adds one column per field, e.g. \code{is_kinase}. A field is \code{NA}
-#' for rows whose \code{entity_type} it doesn't apply to, and for rows the
-#' backend has no answer for.
+#' Adds one column per property, e.g. \code{is_kinase}. A property is
+#' \code{NA} for rows whose \code{entity_type} it doesn't apply to, and for
+#' rows the backend has no answer for.
 #'
 #' Internal until the end of Phase 3 of the API refactor.
 #'
 #' @param backend a \code{NetworkBackend}, e.g. from \code{indra_backend()}
 #' @param entities entity table, grounded by \code{convert_ids()}
-#' @param fields the fields to add. \code{NULL} adds every field the backend
-#' supports.
+#' @param properties the properties to add. \code{NULL} adds every
+#' property the backend supports.
 #' @param ... passed to methods
-#' @return \code{entities} with one column per field
+#' @return \code{entities} with one column per property
 #' @keywords internal
 #' @noRd
-setGeneric("get_annotations",
-    function(backend, entities, fields = NULL, ...)
-        standardGeneric("get_annotations"),
+setGeneric("get_entity_properties",
+    function(backend, entities, properties = NULL, ...)
+        standardGeneric("get_entity_properties"),
     signature = "backend")
 
-setMethod("get_annotations", "NetworkBackend",
-    function(backend, entities, fields = NULL, ...) {
-        stop(class(backend), " does not support get_annotations().",
+setMethod("get_entity_properties", "NetworkBackend",
+    function(backend, entities, properties = NULL, ...) {
+        stop(class(backend), " does not support get_entity_properties().",
              call. = FALSE)
     })
