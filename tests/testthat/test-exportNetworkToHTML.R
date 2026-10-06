@@ -3,7 +3,7 @@ library(mockery)
 make_nodes <- function() {
     data.frame(
         id    = c("P53_HUMAN", "MDM2_HUMAN"),
-        log2FC = c(1.5, -1.0),
+        logFC  = c(1.5, -1.0),
         stringsAsFactors = FALSE
     )
 }

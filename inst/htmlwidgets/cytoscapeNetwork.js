@@ -229,7 +229,7 @@ HTMLWidgets.widget({
       var hasPtm = cyInstance.nodes('[node_type = "ptm"]').length > 0;
 
       legendEl.innerHTML =
-        '<div style="font-weight:bold;margin-bottom:8px;font-size:13px;">Node color (log2FC)</div>' +
+        '<div style="font-weight:bold;margin-bottom:8px;font-size:13px;">Node color (logFC)</div>' +
         '<div style="display:flex;align-items:flex-start;margin-bottom:12px;">' +
         '  <div style="width:18px;height:110px;background:linear-gradient(to top,#ADD8E6,#D3D3D3,#FFA590);border:1px solid #999;border-radius:3px;margin-right:7px;flex-shrink:0;"></div>' +
         '  <div style="display:flex;flex-direction:column;justify-content:space-between;height:110px;font-size:11px;">' +

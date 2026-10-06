@@ -34,7 +34,7 @@ Edges of the symmetric statement types \code{"Complex"} and
 Required node column: \code{id}. An \code{id} can repeat, once per PTM
 site row of the same protein. When present, \code{entity_type},
 \code{entity_name}, \code{namespace}, \code{entity_id}, \code{site},
-\code{log2FC}, \code{adj.pvalue}, \code{measured},
+\code{logFC}, \code{adj.pvalue}, \code{measured},
 \code{included_in_query}, \code{node_role}, and \code{has_measured_sites}
 are type-checked.
 Nodes with \code{measured == FALSE} must have \code{NA} statistics.

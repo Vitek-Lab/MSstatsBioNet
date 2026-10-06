@@ -26,16 +26,15 @@ must use `statement_id` and `evidence_url`.
 `evidence_url` in place of `evidenceLink`.
 * The nodes returned by `getSubnetworkFromIndra()` follow the node contract.
 Columns are renamed, with no aliases: `entityName` to `entity_name`,
-`entityId` to `entity_id`, `Site` to `site`, and `logFC` to `log2FC`
-(matching the MSstats column it comes from). New column: `namespace`, the
+`entityId` to `entity_id`, and `Site` to `site`. `logFC` keeps its name,
+whatever the log base of the input. New column: `namespace`, the
 grounding namespace(s) aligned with `entity_id`. The ID columns are always
 character, even when every grounded ID is numeric.
 * `getSubnetworkFromIndra()` calls `validate_network()` on its result, so it
 stops with an error instead of returning a network that breaks the contract.
 * `cytoscapeNetwork()`, `exportNetworkToHTML()`, and
-`previewNetworkInBrowser()` read the new node column names (`log2FC`,
-`entity_name`, `site`). Nodes built by hand for them must use these names.
-The widget legend reads "Node color (log2FC)".
+`previewNetworkInBrowser()` read the new node column names (`entity_name`,
+`site`). Nodes built by hand for them must use these names.
 * `cytoscapeNetwork()` now errors when `displayLabelType` is not `"id"` or
 `"entity_name"`. Other values used to fall back to `"id"` silently.
 

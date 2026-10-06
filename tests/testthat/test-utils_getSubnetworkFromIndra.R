@@ -2,7 +2,7 @@ describe(".filterByPtmSite", {
     make_nodes <- function() {
         data.frame(
             id       = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN"),
-            log2FC    = c(1.5, -1.0, 0.5),
+            logFC     = c(1.5, -1.0, 0.5),
             site     = c("S15_S20", "T68",  NA),
             stringsAsFactors = FALSE
         )
@@ -88,7 +88,7 @@ describe(".filterByPtmSite", {
     test_that(".filterByPtmSite preserves all node columns after pruning", {
         result <- MSstatsBioNet:::.filterByPtmSite(make_nodes(), make_edges(),
                                                    filter_by_ptm_site = TRUE)
-        expect_true(all(c("id", "log2FC", "site") %in% names(result$nodes)))
+        expect_true(all(c("id", "logFC", "site") %in% names(result$nodes)))
     })
     
     test_that(".filterByPtmSite keeps edge when site matches any of multiple node sites", {

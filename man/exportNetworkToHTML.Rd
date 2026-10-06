@@ -15,7 +15,7 @@ exportNetworkToHTML(
 }
 \arguments{
 \item{nodes}{Data frame with at minimum an \code{id} column.  Optional
-columns: \code{log2FC} (numeric), \code{entity_name}
+columns: \code{logFC} (numeric), \code{entity_name}
 (character; may be semicolon-joined for multi-grounded
 rows), \code{entity_id} (character), \code{site}
 (character, underscore-separated PTM site list).}

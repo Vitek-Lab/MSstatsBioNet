@@ -5,7 +5,7 @@
 create_mock_nodes <- function() {
     data.frame(
         id          = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "BRCA1_HUMAN"),
-        log2FC      = c(2.5, -1.8, 1.2, -2.1),
+        logFC       = c(2.5, -1.8, 1.2, -2.1),
         pvalue      = c(0.001, 0.02, 0.03, 0.005),
         entity_name = c("TP53", "MDM2", "ATM", "BRCA1"),
         stringsAsFactors = FALSE
@@ -15,7 +15,7 @@ create_mock_nodes <- function() {
 create_mock_nodes_ptm <- function() {
     data.frame(
         id          = c("P53_HUMAN", "MDM2_HUMAN"),
-        log2FC      = c(2.5, -1.8),
+        logFC       = c(2.5, -1.8),
         entity_name = c("TP53", "MDM2"),
         site        = c(NA, "S15_S20"),
         stringsAsFactors = FALSE
@@ -270,8 +270,8 @@ test_that(".buildElements computes width and height from label length", {
     expect_true(all(heights >= 40  & heights <= 60))
 })
 
-test_that(".buildElements uses grey when log2FC column is absent", {
-    nodes <- create_mock_nodes()[, !names(create_mock_nodes()) %in% "log2FC"]
+test_that(".buildElements uses grey when logFC column is absent", {
+    nodes <- create_mock_nodes()[, !names(create_mock_nodes()) %in% "logFC"]
     result <- MSstatsBioNet:::.buildElements(nodes, data.frame())
     
     protein_nodes <- Filter(function(el) !is.null(el$data$node_type) &&

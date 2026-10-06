@@ -96,7 +96,7 @@ test_that(".addAdditionalMetadataToIndraEdge recovers original Protein from a mu
 
 # ----- .constructNodesDataFrame carries entity_name + entity_id -----
 
-test_that(".constructNodesDataFrame emits id, entity_name, namespace, entity_id, site, log2FC, adj.pvalue", {
+test_that(".constructNodesDataFrame emits id, entity_name, namespace, entity_id, site, logFC, adj.pvalue", {
     input <- data.frame(
         Protein         = c("FOO", "BAR"),
         EntityNamespace = c("HGNC;CHEBI", "HGNC"),
@@ -111,7 +111,7 @@ test_that(".constructNodesDataFrame emits id, entity_name, namespace, entity_id,
                         stringsAsFactors = FALSE)
     nodes <- MSstatsBioNet:::.constructNodesDataFrame(input, edges)
     expect_equal(colnames(nodes),
-                 c("id", "entity_name", "namespace", "entity_id", "site", "log2FC", "adj.pvalue"))
+                 c("id", "entity_name", "namespace", "entity_id", "site", "logFC", "adj.pvalue"))
     expect_equal(nodes$entity_name[nodes$id == "FOO"], "KIT;glucose")
     expect_equal(nodes$entity_id[nodes$id == "FOO"],   "3815;17234")
     expect_equal(nodes$entity_name[nodes$id == "BAR"], "A1BG")

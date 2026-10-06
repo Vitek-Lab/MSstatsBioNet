@@ -33,7 +33,7 @@ server <- function(input, output, session) {
   output$cytoNetwork <- renderCytoscapeNetwork({
     nodes <- data.frame(
       id    = c("TP53", "MDM2", "CDKN1A"),
-      log2FC = c(1.5, -0.8, 2.1),
+      logFC  = c(1.5, -0.8, 2.1),
       stringsAsFactors = FALSE
     )
     edges <- data.frame(

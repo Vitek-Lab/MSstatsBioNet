@@ -98,7 +98,7 @@ deprecated \code{paperCount} (and \code{correlation} when
 \code{protein_level_data} is given).
 
 \code{nodes} has one row per analyte: \code{id}, \code{entity_name},
-\code{namespace}, \code{entity_id}, \code{site}, \code{log2FC}, and
+\code{namespace}, \code{entity_id}, \code{site}, \code{logFC}, and
 \code{adj.pvalue}.
 }
 \description{
