@@ -67,7 +67,9 @@ network, regardless if those ids are in the input data. Should be formatted
 as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".}
 
 \item{filter_by_curation}{logical, whether to filter out statements that
-have been curated as incorrect in INDRA.  Default is FALSE.}
+have been curated as incorrect in INDRA.  Default is FALSE. Runs
+\code{\link{filter_by_curation}()} with
+\code{min_evidence = evidence_count_cutoff}.}
 
 \item{filter_by_ptm_site}{logical, whether to filter edges based on whether the 
 site information from INDRA matches with the PTM site in the input.  Default is FALSE.  
