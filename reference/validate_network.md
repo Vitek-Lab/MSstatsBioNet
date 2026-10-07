@@ -31,7 +31,10 @@ as `"S148"`, `;`-joined when there are several, or `NA`), `confidence`
 `evidence_count` (whole number, at least 1, not `NA`), `evidence_url`,
 `statement_id` (character), `backend_database`, and `query_type`. Edges
 of the symmetric statement types `"Complex"` and `"Association"` must
-have `directed = FALSE`.
+have `directed = FALSE`. Several edges can share a `statement_id`: an
+undirected statement can be listed in both directions, and a statement
+reaches every node with its grounding (see
+[`get_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.md)).
 
 Required node columns: `id`, `entity_type` (e.g. `"protein"`,
 `"ptm_site"`, `"metabolite"`, `"family"`), `entity_name`, `namespace`

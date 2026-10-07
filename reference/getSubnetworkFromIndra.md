@@ -122,7 +122,9 @@ list of 2 data.frames, `nodes` and `edges`, that meets the contract
 checked by
 [`validate_network`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md).
 
-`edges` has one row per INDRA statement: `source`, `target`,
+`edges` has one row per INDRA statement and pair of nodes it connects (a
+statement whose grounding matches several `Protein` rows, such as two
+isoforms of one gene, gives each of them an edge): `source`, `target`,
 `interaction` (INDRA statement type), `directed` (`FALSE` for symmetric
 types such as `Complex`), `site` (PTM site on the target, or `NA`),
 `confidence` (INDRA belief score), `evidence_count`, `evidence_url`

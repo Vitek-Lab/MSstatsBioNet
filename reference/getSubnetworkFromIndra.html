@@ -163,7 +163,10 @@ or <code>"down"</code> (downregulated only).</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>list of 2 data.frames, <code>nodes</code> and <code>edges</code>, that meets
 the contract checked by <code><a href="validate_network.html">validate_network</a></code>.</p>
-<p><code>edges</code> has one row per INDRA statement: <code>source</code>,
+<p><code>edges</code> has one row per INDRA statement and pair of nodes it
+connects (a statement whose grounding matches several <code>Protein</code>
+rows, such as two isoforms of one gene, gives each of them an edge):
+<code>source</code>,
 <code>target</code>, <code>interaction</code> (INDRA statement type),
 <code>directed</code> (<code>FALSE</code> for symmetric types such as
 <code>Complex</code>), <code>site</code> (PTM site on the target, or <code>NA</code>),

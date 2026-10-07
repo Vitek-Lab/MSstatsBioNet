@@ -125,6 +125,16 @@ the backend. Every node the backend returns is matched against all rows,
 so a node in the input gets `measured = TRUE` and its statistics, and a
 node not in the input gets `measured = FALSE` and `NA` statistics.
 
+Each node is one row of `entities` (a PTM site row is drawn on its
+parent protein's node). When several rows share a grounding, e.g. two
+isoforms that both ground to the same gene, or a protein and a protein
+group that contains it, each of their nodes gets the backend's edges,
+with its own statistics. So one backend statement can give several
+edges, and edges can share a `statement_id`. A statement from a
+grounding to itself, such as a homodimer, gives each matching node a
+self-loop, and no edges between those nodes. To count statements rather
+than edges, count unique `backend_database` and `statement_id` pairs.
+
 `get_network()` prints the question it asks as a message, with the
 number of entities, so the query in a saved script or log is readable
 without the documentation.

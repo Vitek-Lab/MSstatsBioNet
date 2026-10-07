@@ -79,7 +79,10 @@ when there are several, or <code>NA</code>), <code>confidence</code> (in [0, 1],
 <code>statement_id</code> (character), <code>backend_database</code>, and
 <code>query_type</code>.
 Edges of the symmetric statement types <code>"Complex"</code> and
-<code>"Association"</code> must have <code>directed = FALSE</code>.</p>
+<code>"Association"</code> must have <code>directed = FALSE</code>. Several edges
+can share a <code>statement_id</code>: an undirected statement can be listed
+in both directions, and a statement reaches every node with its
+grounding (see <code><a href="get_network.html">get_network()</a></code>).</p>
 <p>Required node columns: <code>id</code>, <code>entity_type</code> (e.g.
 <code>"protein"</code>, <code>"ptm_site"</code>, <code>"metabolite"</code>,
 <code>"family"</code>), <code>entity_name</code>, <code>namespace</code> and
