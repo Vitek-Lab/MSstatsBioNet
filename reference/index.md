@@ -37,8 +37,12 @@
   : Export network data with Cytoscape visualization
 - [`filterSubnetworkByContext()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.md)
   : Filter a subnetwork by contextual relevance
+- [`filter_by_curation()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filter_by_curation.md)
+  : Remove evidence curated as incorrect
 - [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
   : Get subnetwork from INDRA database
+- [`get_curations()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_curations.md)
+  : Get the curations of edges from a backend
 - [`get_entity_properties()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_entity_properties.md)
   : Add a backend's properties of each entity
 - [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md)

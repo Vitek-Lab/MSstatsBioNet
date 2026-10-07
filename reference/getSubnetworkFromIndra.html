@@ -136,7 +136,9 @@ as "namespace:identifier", e.g. "HGNC:1234" or "CHEBI:4911".</p></dd>
 
 <dt id="arg-filter-by-curation">filter_by_curation<a class="anchor" aria-label="anchor" href="#arg-filter-by-curation"></a></dt>
 <dd><p>logical, whether to filter out statements that
-have been curated as incorrect in INDRA.  Default is FALSE.</p></dd>
+have been curated as incorrect in INDRA.  Default is FALSE. Runs
+<code><a href="filter_by_curation.html">filter_by_curation()</a></code> with
+<code>min_evidence = evidence_count_cutoff</code>.</p></dd>
 
 
 <dt id="arg-filter-by-ptm-site">filter_by_ptm_site<a class="anchor" aria-label="anchor" href="#arg-filter-by-ptm-site"></a></dt>

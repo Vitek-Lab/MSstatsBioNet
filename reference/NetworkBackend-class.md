@@ -12,7 +12,8 @@ writing methods for the generics.
 ## Details
 
 `IndraBackend` queries INDRA CoGEx for networks and grounds names with
-Gilda, INDRA's grounding service.
+Gilda, INDRA's grounding service. Curations come from the INDRA
+database.
 
 ## Slots
 
@@ -23,6 +24,10 @@ Gilda, INDRA's grounding service.
 - `grounding_url`:
 
   base URL of Gilda
+
+- `curation_url`:
+
+  base URL of the INDRA database, which holds the curations
 
 ## See also
 

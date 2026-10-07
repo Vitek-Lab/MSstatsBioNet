@@ -94,7 +94,9 @@ getSubnetworkFromIndra(
 - filter_by_curation:
 
   logical, whether to filter out statements that have been curated as
-  incorrect in INDRA. Default is FALSE.
+  incorrect in INDRA. Default is FALSE. Runs
+  [`filter_by_curation()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filter_by_curation.md)
+  with `min_evidence = evidence_count_cutoff`.
 
 - filter_by_ptm_site:
 

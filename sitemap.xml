@@ -24,7 +24,9 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/dot-validateAnnotateProteinInfoFromIndraInput.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/filter_by_curation.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/get_curations.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/get_entity_properties.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.html</loc></url>

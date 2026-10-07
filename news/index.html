@@ -58,6 +58,8 @@
 <code><a href="../reference/network_queries.html">?network_queries</a></code> describes the questions a query can ask, with a glossary. <code><a href="../reference/subnetwork_query.html">subnetwork_query()</a></code> is the first; more are planned.</li>
 <li>
 <code>get_evidence(backend, edges)</code> returns the evidence sentences and PubMed IDs behind each edge, looked up by <code>statement_id</code>.</li>
+<li>
+<code>get_curations(backend, edges)</code> counts, for each statement, the evidence curated as incorrect, and <code>filter_by_curation(network,   min_evidence = 1)</code> subtracts it from <code>evidence_count</code>, drops the edges left below <code>min_evidence</code> (and edges left with no evidence), and drops the nodes left without edges. Like <code><a href="../reference/get_evidence.html">get_evidence()</a></code>, it uses the backend named in each edge’s <code>backend_database</code> unless <code>backend</code> is given. <code>indra_backend(curation_url = )</code> sets the INDRA database URL.</li>
 <li>The S4 classes <code>NetworkBackend</code>, <code>IndraBackend</code>, <code>NetworkQuery</code>, and <code>SubnetworkQuery</code> are exported, so other packages can add backends.</li>
 </ul></li>
 <li><p>New function <code><a href="../reference/validate_network.html">validate_network()</a></code> checks a <code>list(nodes, edges)</code> network against the edge and node contract (v1.0): required columns and types, the statement-type and entity-type vocabularies, value ranges, <code>NA</code> statistics on nodes that are not in the input data, and that every edge’s source and target are nodes. It stops with an error listing every problem found.</p></li>
@@ -106,6 +108,8 @@
 <li>
 <code><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code> builds an entity table from <code>input</code>, flags the rows to query with <code><a href="../reference/select_entities.html">select_entities()</a></code>, and passes all rows to <code><a href="../reference/get_network.html">get_network()</a></code>, which matches the nodes INDRA returns against every row. Like <code><a href="../reference/get_network.html">get_network()</a></code>, it now prints the question it asks as a message.</li>
 <li>The context and topic functions get edge evidence through <code><a href="../reference/get_evidence.html">get_evidence()</a></code>. The INDRA evidence lookup now uses the backend’s <code>cogex_url</code> in place of a hard-coded URL. Its output is unchanged.</li>
+<li>
+<code>getSubnetworkFromIndra(filter_by_curation = TRUE)</code> runs <code><a href="../reference/filter_by_curation.html">filter_by_curation()</a></code>. It looks up each statement hash once, where it used to look up every edge, uses the backend’s <code>curation_url</code>, prints how many edges it drops, and also drops edges left with no evidence when <code>evidence_count_cutoff</code> is below 1. The curation lookup reads evidence hashes as character, so two hashes can no longer round to one number and be counted once.</li>
 </ul></div>
 </div>
     <div class="section level2">

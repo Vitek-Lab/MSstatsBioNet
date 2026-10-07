@@ -42,6 +42,16 @@
     is the first; more are planned.
   - `get_evidence(backend, edges)` returns the evidence sentences and
     PubMed IDs behind each edge, looked up by `statement_id`.
+  - `get_curations(backend, edges)` counts, for each statement, the
+    evidence curated as incorrect, and
+    `filter_by_curation(network, min_evidence = 1)` subtracts it from
+    `evidence_count`, drops the edges left below `min_evidence` (and
+    edges left with no evidence), and drops the nodes left without
+    edges. Like
+    [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md),
+    it uses the backend named in each edge’s `backend_database` unless
+    `backend` is given. `indra_backend(curation_url = )` sets the INDRA
+    database URL.
   - The S4 classes `NetworkBackend`, `IndraBackend`, `NetworkQuery`, and
     `SubnetworkQuery` are exported, so other packages can add backends.
 
@@ -241,6 +251,14 @@
   [`get_evidence()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_evidence.md).
   The INDRA evidence lookup now uses the backend’s `cogex_url` in place
   of a hard-coded URL. Its output is unchanged.
+- `getSubnetworkFromIndra(filter_by_curation = TRUE)` runs
+  [`filter_by_curation()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filter_by_curation.md).
+  It looks up each statement hash once, where it used to look up every
+  edge, uses the backend’s `curation_url`, prints how many edges it
+  drops, and also drops edges left with no evidence when
+  `evidence_count_cutoff` is below 1. The curation lookup reads evidence
+  hashes as character, so two hashes can no longer round to one number
+  and be counted once.
 
 ## MSstatsBioNet 0.99.0
 
