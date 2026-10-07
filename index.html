@@ -60,7 +60,7 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>MSstatsBioNet is an R/Bioconductor package for network analysis and enrichment of MSstats differential abundance results in the context of prior-knowledge biomolecular networks. It takes the output of MSstats (or MSstatsTMT / MSstatsPTM) differential abundance analysis, queries network databases for the interactions among the analyzed proteins, and filters, contextualizes, and visualizes the resulting subnetworks. Notably, it integrates with <a href="https://github.com/sorgerlab/indra" class="external-link">INDRA</a>, a database of biological networks assembled from the literature using text mining, enabling interpretation of proteomic and phosphoproteomic results against past published knowledge.</p>
+<p>MSstatsBioNet is an R/Bioconductor package for network analysis and enrichment of MSstats differential abundance results in the context of prior-knowledge biomolecular networks. It takes the output of MSstats (or MSstatsTMT / MSstatsPTM) differential abundance analysis, maps the analytes (proteins, PTM sites, metabolites, lipids, or drugs) to database identifiers, queries network databases for the interactions among them, and filters, contextualizes, and visualizes the resulting subnetworks. Notably, it integrates with <a href="https://github.com/sorgerlab/indra" class="external-link">INDRA</a>, a database of biological networks assembled from the literature using text mining, enabling interpretation of proteomic, phosphoproteomic, and metabolomic results against past published knowledge.</p>
 <p>MSstatsBioNet is part of the <a href="https://github.com/Vitek-Lab/MSstats" class="external-link">MSstats</a> family of packages, developed and maintained by the <a href="https://olga-vitek-lab.khoury.northeastern.edu/" class="external-link">Vitek Lab</a> at Northeastern University. The package and its documentation are also available at <a href="http://msstats.org" class="external-link">msstats.org</a>.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -84,19 +84,30 @@
 <span><span class="va">input</span> <span class="op">&lt;-</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/groupComparisonModel.csv"</span>,</span>
 <span>                                        package <span class="op">=</span> <span class="st">"MSstatsBioNet"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Retrieve the subnetwork of interactions among these proteins from INDRA</span></span>
-<span><span class="va">subnetwork</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra</a></span><span class="op">(</span><span class="va">input</span><span class="op">)</span></span>
+<span><span class="co"># Describe the analytes: here UniProt accessions of proteins. For other</span></span>
+<span><span class="co"># molecules, change entity_type and id_type, e.g. entity_type = "metabolite"</span></span>
+<span><span class="co"># and id_type = "chemical_name" for compound names</span></span>
+<span><span class="va">entities</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/prepare_entities.html">prepare_entities</a></span><span class="op">(</span><span class="va">input</span>, entity_type <span class="op">=</span> <span class="st">"protein"</span>,</span>
+<span>                             id_type <span class="op">=</span> <span class="st">"uniprot"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
+<span><span class="co"># Map the identifiers to INDRA's namespaces and select significant analytes</span></span>
+<span><span class="va">indra</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/indra_backend.html">indra_backend</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">entities</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/convert_ids.html">convert_ids</a></span><span class="op">(</span><span class="va">indra</span>, <span class="va">entities</span><span class="op">)</span></span>
+<span><span class="va">entities</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/select_entities.html">select_entities</a></span><span class="op">(</span><span class="va">entities</span>, pvalue_cutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Retrieve the subnetwork of interactions among the selected analytes</span></span>
+<span><span class="va">network</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_network.html">get_network</a></span><span class="op">(</span><span class="va">indra</span>, <span class="va">entities</span>, <span class="fu"><a href="reference/subnetwork_query.html">subnetwork_query</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Visualize the network (e.g. in Cytoscape, or export to HTML)</span></span>
-<span><span class="fu"><a href="reference/cytoscapeNetwork.html">cytoscapeNetwork</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/cytoscapeNetwork.html">cytoscapeNetwork</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">network</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="input-formats">Input Formats<a class="anchor" aria-label="anchor" href="#input-formats"></a>
 </h2>
-<p>MSstatsBioNet works on <strong>differential abundance results</strong>, not raw search-tool output. Its main entry point, <code><a href="reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra()</a></code>, accepts the <code>ComparisonResult</code> table produced by the group-comparison functions across the MSstats ecosystem:</p>
+<p>MSstatsBioNet works on <strong>differential abundance results</strong>, not raw search-tool output. It accepts the <code>ComparisonResult</code> table produced by the group-comparison functions across the MSstats ecosystem, or any table with one row per analyte in the same format:</p>
 <table class="table">
 <colgroup>
 <col width="50%">
@@ -121,12 +132,44 @@
 </tr>
 </tbody>
 </table>
-<p>The input table provides, per protein and comparison, the log2 fold change, p-value, and adjusted p-value used for filtering and network coloring. UniProt identifiers can be annotated with <code><a href="reference/annotateProteinInfoFromIndra.html">annotateProteinInfoFromIndra()</a></code>.</p>
+<p>The input table provides, per analyte and comparison, the log2 fold change, p-value, and adjusted p-value used for filtering and network coloring. The analyte identifiers are read from the <code>Protein</code> column by default; set <code>id_column</code> in <code><a href="reference/prepare_entities.html">prepare_entities()</a></code> to use another column.</p>
+<p><code><a href="reference/prepare_entities.html">prepare_entities()</a></code> takes the type of each analyte (<code>entity_type</code>) and its identifier system (<code>id_type</code>), either as one value for the whole table or as a column with one value per row, so a single table can mix molecule types. <code><a href="reference/convert_ids.html">convert_ids()</a></code> then maps the identifiers to the backend’s namespaces. With the INDRA backend, the supported combinations are:</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr>
+<th><code>entity_type</code></th>
+<th><code>id_type</code></th>
+<th>Mapped to</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>
+<code>"protein"</code>, <code>"ptm_site"</code>
+</td>
+<td>
+<code>"uniprot"</code>, <code>"uniprot_mnemonic"</code>, <code>"hgnc_symbol"</code>
+</td>
+<td>HGNC</td>
+</tr>
+<tr>
+<td>
+<code>"metabolite"</code>, <code>"lipid"</code>, <code>"drug"</code>
+</td>
+<td><code>"chemical_name"</code></td>
+<td>CHEBI, MESH, PUBCHEM, … (grounded by name with <a href="https://github.com/gyorilab/gilda" class="external-link">Gilda</a>)</td>
+</tr>
+</tbody>
+</table>
+<p><code>backend_capabilities(indra_backend())</code> lists these from R. Entities outside the input, such as unmeasured enzymes or receptors, can be added to a query with <code>get_network(include_entities = )</code>.</p>
 <ul>
 <li>
 <strong>Databases supported:</strong> INDRA</li>
 <li>
-<strong>Filtering options:</strong> p-value filter, context/topic-based filtering (<code><a href="reference/filterSubnetworkByContext.html">filterSubnetworkByContext()</a></code>)</li>
+<strong>Filtering options:</strong> p-value, fold-change, and direction filters (<code><a href="reference/select_entities.html">select_entities()</a></code>), context/topic-based filtering (<code><a href="reference/filterSubnetworkByContext.html">filterSubnetworkByContext()</a></code>)</li>
 <li>
 <strong>Visualization options:</strong> Cytoscape Desktop (<code><a href="reference/cytoscapeNetwork.html">cytoscapeNetwork()</a></code>), in-browser preview (<code><a href="reference/previewNetworkInBrowser.html">previewNetworkInBrowser()</a></code>), standalone HTML export (<code><a href="reference/exportNetworkToHTML.html">exportNetworkToHTML()</a></code>), and Shiny integration (<code><a href="reference/cytoscapeNetworkOutput.html">cytoscapeNetworkOutput()</a></code> / <code><a href="reference/renderCytoscapeNetwork.html">renderCytoscapeNetwork()</a></code>)</li>
 </ul>
@@ -140,6 +183,7 @@
 <li><a href="vignettes/Cytoscape-Visualization.Rmd">Cytoscape visualization</a></li>
 <li><a href="vignettes/Filter-By-Context.Rmd">Filter by context</a></li>
 <li><a href="vignettes/PTM-Analysis.Rmd">PTM analysis</a></li>
+<li><a href="vignettes/Metabolomics-Analysis.Rmd">Metabolomics analysis</a></li>
 <li><a href="http://msstats.org" class="external-link">Official website: msstats.org</a></li>
 <li><a href="https://bioconductor.org/packages/MSstatsBioNet" class="external-link">Bioconductor package page and reference manual</a></li>
 </ul>
