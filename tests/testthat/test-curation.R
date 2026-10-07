@@ -106,6 +106,21 @@ describe(".get_incorrect_curation_count()", {
         expect_equal(get_url(), "https://curation.example.org/curation/list/-123")
     })
 
+    test_that("counts source hashes that differ only beyond double precision apart", {
+        # Both hashes round to the same double (spacing 1024 near 5e18)
+        local_mocked_bindings(
+            GET = function(url, ...) structure(list(), class = "response"),
+            status_code = function(x) 200,
+            content = function(x, ...) paste0(
+                '[{"tag": "hypothesis", "source_hash": -5331350000000000001},',
+                ' {"tag": "polarity", "source_hash": -5331350000000000002},',
+                ' {"tag": "polarity", "source_hash": -5331350000000000002},',
+                ' {"tag": "correct", "source_hash": -5331350000000000003}]')
+        )
+        expect_identical(-5331350000000000001, -5331350000000000002)
+        expect_equal(.get_incorrect_curation_count("111"), 2)
+    })
+
     test_that("counts 0 when a statement has no curations", {
         .mock_curation_response(environment(), list())
         expect_equal(.get_incorrect_curation_count("111"), 0)

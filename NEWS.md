@@ -177,7 +177,9 @@ hard-coded URL. Its output is unchanged.
 `filter_by_curation()`. It looks up each statement hash once, where it used
 to look up every edge, uses the backend's `curation_url`, prints how many
 edges it drops, and also drops edges left with no evidence when
-`evidence_count_cutoff` is below 1.
+`evidence_count_cutoff` is below 1. The curation lookup reads evidence
+hashes as character, so two hashes can no longer round to one number and
+be counted once.
 
 # MSstatsBioNet 0.99.0
 
