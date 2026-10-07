@@ -1,0 +1,244 @@
+---
+title: "Metabolomics Analysis"
+author: "Anthony Wu"
+package: MSstatsBioNet
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{MSstatsBioNet: Metabolomics Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>"
+)
+```
+
+# Installation
+
+Run this code below to install MSstatsBioNet from bioconductor
+
+```{r eval = FALSE}
+if (!require("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
+
+BiocManager::install("MSstatsBioNet")
+```
+
+# Purpose of this vignette
+
+`MSstatsBioNet` is not limited to proteins. This vignette shows how to take differential abundance results for small molecules (metabolites, drugs, and drug metabolites), ground the compound names to database identifiers, and place them in a network of prior knowledge from INDRA together with the proteins they are known to interact with.
+
+# Dataset
+
+We will be taking a subset of the dataset found in this [paper](https://doi.org/10.1371/journal.pone.0271794) (Panitchpakdi et al., PLOS ONE 2022). Healthy volunteers took a single oral dose of the antihistamine diphenhydramine, and plasma and skin swabs were sampled over a time course and profiled by untargeted LC-MS/MS metabolomics. The raw data are public on MassIVE under accession [MSV000085944](https://massive.ucsd.edu/ProteoSAFe/dataset.jsp?accession=MSV000085944).
+
+The table is the output of the MSstats function `groupComparison` for the comparison of 480 minutes after the dose against baseline (`480m vs 0m`). MSstats names the analyte column `Protein`. Since each analyte here is a compound, the column has been renamed to `Analyte`. The subset holds 25 compounds: diphenhydramine and its metabolites, a few endogenous metabolites such as bile acids, and some unannotated features.
+
+```{r}
+input = data.table::fread(system.file(
+    "extdata/panitchpakdi-2022.csv",
+    package = "MSstatsBioNet"
+))
+knitr::kable(head(input[, .(Analyte, Label, log2FC, adj.pvalue, issue)]))
+```
+
+Compounds named after the drug have some of the largest fold changes, as expected 8 hours after the dose.
+
+```{r}
+input[grepl("diphenhydramine|DIP_", Analyte, ignore.case = TRUE),
+      .(Analyte, log2FC, adj.pvalue)]
+```
+
+Rows with `issue == "oneConditionMissing"` were detected in only one of the two time points, so their `log2FC` is `Inf` or `-Inf`.
+
+```{r}
+table(input$issue, useNA = "ifany")
+```
+
+# Building the entity table
+
+The network functions work on an entity table with one row per analyte. `prepare_entities` builds it from the `groupComparison` output. It needs the column holding the analyte identifiers (`id_column`, `"Protein"` by default, so here `"Analyte"`), the type of each analyte (`entity_type`), and the identifier system of that column (`id_type`). Here the identifiers are compound names, so `id_type = "chemical_name"`.
+
+Both arguments take either one value for every row, or the name of a column holding one value per row. We mark diphenhydramine as a `"drug"` and every other compound as a `"metabolite"`, so that the drug gets its own shape in the network.
+
+```{r}
+library(MSstatsBioNet)
+input$entity_type <- ifelse(input$Analyte == "Diphenhydramine",
+                            "drug", "metabolite")
+entities <- prepare_entities(input,
+                             id_column = "Analyte",
+                             entity_type = "entity_type",
+                             id_type = "chemical_name")
+knitr::kable(head(entities[, c("id", "entity_type", "id_type", "logFC",
+                               "adj.pvalue")]))
+```
+
+The table keeps every compound, not only the significant ones, so that the network can later recognize which of its nodes were measured.
+
+# ID Conversion
+
+INDRA identifies a compound by a database identifier such as a ChEBI ID, not by its name. A backend converts names to identifiers. `indra_backend()` creates a backend for INDRA, and `backend_capabilities` lists the conversions it supports.
+
+```{r}
+indra <- indra_backend()
+backend_capabilities(indra)$id_conversions
+```
+
+For metabolites, lipids, and drugs, INDRA's backend grounds each `chemical_name` with [Gilda](https://github.com/gyorilab/gilda), INDRA's grounding service, and keeps whichever namespace Gilda returns (CHEBI, MESH, PUBCHEM, ...). `convert_ids` fills in the `namespace`, `entity_id`, and `entity_name` columns.
+
+So that this vignette builds without network access, the chunks that call Gilda and INDRA (`convert_ids` and `get_network`) are not run when the vignette is built. Their results were saved with `inst/script/panitchpakdi-2022-network.R` and are loaded from `extdata/panitchpakdi-2022-network.rds` instead. The output below comes from those saved results.
+
+```{r, include = FALSE}
+saved <- readRDS(system.file(
+    "extdata/panitchpakdi-2022-network.rds",
+    package = "MSstatsBioNet"
+))
+```
+
+```{r, eval = FALSE}
+entities <- convert_ids(indra, entities)
+```
+
+```{r, include = FALSE}
+entities <- saved$entities
+```
+
+```{r}
+knitr::kable(entities[, c("id", "namespace", "entity_id", "entity_name")])
+```
+
+A few things to note in the output:
+
+- Diphenhydramine grounds to `CHEBI:4636`, and its N-demethylated metabolite grounds to its own ChEBI entry.
+- Features named only by mass and retention time (e.g. `330.2274_2.75`) and predicted biotransformation products (e.g. `BT-HUMAN-Step2: Diphenhydramine [CARBONYL_REDUCTION]`) have no grounding (`NA`). They stay in the table but will be left out of the network.
+- A name can ground to more than one candidate. Glycochenodeoxycholic acid matches two ChEBI entries, so its `namespace`, `entity_id`, and `entity_name` hold semicolon-joined values in the same order. The network query uses all candidates.
+
+```{r}
+table(grounded = !is.na(entities$entity_id))
+```
+
+# Selecting Compounds
+
+`select_entities` flags the compounds to send to INDRA by setting `included_in_query`. Here we keep compounds with an adjusted p-value below 0.05.
+
+```{r}
+selected <- select_entities(entities, pvalue_cutoff = 0.05)
+table(selected$included_in_query)
+```
+
+Compounds with an infinite fold change are never selected by the cutoffs, because their p-values are not computed from a model. We come back to them below.
+
+# Network Query
+
+## Measured compounds only
+
+`get_network` sends the selected compounds to the backend and returns `nodes` and `edges` tables. `subnetwork_query()` asks how the selected compounds are connected to each other, with no other nodes added. It prints this question as a message.
+
+```{r, eval = FALSE}
+network <- get_network(indra, selected, subnetwork_query())
+#> Dropping 4 row(s) with no entity grounding (NA entity_id).
+#> INDRA subnetwork: how are 7 selected entities connected to each other, with no other nodes added?
+```
+
+```{r, include = FALSE}
+network <- saved$network_compounds
+```
+
+```{r}
+knitr::kable(network$nodes[, c("id", "entity_name", "namespace",
+                               "entity_id", "logFC")])
+knitr::kable(network$edges[, c("source", "target", "interaction",
+                               "evidence_count")])
+```
+
+The literature rarely describes one small molecule acting on another directly, so the network is small. Here only the two glycine-conjugated bile acids are connected.
+
+## Adding proteins with `include_entities`
+
+Compounds are usually connected through proteins: the enzymes that make or break them down, the transporters that move them, and the receptors they act on. These proteins are not measured in a metabolomics experiment, but they can be added to the query with the `include_entities` argument of `get_network`, using `"namespace:identifier"` IDs. Here we add:
+
+- `HGNC:5182` (HRH1), the histamine H1 receptor that diphenhydramine blocks,
+- `HGNC:2625` (CYP2D6), the main cytochrome P450 that metabolizes diphenhydramine,
+- `HGNC:7967` (NR1H4, also known as FXR), the nuclear receptor for bile acids.
+
+```{r}
+proteins <- c("HGNC:5182", "HGNC:2625", "HGNC:7967")
+```
+
+```{r, eval = FALSE}
+network <- get_network(indra, selected, subnetwork_query(),
+                       include_entities = proteins)
+#> Dropping 4 row(s) with no entity grounding (NA entity_id).
+#> INDRA subnetwork: how are 7 selected entities and 3 added entities connected to each other, with no other nodes added?
+```
+
+```{r, include = FALSE}
+network <- saved$network
+```
+
+```{r}
+knitr::kable(network$nodes[, c("id", "entity_type", "measured", "logFC")])
+knitr::kable(head(network$edges[, c("source", "target", "interaction",
+                                    "evidence_count")], 10))
+```
+
+The added proteins have `measured = FALSE` and no statistics, because they match no row of the entity table. The network now links diphenhydramine to HRH1 and CYP2D6, and the bile acids to FXR.
+
+`validate_network` checks that the network meets the contract that the visualization and filtering functions expect. It returns the network invisibly when it does, and gives an error listing the problems when it does not.
+
+```{r}
+validate_network(network)
+```
+
+## Compounds detected at one time point only
+
+Set `include_infinite_fc = TRUE` in `select_entities` to also select compounds with an infinite fold change. Note that a compound detected at only one time point may be at the detection limit at the other, so treat these compounds with more caution.
+
+```{r}
+selected_inf <- select_entities(entities, pvalue_cutoff = 0.05,
+                                include_infinite_fc = TRUE)
+table(selected_inf$included_in_query)
+```
+
+```{r, eval = FALSE}
+network_inf <- get_network(indra, selected_inf, subnetwork_query(),
+                           include_entities = proteins)
+#> Dropping 4 row(s) with no entity grounding (NA entity_id).
+#> INDRA subnetwork: how are 21 selected entities and 3 added entities connected to each other, with no other nodes added?
+```
+
+```{r, include = FALSE}
+network_inf <- saved$network_inf
+```
+
+```{r}
+setdiff(network_inf$nodes$id, network$nodes$id)
+```
+
+This package is distributed under the [Artistic-2.0](https://opensource.org/licenses/Artistic-2.0) license. However, its dependencies may have different licenses. In this example, get_network with the INDRA backend depends on INDRA, which is distributed under the [BSD 2-Clause](https://opensource.org/license/bsd-2-clause) license. Furthermore, INDRA's knowledge sources may have different licenses for commercial applications. Please refer to the [INDRA README](https://github.com/sorgerlab/indra?tab=readme-ov-file#indra-modules) for more information on its knowledge sources and their associated licenses.
+
+# Network Visualization
+
+`cytoscapeNetwork` draws the network. The shape of a node comes from its `entity_type`: diphenhydramine is a diamond, the other metabolites are hexagons, and proteins are rounded rectangles. Proteins added through `include_entities` have no fill and a dashed border, because they were not measured. Click an edge to open its INDRA evidence.
+
+```{r}
+cytoscapeNetwork(network$nodes, network$edges,
+                 displayLabelType = "entity_name")
+```
+
+To open the network in a browser instead, use `previewNetworkInBrowser`.
+
+```{r eval = FALSE}
+previewNetworkInBrowser(network$nodes, network$edges,
+                        displayLabelType = "entity_name")
+```
+
+# Session info
+
+```{r}
+sessionInfo()
+```
