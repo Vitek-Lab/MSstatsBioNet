@@ -90,8 +90,24 @@ backend_capabilities(indra)$id_conversions
 
 For metabolites, lipids, and drugs, INDRA's backend grounds each `chemical_name` with [Gilda](https://github.com/gyorilab/gilda), INDRA's grounding service, and keeps whichever namespace Gilda returns (CHEBI, MESH, PUBCHEM, ...). `convert_ids` fills in the `namespace`, `entity_id`, and `entity_name` columns.
 
-```{r}
+So that this vignette builds without network access, the chunks that call Gilda and INDRA (`convert_ids` and `get_network`) are not run when the vignette is built. Their results were saved with `inst/script/panitchpakdi-2022-network.R` and are loaded from `extdata/panitchpakdi-2022-network.rds` instead. The output below comes from those saved results.
+
+```{r, include = FALSE}
+saved <- readRDS(system.file(
+    "extdata/panitchpakdi-2022-network.rds",
+    package = "MSstatsBioNet"
+))
+```
+
+```{r, eval = FALSE}
 entities <- convert_ids(indra, entities)
+```
+
+```{r, include = FALSE}
+entities <- saved$entities
+```
+
+```{r}
 knitr::kable(entities[, c("id", "namespace", "entity_id", "entity_name")])
 ```
 
@@ -122,8 +138,17 @@ Compounds with an infinite fold change are never selected by the cutoffs, becaus
 
 `get_network` sends the selected compounds to the backend and returns `nodes` and `edges` tables. `subnetwork_query()` asks how the selected compounds are connected to each other, with no other nodes added. It prints this question as a message.
 
-```{r}
+```{r, eval = FALSE}
 network <- get_network(indra, selected, subnetwork_query())
+#> Dropping 4 row(s) with no entity grounding (NA entity_id).
+#> INDRA subnetwork: how are 7 selected entities connected to each other, with no other nodes added?
+```
+
+```{r, include = FALSE}
+network <- saved$network_compounds
+```
+
+```{r}
 knitr::kable(network$nodes[, c("id", "entity_name", "namespace",
                                "entity_id", "logFC")])
 knitr::kable(network$edges[, c("source", "target", "interaction",
@@ -142,8 +167,20 @@ Compounds are usually connected through proteins: the enzymes that make or break
 
 ```{r}
 proteins <- c("HGNC:5182", "HGNC:2625", "HGNC:7967")
+```
+
+```{r, eval = FALSE}
 network <- get_network(indra, selected, subnetwork_query(),
                        include_entities = proteins)
+#> Dropping 4 row(s) with no entity grounding (NA entity_id).
+#> INDRA subnetwork: how are 7 selected entities and 3 added entities connected to each other, with no other nodes added?
+```
+
+```{r, include = FALSE}
+network <- saved$network
+```
+
+```{r}
 knitr::kable(network$nodes[, c("id", "entity_type", "measured", "logFC")])
 knitr::kable(head(network$edges[, c("source", "target", "interaction",
                                     "evidence_count")], 10))
@@ -164,8 +201,21 @@ Set `include_infinite_fc = TRUE` in `select_entities` to also select compounds w
 ```{r}
 selected_inf <- select_entities(entities, pvalue_cutoff = 0.05,
                                 include_infinite_fc = TRUE)
+table(selected_inf$included_in_query)
+```
+
+```{r, eval = FALSE}
 network_inf <- get_network(indra, selected_inf, subnetwork_query(),
                            include_entities = proteins)
+#> Dropping 4 row(s) with no entity grounding (NA entity_id).
+#> INDRA subnetwork: how are 21 selected entities and 3 added entities connected to each other, with no other nodes added?
+```
+
+```{r, include = FALSE}
+network_inf <- saved$network_inf
+```
+
+```{r}
 setdiff(network_inf$nodes$id, network$nodes$id)
 ```
 
