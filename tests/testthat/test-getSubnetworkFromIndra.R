@@ -321,18 +321,108 @@ test_that("a node is matched to the rows in the query before other rows", {
     expect_setequal(subnetwork$nodes$id, c("A", "B"))
 })
 
-test_that("a node matching rows of several nodes keeps INDRA's name and NA statistics", {
-    input <- .make_annotated_input(c("A1", "A2", "B"), "HGNC", c("1", "1", "2"))
+test_that("rows that share a grounding each get the edge, with their own statistics", {
+    # A1 and A2 are two isoforms of one gene
+    input <- .make_annotated_input(c("A1", "A2", "B"), "HGNC", c("1", "1", "2"),
+                                   log2FC = c(2, -1.5, 1))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"),
+                        hash = "7", evidence_count = 3L))
+    expect_no_message(
+        subnetwork <- .run_with_statements(input, statements),
+        message = "several nodes")
+    edges <- subnetwork$edges
+    expect_equal(edges$source, c("A1", "A2"))
+    expect_equal(edges$target, c("B", "B"))
+    expect_equal(edges$statement_id, c("7", "7"))
+    expect_equal(edges$evidence_count, c(3L, 3L))
+    nodes <- subnetwork$nodes
+    expect_setequal(nodes$id, c("A1", "A2", "B"))
+    expect_true(all(nodes$measured))
+    expect_true(all(nodes$node_role == "passed_cutoffs"))
+    expect_equal(nodes$logFC[match(c("A1", "A2"), nodes$id)], c(2, -1.5))
+    expect_silent(validate_network(subnetwork))
+})
+
+test_that("a protein group and a protein in it each get the edge", {
+    input <- .make_annotated_input(c("A;C", "A", "B"),
+                                   c("HGNC;HGNC", "HGNC", "HGNC"),
+                                   c("1;3", "1", "2"))
     statements <- list(
         .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB")))
-    expect_message(
-        subnetwork <- .run_with_statements(input, statements),
-        "1 node\\(s\\) from the backend match entities of several nodes.*GENEA")
-    ambiguous_node <- subnetwork$nodes[subnetwork$nodes$id == "GENEA", ]
-    expect_true(ambiguous_node$measured)
-    expect_true(is.na(ambiguous_node$logFC))
-    expect_equal(ambiguous_node$node_role, "passed_cutoffs")
+    subnetwork <- .run_with_statements(input, statements)
+    expect_equal(subnetwork$edges$source, c("A;C", "A"))
+    expect_equal(subnetwork$edges$target, c("B", "B"))
+    expect_setequal(subnetwork$nodes$id, c("A;C", "A", "B"))
     expect_silent(validate_network(subnetwork))
+})
+
+test_that("a statement between two shared groundings connects every pair of their nodes", {
+    input <- .make_annotated_input(c("A1", "A2", "B1", "B2"), "HGNC",
+                                   c("1", "1", "2", "2"))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB")))
+    edges <- .run_with_statements(input, statements)$edges
+    expect_equal(paste(edges$source, edges$target),
+                 c("A1 B1", "A1 B2", "A2 B1", "A2 B2"))
+})
+
+test_that("a statement from a shared grounding to itself gives self-loops only", {
+    # A TP53 homodimer doesn't say that two TP53 isoforms bind each other
+    input <- .make_annotated_input(c("A1", "A2", "B"), "HGNC", c("1", "1", "2"))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "1", "GENEA"),
+                        stmt_type = "Complex", hash = "1"),
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"),
+                        hash = "2"))
+    subnetwork <- .run_with_statements(input, statements)
+    edges <- subnetwork$edges
+    self_edges <- edges[edges$statement_id == "1", ]
+    expect_equal(self_edges$source, c("A1", "A2"))
+    expect_equal(self_edges$target, c("A1", "A2"))
+    expect_silent(validate_network(subnetwork))
+})
+
+test_that("rows that share a grounding each get an edge to a latent node", {
+    input <- .make_annotated_input(c("A1", "A2"), "HGNC", c("1", "1"))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "99", "GENEZ")))
+    subnetwork <- .run_with_statements(input, statements,
+                                       force_include_other = "HGNC:99")
+    expect_equal(subnetwork$edges$source, c("A1", "A2"))
+    expect_equal(subnetwork$edges$target, c("GENEZ", "GENEZ"))
+    latent <- subnetwork$nodes[subnetwork$nodes$id == "GENEZ", ]
+    expect_equal(nrow(latent), 1)
+    expect_false(latent$measured)
+})
+
+test_that("evidence and curation follow every edge of a statement shared by several nodes", {
+    input <- .make_annotated_input(c("A1", "A2", "B"), "HGNC", c("1", "1", "2"))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"),
+                        hash = "7", evidence_count = 1L),
+        .make_statement(c("HGNC", "2", "GENEB"), c("HGNC", "1", "GENEA"),
+                        hash = "8", evidence_count = 1L))
+    subnetwork <- .run_with_statements(input, statements)
+    requested_hashes <- NULL
+    local_mocked_bindings(
+        .query_indra_evidence = function(stmt_hashes, cogex_url, ...) {
+            requested_hashes <<- stmt_hashes
+            list("7" = list(list(text = "A binds B", pmid = "11")),
+                 "8" = list(list(text = "B activates A", pmid = "12")))
+        },
+        .get_incorrect_curation_count = function(statement_id, curation_url) {
+            c("7" = 1, "8" = 0)[[statement_id]]
+        }
+    )
+    evidence <- suppressMessages(get_evidence(indra_backend(),
+                                              subnetwork$edges))
+    expect_setequal(requested_hashes, c("7", "8"))
+    expect_equal(evidence$source[evidence$statement_id == "7"], c("A1", "A2"))
+    filtered <- suppressMessages(filter_by_curation(subnetwork))
+    expect_equal(unique(filtered$edges$statement_id), "8")
+    expect_equal(nrow(filtered$edges), 2)
+    expect_silent(validate_network(filtered))
 })
 
 test_that("statements between identifiers shared by two namespaces stay separate edges", {

@@ -66,8 +66,7 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
 #'
 #' \describe{
 #'   \item{latent}{\code{measured = FALSE}: not in the input data}
-#'   \item{no_logfc}{in the input, but \code{logFC} is \code{NA}, e.g. a
-#'     node that matches the rows of several nodes}
+#'   \item{no_logfc}{in the input, but \code{logFC} is \code{NA}}
 #'   \item{not_queried}{in the input, but \code{included_in_query = FALSE}}
 #'   \item{measured}{everything else}
 #' }

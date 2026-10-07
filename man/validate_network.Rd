@@ -29,7 +29,10 @@ when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 \code{statement_id} (character), \code{backend_database}, and
 \code{query_type}.
 Edges of the symmetric statement types \code{"Complex"} and
-\code{"Association"} must have \code{directed = FALSE}.
+\code{"Association"} must have \code{directed = FALSE}. Several edges
+can share a \code{statement_id}: an undirected statement can be listed
+in both directions, and a statement reaches every node with its
+grounding (see \code{\link{get_network}()}).
 
 Required node columns: \code{id}, \code{entity_type} (e.g.
 \code{"protein"}, \code{"ptm_site"}, \code{"metabolite"},

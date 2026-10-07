@@ -54,7 +54,10 @@
 #' @return list of 2 data.frames, \code{nodes} and \code{edges}, that meets
 #' the contract checked by \code{\link{validate_network}}.
 #'
-#' \code{edges} has one row per INDRA statement: \code{source},
+#' \code{edges} has one row per INDRA statement and pair of nodes it
+#' connects (a statement whose grounding matches several \code{Protein}
+#' rows, such as two isoforms of one gene, gives each of them an edge):
+#' \code{source},
 #' \code{target}, \code{interaction} (INDRA statement type),
 #' \code{directed} (\code{FALSE} for symmetric types such as
 #' \code{Complex}), \code{site} (PTM site on the target, or \code{NA}),
