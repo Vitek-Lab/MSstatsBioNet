@@ -1,4 +1,4 @@
-Protein,Label,log2FC,SE,Tvalue,DF,pvalue,adj.pvalue,issue,MissingPercentage,ImputationPercentage
+Analyte,Label,log2FC,SE,Tvalue,DF,pvalue,adj.pvalue,issue,MissingPercentage,ImputationPercentage
 "1,7-bis(4-hydroxyphenyl)-5-[(2R,3R,4S,5S,6R)-3,4,5-trihydroxy-6-(hydroxymethyl)oxan-2-yl]oxyheptan-3-one",480m vs 0m,Inf,,,,,0,oneConditionMissing,0.928571428571429,0
 19-Hydroxy-PGF,480m vs 0m,-Inf,,,,,0,oneConditionMissing,0.928571428571429,0
 2-[(2-carboxyethyl)amino]propanoic acid,480m vs 0m,-Inf,,,,,0,oneConditionMissing,0.928571428571429,0

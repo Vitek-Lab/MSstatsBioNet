@@ -36,21 +36,21 @@ BiocManager::install("MSstatsBioNet")
 
 We will be taking a subset of the dataset found in this [paper](https://doi.org/10.1371/journal.pone.0271794) (Panitchpakdi et al., PLOS ONE 2022). Healthy volunteers took a single oral dose of the antihistamine diphenhydramine, and plasma and skin swabs were sampled over a time course and profiled by untargeted LC-MS/MS metabolomics. The raw data are public on MassIVE under accession [MSV000085944](https://massive.ucsd.edu/ProteoSAFe/dataset.jsp?accession=MSV000085944).
 
-The table is the output of the MSstats function `groupComparison` for the comparison of 480 minutes after the dose against baseline (`480m vs 0m`). Following the MSstats convention, the analyte is in the `Protein` column, even though here each analyte is a compound. The subset holds 25 compounds: diphenhydramine and its metabolites, a few endogenous metabolites such as bile acids, and some unannotated features.
+The table is the output of the MSstats function `groupComparison` for the comparison of 480 minutes after the dose against baseline (`480m vs 0m`). MSstats names the analyte column `Protein`. Since each analyte here is a compound, the column has been renamed to `Analyte`. The subset holds 25 compounds: diphenhydramine and its metabolites, a few endogenous metabolites such as bile acids, and some unannotated features.
 
 ```{r}
 input = data.table::fread(system.file(
     "extdata/panitchpakdi-2022.csv",
     package = "MSstatsBioNet"
 ))
-knitr::kable(head(input[, .(Protein, Label, log2FC, adj.pvalue, issue)]))
+knitr::kable(head(input[, .(Analyte, Label, log2FC, adj.pvalue, issue)]))
 ```
 
 Compounds named after the drug have some of the largest fold changes, as expected 8 hours after the dose.
 
 ```{r}
-input[grepl("diphenhydramine|DIP_", Protein, ignore.case = TRUE),
-      .(Protein, log2FC, adj.pvalue)]
+input[grepl("diphenhydramine|DIP_", Analyte, ignore.case = TRUE),
+      .(Analyte, log2FC, adj.pvalue)]
 ```
 
 Rows with `issue == "oneConditionMissing"` were detected in only one of the two time points, so their `log2FC` is `Inf` or `-Inf`.
@@ -61,15 +61,16 @@ table(input$issue, useNA = "ifany")
 
 # Building the entity table
 
-The network functions work on an entity table with one row per analyte. `prepare_entities` builds it from the `groupComparison` output. It needs the type of each analyte (`entity_type`) and the identifier system of the `Protein` column (`id_type`). Here the identifiers are compound names, so `id_type = "chemical_name"`.
+The network functions work on an entity table with one row per analyte. `prepare_entities` builds it from the `groupComparison` output. It needs the column holding the analyte identifiers (`id_column`, `"Protein"` by default, so here `"Analyte"`), the type of each analyte (`entity_type`), and the identifier system of that column (`id_type`). Here the identifiers are compound names, so `id_type = "chemical_name"`.
 
 Both arguments take either one value for every row, or the name of a column holding one value per row. We mark diphenhydramine as a `"drug"` and every other compound as a `"metabolite"`, so that the drug gets its own shape in the network.
 
 ```{r}
 library(MSstatsBioNet)
-input$entity_type <- ifelse(input$Protein == "Diphenhydramine",
+input$entity_type <- ifelse(input$Analyte == "Diphenhydramine",
                             "drug", "metabolite")
 entities <- prepare_entities(input,
+                             id_column = "Analyte",
                              entity_type = "entity_type",
                              id_type = "chemical_name")
 knitr::kable(head(entities[, c("id", "entity_type", "id_type", "logFC",
