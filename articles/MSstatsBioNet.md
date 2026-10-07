@@ -40,23 +40,23 @@ input = data.table::fread(system.file(
 
 library(MSstatsConvert)
 msstats_imported = FragPipetoMSstatsFormat(input, use_log_file = FALSE)
-#> INFO  [2026-10-07 16:25:19] ** Raw data from FragPipe imported successfully.
-#> INFO  [2026-10-07 16:25:19] ** Using annotation extracted from quantification data.
-#> INFO  [2026-10-07 16:25:19] ** Run labels were standardized to remove symbols such as '.' or '%'.
-#> INFO  [2026-10-07 16:25:19] ** The following options are used:
+#> INFO  [2026-10-07 18:32:56] ** Raw data from FragPipe imported successfully.
+#> INFO  [2026-10-07 18:32:56] ** Using annotation extracted from quantification data.
+#> INFO  [2026-10-07 18:32:56] ** Run labels were standardized to remove symbols such as '.' or '%'.
+#> INFO  [2026-10-07 18:32:56] ** The following options are used:
 #>   - Features will be defined by the columns: PeptideSequence, PrecursorCharge, FragmentIon, ProductCharge
 #>   - Shared peptides will be removed.
 #>   - Proteins with single feature will not be removed.
 #>   - Features with less than 3 measurements across runs will be removed.
-#> INFO  [2026-10-07 16:25:19] ** Features with all missing measurements across runs are removed.
-#> INFO  [2026-10-07 16:25:19] ** Shared peptides are removed.
-#> INFO  [2026-10-07 16:25:19] ** Multiple measurements in a feature and a run are summarized by summaryforMultipleRows: max
-#> INFO  [2026-10-07 16:25:19] ** Features with one or two measurements across runs are removed.
-#> INFO  [2026-10-07 16:25:19] ** Run annotation merged with quantification data.
-#> INFO  [2026-10-07 16:25:19] ** Features with one or two measurements across runs are removed.
-#> INFO  [2026-10-07 16:25:19] ** Fractionation handled.
-#> INFO  [2026-10-07 16:25:19] ** Updated quantification data to make balanced design. Missing values are marked by NA
-#> INFO  [2026-10-07 16:25:19] ** Finished preprocessing. The dataset is ready to be processed by the dataProcess function.
+#> INFO  [2026-10-07 18:32:56] ** Features with all missing measurements across runs are removed.
+#> INFO  [2026-10-07 18:32:56] ** Shared peptides are removed.
+#> INFO  [2026-10-07 18:32:56] ** Multiple measurements in a feature and a run are summarized by summaryforMultipleRows: max
+#> INFO  [2026-10-07 18:32:56] ** Features with one or two measurements across runs are removed.
+#> INFO  [2026-10-07 18:32:56] ** Run annotation merged with quantification data.
+#> INFO  [2026-10-07 18:32:56] ** Features with one or two measurements across runs are removed.
+#> INFO  [2026-10-07 18:32:56] ** Fractionation handled.
+#> INFO  [2026-10-07 18:32:56] ** Updated quantification data to make balanced design. Missing values are marked by NA
+#> INFO  [2026-10-07 18:32:56] ** Finished preprocessing. The dataset is ready to be processed by the dataProcess function.
 head(msstats_imported)
 #>   ProteinName PeptideSequence PrecursorCharge FragmentIon ProductCharge
 #> 1      P05023   AVAGDASESALLK               2         b12             1
@@ -99,35 +99,35 @@ library(MSstats)
 #> 
 #>     savePlot
 QuantData <- dataProcess(msstats_imported, use_log_file = FALSE)
-#> INFO  [2026-10-07 16:25:20] ** Log2 intensities under cutoff = 9.2885  were considered as censored missing values.
-#> INFO  [2026-10-07 16:25:20] ** Log2 intensities = NA were considered as censored missing values.
-#> INFO  [2026-10-07 16:25:20] ** Use top100 features that have highest average of log2(intensity) across runs.
-#> INFO  [2026-10-07 16:25:20] 
+#> INFO  [2026-10-07 18:32:58] ** Log2 intensities under cutoff = 9.2885  were considered as censored missing values.
+#> INFO  [2026-10-07 18:32:58] ** Log2 intensities = NA were considered as censored missing values.
+#> INFO  [2026-10-07 18:32:58] ** Use top100 features that have highest average of log2(intensity) across runs.
+#> INFO  [2026-10-07 18:32:58] 
 #>  # proteins: 10
 #>  # peptides per protein: 1-8
 #>  # features per peptide: 7-12
-#> INFO  [2026-10-07 16:25:20] 
+#> INFO  [2026-10-07 18:32:58] 
 #>                     NAT T
 #>              # runs   5 5
 #>     # bioreplicates   5 5
 #>  # tech. replicates   1 1
-#> INFO  [2026-10-07 16:25:20] Some features are completely missing in at least one condition:  
+#> INFO  [2026-10-07 18:32:58] Some features are completely missing in at least one condition:  
 #>  ELEAEIQQLR_2_b5_1,
 #>  ELEAEIQQLR_2_b8_1,
 #>  NLEAVETLGSTSTIC(UniMod:4)SDK_3_b13_2,
 #>  NLEAVETLGSTSTIC(UniMod:4)SDK_3_b3_1,
 #>  NLEAVETLGSTSTIC(UniMod:4)SDK_3_b4_1 ...
-#> INFO  [2026-10-07 16:25:20]  == Start the summarization per subplot...
+#> INFO  [2026-10-07 18:32:58]  == Start the summarization per subplot...
 #>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
-#> INFO  [2026-10-07 16:25:21]  == Summarization is done.
+#> INFO  [2026-10-07 18:32:58]  == Summarization is done.
 model <- groupComparison(
     contrast.matrix = "pairwise",
     data = QuantData,
     use_log_file = FALSE
 )
-#> INFO  [2026-10-07 16:25:21]  == Start to test and get inference in whole plot ...
+#> INFO  [2026-10-07 18:32:58]  == Start to test and get inference in whole plot ...
 #>   |                                                                              |                                                                      |   0%  |                                                                              |=======                                                               |  10%  |                                                                              |==============                                                        |  20%  |                                                                              |=====================                                                 |  30%  |                                                                              |============================                                          |  40%  |                                                                              |===================================                                   |  50%  |                                                                              |==========================================                            |  60%  |                                                                              |=================================================                     |  70%  |                                                                              |========================================================              |  80%  |                                                                              |===============================================================       |  90%  |                                                                              |======================================================================| 100%
-#> INFO  [2026-10-07 16:25:21]  == Comparisons for all proteins are done.
+#> INFO  [2026-10-07 18:32:58]  == Comparisons for all proteins are done.
 head(model$ComparisonResult)
 #>   Protein    Label     log2FC        SE     Tvalue DF       pvalue  adj.pvalue
 #> 1  O00217 NAT vs T  2.0285031 0.4364177   4.648077  4 0.0096753522 0.013821932
