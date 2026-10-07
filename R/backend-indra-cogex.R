@@ -122,10 +122,10 @@
     edge$evidence_url <- .indraStatementUrl(edge$statement_id)
     # Map the statement's source and target back to the nodes of their
     # entity rows, matching namespace and identifier, so a multi-grounded row
-    # is found by any of its groundings.
-    edge$source_node_id <- .find_node_id_for_grounding(
+    # is found by any of its groundings. A grounding can match several nodes.
+    edge$source_node_ids <- .find_node_ids_for_grounding(
         grounding_lookup, edge$source_ns, edge$source_id, edge$source_name)
-    edge$target_node_id <- .find_node_id_for_grounding(
+    edge$target_node_ids <- .find_node_ids_for_grounding(
         grounding_lookup, edge$target_ns, edge$target_id, edge$target_name)
     return(edge)
 }
@@ -193,8 +193,8 @@
     statements <- lapply(keys(res), function(x) query(res, x))
     interaction <- vapply(statements, function(x) x$data$stmt_type, "")
     edges <- data.frame(
-        source = vapply(statements, function(x) x$source_node_id, ""),
-        target = vapply(statements, function(x) x$target_node_id, ""),
+        source = character(length(statements)),
+        target = character(length(statements)),
         interaction = interaction,
         directed = !interaction %in% UNDIRECTED_INTERACTION_TYPES,
         site = vapply(statements, function(x) x$site, ""),
@@ -214,7 +214,44 @@
         paperCount = vapply(statements, function(x) x$data$paper_count, 1),
         stringsAsFactors = FALSE
     )
-    return(edges)
+    .fan_out_edges(edges, statements)
+}
+
+#' Give an edge to every pair of nodes its statement connects
+#'
+#' A statement whose source or target grounding matches several nodes
+#' becomes one edge per (source node, target node) pair. The copies share
+#' the statement's columns, including \code{statement_id} and
+#' \code{evidence_count}. A statement from a grounding to itself (e.g. a
+#' homodimer) gives each matching node a self-loop, and no edges between
+#' those nodes, which the statement doesn't name.
+#' @param edges edges data.frame, one row per statement, \code{source} and
+#' \code{target} not yet filled in
+#' @param statements the statements, with \code{source_node_ids} and
+#' \code{target_node_ids} from \code{.addAdditionalMetadataToIndraEdge()}
+#' @return edges data.frame, with the copies of a statement next to each
+#' other
+#' @keywords internal
+#' @noRd
+.fan_out_edges <- function(edges, statements) {
+    node_pairs <- lapply(statements, function(statement) {
+        source_ids <- statement$source_node_ids
+        target_ids <- statement$target_node_ids
+        same_grounding <- identical(statement$source_ns, statement$target_ns) &&
+            identical(as.character(statement$source_id),
+                      as.character(statement$target_id))
+        if (same_grounding) {
+            return(list(source = source_ids, target = source_ids))
+        }
+        list(source = rep(source_ids, each = length(target_ids)),
+             target = rep(target_ids, times = length(source_ids)))
+    })
+    n_pairs <- vapply(node_pairs, function(x) length(x$source), integer(1))
+    edges <- edges[rep(seq_len(nrow(edges)), n_pairs), , drop = FALSE]
+    edges$source <- as.character(unlist(lapply(node_pairs, `[[`, "source")))
+    edges$target <- as.character(unlist(lapply(node_pairs, `[[`, "target")))
+    rownames(edges) <- NULL
+    edges
 }
 
 # CoGEx ID-mapping and entity-property calls, used by convert_ids() and

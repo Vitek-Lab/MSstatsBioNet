@@ -103,8 +103,27 @@ test_that(".addAdditionalMetadataToIndraEdge recovers original Protein from a mu
         target_id = "1097",  target_ns = "HGNC",  target_name = "A1BG"
     )
     edge_with_node_ids <- MSstatsBioNet:::.addAdditionalMetadataToIndraEdge(edge, grounding_lookup)
-    expect_equal(edge_with_node_ids$source_node_id, "FOO") # not "17234" or "glucose"
-    expect_equal(edge_with_node_ids$target_node_id, "BAR") # not "1097" or "A1BG"
+    expect_equal(edge_with_node_ids$source_node_ids, "FOO") # not "17234" or "glucose"
+    expect_equal(edge_with_node_ids$target_node_ids, "BAR") # not "1097" or "A1BG"
+})
+
+test_that(".find_node_ids_for_grounding returns every node of a shared grounding", {
+    entities <- .multi_grounded_entities()
+    entities$entity_id[2] <- "3815"
+    grounding_lookup <- MSstatsBioNet:::.build_grounding_lookup(entities)
+    expect_equal(MSstatsBioNet:::.find_node_ids_for_grounding(
+        grounding_lookup, "HGNC", "3815", "KIT"), c("FOO", "BAR"))
+    expect_equal(MSstatsBioNet:::.find_node_ids_for_grounding(
+        grounding_lookup, "HGNC", "99", "GENEZ"), "GENEZ")
+})
+
+test_that(".fan_out_edges keeps the edge columns and handles no statements", {
+    edges <- data.frame(source = character(0), target = character(0),
+                        interaction = character(0), stringsAsFactors = FALSE)
+    result <- MSstatsBioNet:::.fan_out_edges(edges, list())
+    expect_equal(colnames(result), colnames(edges))
+    expect_type(result$source, "character")
+    expect_equal(nrow(result), 0)
 })
 
 # ----- .build_network_nodes carries entity_name + entity_id -----
@@ -114,7 +133,7 @@ test_that(".build_network_nodes emits the node contract columns", {
     edges <- data.frame(source = c("FOO"), target = c("BAR"),
                         stringsAsFactors = FALSE)
     nodes <- MSstatsBioNet:::.build_network_nodes(
-        grounding_lookup, edges, MSstatsBioNet:::.list_backend_nodes(list(), grounding_lookup))
+        grounding_lookup, edges, MSstatsBioNet:::.list_latent_backend_nodes(list(), grounding_lookup))
     expect_equal(colnames(nodes),
                  c("id", "entity_type", "entity_name", "namespace", "entity_id",
                    "measured", "included_in_query", "node_role", "site",

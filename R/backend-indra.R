@@ -52,7 +52,8 @@ indra_backend <- function(cogex_url = INDRA_API_URL,
 # to CoGEx indra_subnetwork_relations, filters the statements, and
 # normalizes them to the edge contract. The source and target of each
 # statement are matched back to the rows of entities by grounding, so nodes
-# carry their statistics. Backend nodes that match no row (from
+# carry their statistics. A grounding shared by the rows of several nodes
+# gives each of them the edge. Backend nodes that match no row (from
 # include_entities) become latent nodes.
 #' @rdname get_network
 #' @export
@@ -77,7 +78,7 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
         edges <- .filterEdgesDataFrame(edges)
         nodes <- .build_network_nodes(
             grounding_lookup, edges,
-            .list_backend_nodes(statements, grounding_lookup))
+            .list_latent_backend_nodes(statements, grounding_lookup))
         network <- list(nodes = nodes, edges = edges)
         validate_network(network)
         network
@@ -396,7 +397,7 @@ INDRA_NAMESPACE_ENTITY_TYPES <- c(
 #'
 #' Prefers rows in the query. Rows outside it are matched only when no
 #' queried row has the grounding, so that an unselected row with the same
-#' grounding (an isoform, say) doesn't make the match ambiguous.
+#' grounding (an isoform, say) doesn't get the edges of the queried row.
 #' @param grounding_lookup from \code{.build_grounding_lookup()}
 #' @param namespace,entity_id the grounding
 #' @return integer vector of entity row numbers, empty when none match
@@ -413,32 +414,38 @@ INDRA_NAMESPACE_ENTITY_TYPES <- c(
     if (length(queried_rows) > 0) queried_rows else rows
 }
 
-#' Find the node ID for a grounding returned by a backend
+#' Find the node IDs for a grounding returned by a backend
+#'
+#' Several entity rows can share a grounding (two isoforms of one gene, or a
+#' protein and a protein group that contains it). Each of their nodes gets
+#' the backend's edges, so this returns all of them.
 #' @param grounding_lookup from \code{.build_grounding_lookup()}
 #' @param namespace,entity_id the grounding
 #' @param backend_name the backend's name for the entity, e.g. INDRA's
 #' gene symbol
-#' @return the node ID of the matching entity rows, or \code{backend_name}
-#' when none match or they belong to several nodes
+#' @return character vector of the distinct node IDs of the matching entity
+#' rows, or \code{backend_name} when none match
 #' @keywords internal
 #' @noRd
-.find_node_id_for_grounding <- function(grounding_lookup, namespace,
-                                        entity_id, backend_name) {
+.find_node_ids_for_grounding <- function(grounding_lookup, namespace,
+                                         entity_id, backend_name) {
     matching_rows <- .find_entity_rows_for_grounding(grounding_lookup,
                                                      namespace, entity_id)
-    node_ids <- unique(grounding_lookup$node_ids[matching_rows])
-    if (length(node_ids) == 1) node_ids else backend_name
+    if (length(matching_rows) == 0) {
+        return(backend_name)
+    }
+    unique(grounding_lookup$node_ids[matching_rows])
 }
 
-#' List the backend nodes of INDRA statements
+#' List the backend nodes of INDRA statements that match no entity row
 #' @param statements filtered INDRA response
 #' @param grounding_lookup from \code{.build_grounding_lookup()}
 #' @return data.frame with one row per distinct node \code{id}: the
-#' sources and targets of the statements, with INDRA's \code{namespace},
-#' \code{entity_id}, and \code{entity_name}
+#' sources and targets of the statements that match no entity row, with
+#' INDRA's \code{namespace}, \code{entity_id}, and \code{entity_name}
 #' @keywords internal
 #' @noRd
-.list_backend_nodes <- function(statements, grounding_lookup) {
+.list_latent_backend_nodes <- function(statements, grounding_lookup) {
     backend_nodes <- lapply(statements, function(statement) {
         data.frame(
             namespace   = c(statement$source_ns, statement$target_ns),
@@ -449,12 +456,13 @@ INDRA_NAMESPACE_ENTITY_TYPES <- c(
     })
     backend_nodes <- do.call(rbind, c(list(.build_empty_groundings(0)),
                                       backend_nodes))
-    backend_nodes$id <- vapply(seq_len(nrow(backend_nodes)), function(i) {
-        .find_node_id_for_grounding(grounding_lookup,
-                                    backend_nodes$namespace[i],
-                                    backend_nodes$entity_id[i],
-                                    backend_nodes$entity_name[i])
-    }, character(1))
+    matches_no_row <- vapply(seq_len(nrow(backend_nodes)), function(i) {
+        length(.find_entity_rows_for_grounding(grounding_lookup,
+                                               backend_nodes$namespace[i],
+                                               backend_nodes$entity_id[i])) == 0
+    }, logical(1))
+    backend_nodes <- backend_nodes[matches_no_row, , drop = FALSE]
+    backend_nodes$id <- backend_nodes$entity_name
     backend_nodes[!duplicated(backend_nodes$id), , drop = FALSE]
 }
 
@@ -471,11 +479,11 @@ NODE_COLUMN_ORDER <- c("id", "entity_type", "entity_name", "namespace",
 #' Nodes that an edge connects get one row per entity row: the rows in the
 #' query, or, for a node that is there only through
 #' \code{include_entities}, all of its rows. These are \code{measured}, with
-#' their statistics. The remaining sources and targets are built by
-#' \code{.build_latent_and_ambiguous_nodes()}.
+#' their statistics. The remaining sources and targets are latent nodes,
+#' built by \code{.build_latent_nodes()}.
 #' @param grounding_lookup from \code{.build_grounding_lookup()}
 #' @param edges edges data.frame
-#' @param backend_nodes from \code{.list_backend_nodes()}
+#' @param backend_nodes from \code{.list_latent_backend_nodes()}
 #' @return nodes data.frame with the columns in \code{NODE_COLUMN_ORDER}
 #' @keywords internal
 #' @noRd
@@ -510,8 +518,7 @@ NODE_COLUMN_ORDER <- c("id", "entity_type", "entity_name", "namespace",
     unmatched <- backend_nodes$id %in% setdiff(node_ids_in_edges, node_ids)
     unmatched_backend_nodes <- backend_nodes[unmatched, , drop = FALSE]
     nodes <- rbind(nodes_in_input,
-                   .build_latent_and_ambiguous_nodes(grounding_lookup,
-                                                     unmatched_backend_nodes))
+                   .build_latent_nodes(unmatched_backend_nodes))
     nodes$has_measured_sites <- nodes$id %in%
         node_ids[entities$entity_type == "ptm_site"]
     nodes$entity_name <- ifelse(is.na(nodes$entity_name), nodes$id,
@@ -521,59 +528,27 @@ NODE_COLUMN_ORDER <- c("id", "entity_type", "entity_name", "namespace",
     nodes
 }
 
-#' Build nodes for backend nodes that are not the node of one entity
+#' Build latent nodes for backend nodes that match no entity row
 #'
-#' A backend node that matches no entity row is latent: \code{measured =
-#' FALSE}, \code{NA} statistics, and an \code{entity_type} from its
-#' namespace. In a subnetwork query it can only come from
-#' \code{include_entities}, so it is \code{"user_added"}. A backend node
-#' that matches the rows of several nodes is ambiguous: it is in the input, but
-#' it isn't known which row's statistics apply, so they are \code{NA}, and a
-#' message names it.
-#' @param grounding_lookup from \code{.build_grounding_lookup()}
-#' @param backend_nodes rows of \code{.list_backend_nodes()}
+#' Latent nodes are not in the input: \code{measured = FALSE}, \code{NA}
+#' statistics, and an \code{entity_type} from their namespace. In a
+#' subnetwork query they can only come from \code{include_entities}, so they
+#' are \code{"user_added"}.
+#' @param backend_nodes rows of \code{.list_latent_backend_nodes()}
 #' @return nodes data.frame without \code{has_measured_sites}
 #' @keywords internal
 #' @noRd
-.build_latent_and_ambiguous_nodes <- function(grounding_lookup, backend_nodes) {
-    entities <- grounding_lookup$entities
-    matching_rows <- lapply(seq_len(nrow(backend_nodes)), function(i) {
-        .find_entity_rows_for_grounding(grounding_lookup,
-                                        backend_nodes$namespace[i],
-                                        backend_nodes$entity_id[i])
-    })
-    matches_several_nodes <- lengths(matching_rows) > 0
-    if (any(matches_several_nodes)) {
-        ambiguous_ids <- backend_nodes$id[matches_several_nodes]
-        message(length(ambiguous_ids), " node(s) from the backend ",
-                "match entities of several nodes and are shown under the ",
-                "backend's name, without statistics: ",
-                .list_values_for_message(ambiguous_ids), ".")
-    }
-    entity_types <- .get_namespace_entity_types(backend_nodes$namespace)
-    node_roles <- rep("user_added", nrow(backend_nodes))
-    user_added <- .get_column_or_default(entities, "user_added",
-                                         FALSE) %in% TRUE
-    for (i in which(matches_several_nodes)) {
-        rows <- matching_rows[[i]]
-        matching_types <- unique(entities$entity_type[rows])
-        if (length(matching_types) == 1) {
-            entity_types[i] <- matching_types
-        }
-        if (any(entities$included_in_query[rows] & !user_added[rows])) {
-            node_roles[i] <- "passed_cutoffs"
-        }
-    }
+.build_latent_nodes <- function(backend_nodes) {
     n_backend_nodes <- nrow(backend_nodes)
     data.frame(
         id                = backend_nodes$id,
-        entity_type       = entity_types,
+        entity_type       = .get_namespace_entity_types(backend_nodes$namespace),
         entity_name       = backend_nodes$entity_name,
         namespace         = backend_nodes$namespace,
         entity_id         = backend_nodes$entity_id,
-        measured          = matches_several_nodes,
+        measured          = rep(FALSE, n_backend_nodes),
         included_in_query = rep(TRUE, n_backend_nodes),
-        node_role         = node_roles,
+        node_role         = rep("user_added", n_backend_nodes),
         site              = rep(NA_character_, n_backend_nodes),
         logFC             = rep(NA_real_, n_backend_nodes),
         adj.pvalue        = rep(NA_real_, n_backend_nodes),

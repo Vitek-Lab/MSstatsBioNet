@@ -119,9 +119,15 @@ with no change. They now also carry INDRA's namespace and identifier, and an
 * INDRA statements between identifiers that are equal but in different
 namespaces (`HGNC:1234` and `CHEBI:1234`) are no longer merged into one
 edge. The order of the edge rows can differ from earlier versions.
-* When an INDRA node matches rows of `input` that belong to different
-nodes, a message names it. It keeps INDRA's name as its `id`, as before,
-and now has `NA` statistics.
+* When several rows of `input` share a grounding, e.g. two isoforms of one
+gene (`P04637` and `P04637-2`) or a protein and a protein group that
+contains it (`P04637` and `P04637;P02342`), each row is its own node, with
+its own statistics, and gets the INDRA edges of that grounding. One
+statement can therefore give several edges with the same `statement_id`.
+A statement from a grounding to itself (a homodimer) gives each such node a
+self-loop, not edges between them. Before, the rows were merged into one
+node named after the INDRA gene (`TP53`) with `logFC = 0` and
+`adj.pvalue = 1`.
 * `getSubnetworkFromIndra()` stops when `input` has more than one
 comparison in its `Label` column, or repeats a `Protein` value. Filter
 `input` to one comparison first.

@@ -9,6 +9,17 @@
 #' its statistics, and a node not in the input gets \code{measured = FALSE}
 #' and \code{NA} statistics.
 #'
+#' Each node is one row of \code{entities} (a PTM site row is drawn on its
+#' parent protein's node). When several rows share a grounding, e.g. two
+#' isoforms that both ground to the same gene, or a protein and a protein
+#' group that contains it, each of their nodes gets the backend's edges,
+#' with its own statistics. So one backend statement can give several
+#' edges, and edges can share a \code{statement_id}. A statement from a
+#' grounding to itself, such as a homodimer, gives each matching node a
+#' self-loop, and no edges between those nodes. To count statements rather
+#' than edges, count unique \code{backend_database} and
+#' \code{statement_id} pairs.
+#'
 #' \code{get_network()} prints the question it asks as a message, with the
 #' number of entities, so the query in a saved script or log is readable
 #' without the documentation.
