@@ -11,12 +11,14 @@
 MSstatsBioNet is an R/Bioconductor package for network analysis and enrichment
 of MSstats differential abundance results in the context of prior-knowledge
 biomolecular networks. It takes the output of MSstats (or MSstatsTMT /
-MSstatsPTM) differential abundance analysis, queries network databases for the
-interactions among the analyzed proteins, and filters, contextualizes, and
+MSstatsPTM) differential abundance analysis, maps the analytes (proteins, PTM
+sites, metabolites, lipids, or drugs) to database identifiers, queries network
+databases for the interactions among them, and filters, contextualizes, and
 visualizes the resulting subnetworks. Notably, it integrates with
 [INDRA](https://github.com/sorgerlab/indra), a database of biological networks
 assembled from the literature using text mining, enabling interpretation of
-proteomic and phosphoproteomic results against past published knowledge.
+proteomic, phosphoproteomic, and metabolomic results against past published
+knowledge.
 
 MSstatsBioNet is part of the [MSstats](https://github.com/Vitek-Lab/MSstats)
 family of packages, developed and maintained by the
@@ -48,22 +50,33 @@ library(MSstatsBioNet)
 input <- data.table::fread(system.file("extdata/groupComparisonModel.csv",
                                         package = "MSstatsBioNet"))
 
-# Retrieve the subnetwork of interactions among these proteins from INDRA
-subnetwork <- getSubnetworkFromIndra(input)
+# Describe the analytes: here UniProt accessions of proteins. For other
+# molecules, change entity_type and id_type, e.g. entity_type = "metabolite"
+# and id_type = "chemical_name" for compound names
+entities <- prepare_entities(input, entity_type = "protein",
+                             id_type = "uniprot")
 
-head(subnetwork$nodes)
-head(subnetwork$edges)
+# Map the identifiers to INDRA's namespaces and select significant analytes
+indra <- indra_backend()
+entities <- convert_ids(indra, entities)
+entities <- select_entities(entities, pvalue_cutoff = 0.05)
+
+# Retrieve the subnetwork of interactions among the selected analytes
+network <- get_network(indra, entities, subnetwork_query())
+
+head(network$nodes)
+head(network$edges)
 
 # Visualize the network (e.g. in Cytoscape, or export to HTML)
-cytoscapeNetwork(subnetwork$nodes, subnetwork$edges)
+cytoscapeNetwork(network$nodes, network$edges)
 ```
 
 ## Input Formats
 
 MSstatsBioNet works on **differential abundance results**, not raw search-tool
-output. Its main entry point, `getSubnetworkFromIndra()`, accepts the
-`ComparisonResult` table produced by the group-comparison functions across the
-MSstats ecosystem:
+output. It accepts the `ComparisonResult` table produced by the
+group-comparison functions across the MSstats ecosystem, or any table with one
+row per analyte in the same format:
 
 | Upstream package | Function producing input |
 | --- | --- |
@@ -71,12 +84,29 @@ MSstats ecosystem:
 | [MSstatsTMT](https://github.com/Vitek-Lab/MSstatsTMT) | `groupComparisonTMT()` |
 | [MSstatsPTM](https://github.com/Vitek-Lab/MSstatsPTM) | `groupComparisonPTM()` |
 
-The input table provides, per protein and comparison, the log2 fold change,
-p-value, and adjusted p-value used for filtering and network coloring. UniProt
-identifiers can be annotated with `annotateProteinInfoFromIndra()`.
+The input table provides, per analyte and comparison, the log2 fold change,
+p-value, and adjusted p-value used for filtering and network coloring. The
+analyte identifiers are read from the `Protein` column by default; set
+`id_column` in `prepare_entities()` to use another column.
+
+`prepare_entities()` takes the type of each analyte (`entity_type`) and its
+identifier system (`id_type`), either as one value for the whole table or as a
+column with one value per row, so a single table can mix molecule types.
+`convert_ids()` then maps the identifiers to the backend's namespaces. With the
+INDRA backend, the supported combinations are:
+
+| `entity_type` | `id_type` | Mapped to |
+| --- | --- | --- |
+| `"protein"`, `"ptm_site"` | `"uniprot"`, `"uniprot_mnemonic"`, `"hgnc_symbol"` | HGNC |
+| `"metabolite"`, `"lipid"`, `"drug"` | `"chemical_name"` | CHEBI, MESH, PUBCHEM, ... (grounded by name with [Gilda](https://github.com/gyorilab/gilda)) |
+
+`backend_capabilities(indra_backend())` lists these from R. Entities outside
+the input, such as unmeasured enzymes or receptors, can be added to a query
+with `get_network(include_entities = )`.
 
 - **Databases supported:** INDRA
-- **Filtering options:** p-value filter, context/topic-based filtering
+- **Filtering options:** p-value, fold-change, and direction filters
+  (`select_entities()`), context/topic-based filtering
   (`filterSubnetworkByContext()`)
 - **Visualization options:** Cytoscape Desktop (`cytoscapeNetwork()`), in-browser
   preview (`previewNetworkInBrowser()`), standalone HTML export
@@ -89,6 +119,7 @@ identifiers can be annotated with `annotateProteinInfoFromIndra()`.
 - [Cytoscape visualization](vignettes/Cytoscape-Visualization.Rmd)
 - [Filter by context](vignettes/Filter-By-Context.Rmd)
 - [PTM analysis](vignettes/PTM-Analysis.Rmd)
+- [Metabolomics analysis](vignettes/Metabolomics-Analysis.Rmd)
 - [Official website: msstats.org](http://msstats.org)
 - [Bioconductor package page and reference manual](https://bioconductor.org/packages/MSstatsBioNet)
 
