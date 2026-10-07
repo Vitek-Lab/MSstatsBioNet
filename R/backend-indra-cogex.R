@@ -214,7 +214,7 @@
         paperCount = vapply(statements, function(x) x$data$paper_count, 1),
         stringsAsFactors = FALSE
     )
-    .fan_out_edges(edges, statements)
+    .add_edge_per_node_pair(edges, statements)
 }
 
 #' Give an edge to every pair of nodes its statement connects
@@ -233,7 +233,7 @@
 #' other
 #' @keywords internal
 #' @noRd
-.fan_out_edges <- function(edges, statements) {
+.add_edge_per_node_pair <- function(edges, statements) {
     node_pairs <- lapply(statements, function(statement) {
         source_ids <- statement$source_node_ids
         target_ids <- statement$target_node_ids

@@ -383,7 +383,7 @@ test_that("a statement from a shared grounding to itself gives self-loops only",
     expect_silent(validate_network(subnetwork))
 })
 
-test_that("a shared grounding fans out to a latent node", {
+test_that("rows that share a grounding each get an edge to a latent node", {
     input <- .make_annotated_input(c("A1", "A2"), "HGNC", c("1", "1"))
     statements <- list(
         .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "99", "GENEZ")))
@@ -396,7 +396,7 @@ test_that("a shared grounding fans out to a latent node", {
     expect_false(latent$measured)
 })
 
-test_that("evidence and curation follow every copy of a fanned-out statement", {
+test_that("evidence and curation follow every edge of a statement shared by several nodes", {
     input <- .make_annotated_input(c("A1", "A2", "B"), "HGNC", c("1", "1", "2"))
     statements <- list(
         .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"),

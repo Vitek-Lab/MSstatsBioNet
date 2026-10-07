@@ -117,10 +117,10 @@ test_that(".find_node_ids_for_grounding returns every node of a shared grounding
         grounding_lookup, "HGNC", "99", "GENEZ"), "GENEZ")
 })
 
-test_that(".fan_out_edges keeps the edge columns and handles no statements", {
+test_that(".add_edge_per_node_pair keeps the edge columns and handles no statements", {
     edges <- data.frame(source = character(0), target = character(0),
                         interaction = character(0), stringsAsFactors = FALSE)
-    result <- MSstatsBioNet:::.fan_out_edges(edges, list())
+    result <- MSstatsBioNet:::.add_edge_per_node_pair(edges, list())
     expect_equal(colnames(result), colnames(edges))
     expect_type(result$source, "character")
     expect_equal(nrow(result), 0)
