@@ -209,12 +209,25 @@
         backend_database = rep("INDRA", length(statements)),
         query_type = rep("subnetwork", length(statements)),
         evidence_sources = vapply(statements, function(x) {
-            x$data$source_counts
+            .list_indra_evidence_sources(x$data$source_counts)
         }, ""),
         paperCount = vapply(statements, function(x) x$data$paper_count, 1),
         stringsAsFactors = FALSE
     )
     .add_edge_per_node_pair(edges, statements)
+}
+
+#' The evidence sources of an INDRA statement, for edges$evidence_sources
+#' @param source_counts CoGEx's \code{source_counts}, a JSON object of
+#' evidence count per source, e.g. \code{'{"reach": 12, "psp": 1}'}
+#' @return the source names, sorted and \code{";"}-joined, e.g.
+#' \code{"psp;reach"}, or \code{NA} when there are none
+#' @keywords internal
+#' @noRd
+.list_indra_evidence_sources <- function(source_counts) {
+    parsed <- tryCatch(jsonlite::fromJSON(source_counts),
+                       error = function(e) NULL)
+    .join_evidence_sources(names(parsed))
 }
 
 #' Give an edge to every pair of nodes its statement connects

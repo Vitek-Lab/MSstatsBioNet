@@ -34,7 +34,8 @@ Subtracts the evidence curated as incorrect, from
 then drops the edges left below \code{min_evidence}, and the nodes those
 edges leave without any edge. Edges left with no evidence are dropped
 whatever \code{min_evidence} is. A message says how many edges were
-dropped.
+dropped. Edges with no evidence count (\code{NA}), such as STRING's,
+are kept as they are, and their backend is not asked for curations.
 }
 \details{
 Run it after any filter that pools edges, such as the PTM-site filter of

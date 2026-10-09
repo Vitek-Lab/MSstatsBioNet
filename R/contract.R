@@ -103,7 +103,8 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' \code{site} (PTM site on the target such as \code{"S148"}, \code{;}-joined
 #' when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 #' \code{NA} when the source provides no score), \code{evidence_count}
-#' (whole number, at least 1, not \code{NA}), \code{evidence_url},
+#' (whole number, at least 1, or \code{NA} when the source has no
+#' evidence count, as STRING), \code{evidence_url},
 #' \code{statement_id} (character), \code{backend_database}, and
 #' \code{query_type}.
 #' Edges of the symmetric statement types \code{"Complex"} and
@@ -111,6 +112,9 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' can share a \code{statement_id}: an undirected statement can be listed
 #' in both directions, and a statement reaches every node with its
 #' grounding (see \code{\link{get_network}()}).
+#' When present, \code{evidence_sources} must be the names of the edge's
+#' evidence sources, joined by \code{";"} (e.g. \code{"psp;reach"}), or
+#' \code{NA}.
 #'
 #' Required node columns: \code{id}, \code{entity_type} (e.g.
 #' \code{"protein"}, \code{"ptm_site"}, \code{"metabolite"},
@@ -282,15 +286,30 @@ validate_network <- function(network) {
     }
     if ("evidence_count" %in% colnames(edges)) {
         evidence_count <- edges$evidence_count
-        # is.infinite() errors on list columns; .check_columns() reports those
-        if (anyNA(evidence_count) ||
-            (is.numeric(evidence_count) && any(is.infinite(evidence_count)))) {
+        # NA means the backend has no evidence count, e.g. STRING. is.infinite()
+        # errors on list columns; .check_columns() reports those
+        if (is.numeric(evidence_count) && any(is.infinite(evidence_count))) {
             problems <- c(problems,
-                          "edges$evidence_count must not be NA or infinite")
+                          "edges$evidence_count must not be infinite")
         }
         if (is.numeric(evidence_count) &&
             any(evidence_count[is.finite(evidence_count)] < 1)) {
             problems <- c(problems, "edges$evidence_count must be at least 1")
+        }
+    }
+    if ("evidence_sources" %in% colnames(edges)) {
+        sources <- edges$evidence_sources
+        if (!is.character(sources) && !all(is.na(sources))) {
+            problems <- c(problems, "edges$evidence_sources must be character")
+        } else {
+            sources <- sources[!is.na(sources)]
+            badly_formatted <- sources[!grepl("^[^;]+(;[^;]+)*$", sources)]
+            if (length(badly_formatted) > 0) {
+                problems <- c(problems, paste0(
+                    "edges$evidence_sources must be source names joined ",
+                    "by ';', e.g. 'psp;reach': ",
+                    paste(unique(badly_formatted), collapse = ", ")))
+            }
         }
     }
     if ("site" %in% colnames(edges) && is.character(edges$site)) {

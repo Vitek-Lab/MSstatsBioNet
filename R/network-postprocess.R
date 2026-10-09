@@ -7,7 +7,8 @@
 #' then drops the edges left below \code{min_evidence}, and the nodes those
 #' edges leave without any edge. Edges left with no evidence are dropped
 #' whatever \code{min_evidence} is. A message says how many edges were
-#' dropped.
+#' dropped. Edges with no evidence count (\code{NA}), such as STRING's,
+#' are kept as they are, and their backend is not asked for curations.
 #'
 #' Run it after any filter that pools edges, such as the PTM-site filter of
 #' \code{\link{getSubnetworkFromIndra}()}: dropping edges first can change
@@ -50,9 +51,16 @@ filter_by_curation <- function(network, min_evidence = 1, backend = NULL) {
     .check_filter_by_curation_input(network, min_evidence)
     .check_backend_argument(backend)
     edges <- network$edges
-    incorrect_counts <- .count_incorrect_evidence(edges, backend)
-    edges$evidence_count <- as.integer(edges$evidence_count - incorrect_counts)
-    keep <- edges$evidence_count >= min_evidence & edges$evidence_count >= 1
+    # Edges with no evidence count (NA, e.g. STRING) have nothing to subtract
+    # from, so they are kept and their backend is not asked
+    counted <- !is.na(edges$evidence_count)
+    incorrect_counts <- .count_incorrect_evidence(
+        edges[counted, , drop = FALSE], backend)
+    edges$evidence_count[counted] <- as.integer(
+        edges$evidence_count[counted] - incorrect_counts)
+    edges$evidence_count <- as.integer(edges$evidence_count)
+    keep <- !counted |
+        (edges$evidence_count >= min_evidence & edges$evidence_count >= 1)
     if (any(!keep)) {
         message("Dropping ", sum(!keep), " edge(s) with fewer than ",
                 max(min_evidence, 1), " evidence after removing the ",

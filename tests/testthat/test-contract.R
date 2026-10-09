@@ -131,32 +131,49 @@ test_that("validate_network checks confidence and evidence_count ranges", {
     expect_error(validate_network(network), "evidence_count must be at least 1")
 })
 
-test_that("validate_network rejects NA or infinite evidence_count", {
+test_that("validate_network accepts NA evidence_count and rejects infinite", {
+    # NA: the backend has no evidence count, e.g. STRING
     network <- .valid_network()
-    network$edges$evidence_count <- c(12, NA)
-    expect_error(validate_network(network),
-                 "evidence_count must not be NA or infinite")
+    network$edges$evidence_count <- c(12L, NA)
+    expect_no_error(validate_network(network))
+
+    # An all-NA logical column passes the type check too
+    network$edges$evidence_count <- NA
+    expect_no_error(validate_network(network))
 
     network$edges$evidence_count <- c(12, Inf)
     expect_error(validate_network(network),
-                 "evidence_count must not be NA or infinite")
+                 "evidence_count must not be infinite")
 
-    # An all-NA logical column passes the type check, but not the NA check
-    network$edges$evidence_count <- NA
-    expect_error(validate_network(network),
-                 "evidence_count must not be NA or infinite")
+    # 0 still fails when other edges are NA
+    network$edges$evidence_count <- c(0L, NA)
+    expect_error(validate_network(network), "evidence_count must be at least 1")
 
-    # A character column gets both the type error and the NA error
     network$edges$evidence_count <- c("12", NA)
-    err <- tryCatch(validate_network(network),
-                    error = function(e) conditionMessage(e))
-    expect_match(err, "edges\\$evidence_count must be integer")
-    expect_match(err, "evidence_count must not be NA or infinite")
+    expect_error(validate_network(network),
+                 "edges\\$evidence_count must be integer")
 
     # A list column is reported as a type problem, not an R error
     network$edges$evidence_count <- list(12L, 1L)
     expect_error(validate_network(network),
                  "edges\\$evidence_count must be integer")
+})
+
+test_that("validate_network checks evidence_sources are joined source names", {
+    network <- .valid_network()
+    network$edges$evidence_sources <- c("psp;reach", NA)
+    expect_no_error(validate_network(network))
+    network$edges$evidence_sources <- NA
+    expect_no_error(validate_network(network))
+
+    network$edges$evidence_sources <- c('{"reach": 12}', "reach")
+    expect_no_error(validate_network(network))  # one name, odd but allowed
+    network$edges$evidence_sources <- c("psp;;reach", ";reach")
+    expect_error(validate_network(network),
+                 "evidence_sources must be source names joined by ';'")
+    network$edges$evidence_sources <- c(1, 2)
+    expect_error(validate_network(network),
+                 "evidence_sources must be character")
 })
 
 test_that("validate_network requires directed == FALSE for symmetric types", {

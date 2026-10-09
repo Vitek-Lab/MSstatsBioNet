@@ -25,10 +25,16 @@
 #' without the documentation.
 #'
 #' Confidence values are comparable within one backend, not across
-#' backends. For INDRA, \code{confidence} is the INDRA belief score.
+#' backends. For INDRA, \code{confidence} is the INDRA belief score; for
+#' STRING, the combined score.
+#'
+#' Each backend reads only its own groundings of \code{entities}, so one
+#' table grounded by several backends' \code{\link{convert_ids}()} serves
+#' all of them, and their networks share node IDs for
+#' \code{\link{merge_networks}()}.
 #'
 #' @param backend a \code{NetworkBackend}, e.g. from
-#' \code{\link{indra_backend}()}
+#' \code{\link{indra_backend}()} or \code{\link{string_backend}()}
 #' @param entities entity table from \code{\link{prepare_entities}()},
 #' grounded by \code{\link{convert_ids}()} and flagged by
 #' \code{\link{select_entities}()}
@@ -37,18 +43,25 @@
 #' \code{\link{network_queries}}.
 #' @param interaction_types values of \code{edges$interaction} to keep
 #' (INDRA statement types, e.g. \code{"Activation"}). \code{NULL} keeps all.
-#' @param min_evidence minimum evidence count per edge
+#' @param min_evidence minimum evidence count per edge. Edges with no
+#' evidence count (\code{NA}, as from STRING) pass the default of 1, and
+#' are dropped by a higher cutoff, with a message saying how many.
 #' @param min_confidence minimum \code{confidence} per edge, in [0, 1].
 #' Edges with no confidence score (\code{NA}) are dropped too, and a message
-#' says how many. \code{NULL} applies no cutoff.
+#' says how many. \code{NULL} applies no cutoff. STRING gets the cutoff as
+#' its \code{required_score}; STRING's website uses 0.4 by default.
 #' @param evidence_sources keeps edges with evidence from at least one of
 #' these sources, e.g. \code{c("reach")}. \code{NULL} keeps all.
 #' \code{backend_capabilities(backend)$evidence_sources} lists a backend's
 #' sources; for INDRA, \code{\link{INDRA_DATABASE_SOURCES}} keeps edges
 #' with curated-database evidence and
 #' \code{\link{INDRA_TEXT_MINED_SOURCES}} edges with text-mined evidence.
+#' For STRING, the sources are its evidence channels, e.g.
+#' \code{"experiments"}, and an edge is kept when one of them has a
+#' non-zero score.
 #' @param include_entities \code{"namespace:identifier"} groundings to add to
-#' the query, e.g. \code{"HGNC:1234"}. Use this for entities outside the
+#' the query, e.g. \code{"HGNC:1234"}, or for STRING
+#' \code{"STRING:9606.ENSP00000269305"}. Use this for entities outside the
 #' input; to keep entities of the input that fail the cutoffs, use
 #' \code{select_entities(force_include = )}.
 #' @param ... passed to methods
@@ -57,8 +70,8 @@
 #' \code{provenance}: a data.frame with one row recording the query, with
 #' the columns \code{backend_database}, \code{query_type},
 #' \code{retrieved_at} (when the response arrived, in UTC),
-#' \code{backend_version} (\code{NA} for INDRA, which has no data
-#' versions), \code{backend_url}, \code{organism} (NCBI taxon IDs of the
+#' \code{backend_version} (e.g. \code{"12.5"} for STRING; \code{NA} for
+#' INDRA, which has no data versions), \code{backend_url}, \code{organism} (NCBI taxon IDs of the
 #' queried rows), \code{parameters} (the query arguments, as JSON), and
 #' \code{package_version} (of MSstatsBioNet). It joins to the edges on
 #' \code{backend_database} and \code{query_type}.
@@ -129,13 +142,26 @@ setMethod("get_network", signature("NetworkBackend", "NetworkQuery"),
 #' \code{\link{get_network}()} can recognize every node that is in the
 #' input.
 #'
+#' A backend replaces only the groundings in its own namespaces and keeps
+#' the others, so a table grounded by \code{indra_backend()} and then by
+#' \code{string_backend()} has both groundings, e.g. \code{namespace =
+#' "HGNC;STRING"}, and serves both backends.
+#'
+#' For STRING, only UniProt accessions are converted (\code{id_type =
+#' "uniprot"}), each to one STRING protein of the row's organism, and the
+#' namespace is \code{"STRING"}. An isoform (\code{"P04637-2"}) gets the
+#' protein of its canonical accession. Identifiers that aren't accessions
+#' give an error before any request, since STRING's search maps other text
+#' to the wrong protein, and accessions STRING doesn't know are listed in a
+#' message.
+#'
 #' For INDRA, UniProt IDs and mnemonics are mapped through CoGEx, and gene
 #' symbols and chemical names are grounded with Gilda. When an identifier
 #' is a protein group (\code{"P1;P2"}) or a name with several candidates,
 #' the groundings are \code{";"}-joined and positionally aligned.
 #'
 #' @param backend a \code{NetworkBackend}, e.g. from
-#' \code{\link{indra_backend}()}
+#' \code{\link{indra_backend}()} or \code{\link{string_backend}()}
 #' @param entities entity table from \code{\link{prepare_entities}()}
 #' @param ... passed to methods
 #' @return \code{entities} with the grounding columns filled in
@@ -322,7 +348,8 @@ setMethod("get_curations", "NetworkBackend",
 #'   \item{evidence_sources}{the \code{evidence_sources} values
 #'     \code{\link{get_network}()} filters on, as a list with
 #'     \code{database} and \code{text_mined} elements, e.g.
-#'     \code{\link{INDRA_DATABASE_SOURCES}}}
+#'     \code{\link{INDRA_DATABASE_SOURCES}}. STRING also has
+#'     \code{predicted} (genomic context and co-expression channels).}
 #'   \item{max_nodes}{for each query type, the largest number of
 #'     groundings one query can take}
 #' }

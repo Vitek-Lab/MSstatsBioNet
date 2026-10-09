@@ -46,7 +46,8 @@ metabolites:
     evidence curated as incorrect, and `filter_by_curation(network,
     min_evidence = 1)` subtracts it from `evidence_count`, drops the edges
     left below `min_evidence` (and edges left with no evidence), and drops
-    the nodes left without edges. Like `get_evidence()`, it uses the
+    the nodes left without edges. Edges with an `NA` `evidence_count`
+    (STRING) are kept as they are. Like `get_evidence()`, it uses the
     backend named in each edge's `backend_database` unless `backend` is
     given. `indra_backend(curation_url = )` sets the INDRA database URL.
     * `merge_networks(..., entities = NULL)` combines networks from several
@@ -72,11 +73,35 @@ metabolites:
     `getSubnetworkFromIndra(sources_filter =)`, gives a warning that
     suggests the internal name where there is one (e.g. `"psp"` for
     `"phosphosite"`).
-    * The S4 classes `NetworkBackend`, `IndraBackend`, `NetworkQuery`, and
-    `SubnetworkQuery` are exported, so other packages can add backends.
+    * `string_backend(network_type = "physical", version = NULL)` is a
+    second backend, for the STRING database of protein-protein
+    associations, over its REST API (no new dependency). Its
+    `convert_ids()` grounds UniProt accessions to STRING proteins (other
+    identifiers give an error before any request, since STRING's search
+    maps them to the wrong protein; isoforms get their canonical
+    accession's protein), and `get_network()` answers `subnetwork_query()`.
+    `network_type` is `"physical"` (undirected `Complex` edges),
+    `"functional"` (undirected `Association` edges), or `"regulatory"`
+    (directed `Activation`, `Inhibition`, or `Regulation` edges, with
+    `sign`). `confidence` is STRING's combined score, and
+    `min_confidence` is sent as STRING's `required_score`.
+    `evidence_count` is `NA`, and `evidence_sources` lists STRING's
+    evidence channels with a non-zero score (e.g.
+    `"database;experiments;textmining"`), which `evidence_sources =`
+    filters on. Every
+    request goes to the address of one STRING version, which `provenance`
+    records, and requests are at least one second apart, as STRING asks.
+    * `convert_ids()` keeps the groundings of other backends and replaces
+    only its own, so one entity table can be grounded by INDRA and STRING,
+    and each backend's `get_network()` reads only its own groundings. The
+    two networks then share node IDs and combine with `merge_networks()`.
+    * The S4 classes `NetworkBackend`, `IndraBackend`, `StringBackend`,
+    `NetworkQuery`, and `SubnetworkQuery` are exported, so other packages
+    can add backends.
 * New function `validate_network()` checks a `list(nodes, edges)` network
 against the edge and node contract (v1.0): required columns and types, the
-statement-type and entity-type vocabularies, value ranges, `NA` statistics
+statement-type and entity-type vocabularies, value ranges (`evidence_count`
+is at least 1, or `NA` for a backend with no evidence count), `NA` statistics
 on nodes that are not in the input data, and that every edge's source and
 target are nodes. It stops with an error listing every problem found.
 
@@ -114,7 +139,9 @@ zero fold change.
 Columns are renamed, with no aliases: `stmt_hash` to `statement_id` (now
 always character, taken from INDRA's full-precision `matches_hash`),
 `evidenceLink` to `evidence_url`, `evidenceCount` to `evidence_count` (now
-integer), and `sourceCounts` to `evidence_sources`. New columns: `directed`
+integer), and `sourceCounts` to `evidence_sources`, which now holds the
+source names joined by `;` (e.g. `"psp;reach"`) instead of a JSON object
+of counts per source. New columns: `directed`
 (`FALSE` for symmetric types such as `Complex`), `confidence` (INDRA belief
 score), `backend_database` (`"INDRA"`), and `query_type` (`"subnetwork"`).
 `filterSubnetworkByContext()`, the topic-model functions, and

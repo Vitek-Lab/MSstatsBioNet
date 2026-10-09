@@ -6,8 +6,38 @@
 #' @keywords internal
 #' @noRd
 BACKEND_CONSTRUCTORS <- list(
-    INDRA = function() indra_backend()
+    INDRA  = function() indra_backend(),
+    STRING = function() string_backend()
 )
+
+#' Stop when a backend can't convert some rows of an entity table
+#'
+#' Checks each row's (\code{entity_type}, \code{id_type}) pair against the
+#' backend's supported conversions.
+#' @param entities entity table
+#' @param backend the backend, for the message
+#' @param conversions named list: for each \code{entity_type}, the
+#' \code{id_type} values the backend converts
+#' @return \code{NULL}, invisibly; errors otherwise
+#' @keywords internal
+#' @noRd
+.check_id_conversions <- function(entities, backend, conversions) {
+    pairs <- unique(entities[, c("entity_type", "id_type")])
+    supported <- vapply(seq_len(nrow(pairs)), function(i) {
+        pairs$id_type[i] %in% conversions[[pairs$entity_type[i]]]
+    }, logical(1))
+    if (any(!supported)) {
+        unsupported <- paste(pairs$entity_type[!supported],
+                             pairs$id_type[!supported], sep = " / ")
+        allowed <- unlist(lapply(names(conversions), function(type) {
+            paste(type, conversions[[type]], sep = " / ")
+        }))
+        stop(class(backend), " can't convert entity_type / id_type: ",
+             .list_values_for_message(unsupported), ". Supported: ",
+             paste(allowed, collapse = ", "), ".", call. = FALSE)
+    }
+    invisible(NULL)
+}
 
 #' Check a backend argument
 #' @param backend \code{NULL} or a \code{NetworkBackend}
