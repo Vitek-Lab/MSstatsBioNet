@@ -91,7 +91,8 @@ grounding (see <code><a href="get_network.html">get_network()</a></code>).</p>
 <code>measured</code> (logical: the node is in the input data),
 <code>included_in_query</code> (logical: the node was part of the query), and
 <code>node_role</code> (why the node is in the network, e.g.
-<code>"passed_cutoffs"</code> or <code>"user_added"</code>). An <code>id</code> can repeat,
+<code>"passed_cutoffs"</code> or <code>"user_added"</code>, or several joined by
+<code>";"</code> after <code><a href="merge_networks.html">merge_networks()</a></code>). An <code>id</code> can repeat,
 once per PTM site row of the same protein. When present, <code>site</code>,
 <code>has_measured_sites</code>, <code>logFC</code>, and <code>adj.pvalue</code> are
 type-checked.

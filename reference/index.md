@@ -51,6 +51,8 @@
   : Get a network from a backend
 - [`indra_backend()`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_backend.md)
   : Create an INDRA backend
+- [`merge_networks()`](https://vitek-lab.github.io/MSstatsBioNet/reference/merge_networks.md)
+  : Combine networks from several queries or backends
 - [`network_queries`](https://vitek-lab.github.io/MSstatsBioNet/reference/network_queries.md)
   : Questions you can ask of a network backend
 - [`prepare_entities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/prepare_entities.md)
