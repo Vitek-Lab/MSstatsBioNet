@@ -70,6 +70,7 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
         statements <- .callIndraCogexApi(groundings$namespace,
                                          groundings$entity_id,
                                          include_entities, backend@cogex_url)
+        retrieved_at <- .get_current_time()
         statements <- .filterIndraResponse(statements, interaction_types,
                                            min_evidence, evidence_sources)
         grounding_lookup <- .build_grounding_lookup(entities)
@@ -79,7 +80,19 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
         nodes <- .build_network_nodes(
             grounding_lookup, edges,
             .list_latent_backend_nodes(statements, grounding_lookup))
-        network <- list(nodes = nodes, edges = edges)
+        provenance <- .build_provenance(
+            backend_database = "INDRA", query_type = "subnetwork",
+            backend_url = backend@cogex_url,
+            organism = .get_column_or_default(
+                entities, "organism",
+                NA_character_)[entities$included_in_query],
+            parameters = list(interaction_types = interaction_types,
+                              min_evidence = min_evidence,
+                              min_confidence = min_confidence,
+                              evidence_sources = evidence_sources,
+                              include_entities = include_entities),
+            retrieved_at = retrieved_at)
+        network <- list(nodes = nodes, edges = edges, provenance = provenance)
         validate_network(network)
         network
     })
