@@ -309,16 +309,19 @@ NODE_STATUS_COLUMNS <- c("measured", "included_in_query", "logFC",
 #' @noRd
 .check_node_status_agrees <- function(nodes, groups) {
     columns <- intersect(NODE_STATUS_COLUMNS, colnames(nodes))
-    disagrees <- vapply(groups, function(rows) {
-        any(vapply(columns, function(column) {
+    # One row per status column, one column per node with several rows
+    column_differs <- matrix(vapply(groups, function(rows) {
+        vapply(columns, function(column) {
             length(unique(nodes[[column]][rows])) > 1
-        }, logical(1)))
-    }, logical(1))
+        }, logical(1))
+    }, logical(length(columns))), nrow = length(columns))
+    disagrees <- colSums(column_differs) > 0
     if (any(disagrees)) {
+        differing_columns <- columns[rowSums(column_differs) > 0]
         node_ids <- unique(nodes$id[vapply(groups[disagrees], `[`,
                                            integer(1), 1)])
         stop("The networks disagree on ",
-             paste(columns, collapse = ", "), " for node(s) ",
+             paste(differing_columns, collapse = ", "), " for node(s) ",
              .list_values_for_message(node_ids), ", so they were built ",
              "from different entity tables or selections. Pass the entity ",
              "table as `entities =` to recompute node status from it.",

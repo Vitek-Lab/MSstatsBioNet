@@ -134,13 +134,23 @@ test_that("conflicting node status without entities is an error naming the node"
     second <- .make_merge_network(query_type = "mediated")
     second$nodes$logFC[second$nodes$id == "B"] <- 2
     expect_error(merge_networks(first, second),
-                 "node\\(s\\) B.*entities =")
+                 "disagree on logFC for node\\(s\\) B.*entities =")
 
     second <- .make_merge_network(query_type = "mediated")
     second$nodes$measured[2] <- FALSE
     second$nodes$logFC[2] <- NA
     second$nodes$adj.pvalue[2] <- NA
-    expect_error(merge_networks(first, second), "node\\(s\\) B")
+    expect_error(merge_networks(first, second),
+                 "disagree on measured, logFC, adj.pvalue for node\\(s\\) B,")
+})
+
+test_that("the error names the columns that differ across all conflicting nodes", {
+    first <- .make_merge_network()
+    second <- .make_merge_network(query_type = "mediated")
+    second$nodes$logFC[second$nodes$id == "A"] <- 2
+    second$nodes$included_in_query[second$nodes$id == "B"] <- FALSE
+    expect_error(merge_networks(first, second),
+                 "disagree on included_in_query, logFC for node\\(s\\) A, B,")
 })
 
 test_that("entities recompute measured and statistics, and unmatched nodes become latent", {
