@@ -100,6 +100,12 @@ get_network(
 
   keeps edges with evidence from at least one of these sources, e.g.
   `c("reach")`. `NULL` keeps all.
+  `backend_capabilities(backend)$evidence_sources` lists a backend's
+  sources; for INDRA,
+  [`INDRA_DATABASE_SOURCES`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_evidence_sources.md)
+  keeps edges with curated-database evidence and
+  [`INDRA_TEXT_MINED_SOURCES`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_evidence_sources.md)
+  edges with text-mined evidence.
 
 - include_entities:
 

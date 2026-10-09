@@ -86,6 +86,12 @@ limits of a backend, so a choice can be checked before a query is sent.</p>
 <dd><p>the <code>edges$interaction</code> values the
     backend returns</p></dd>
 
+  <dt>evidence_sources</dt>
+<dd><p>the <code>evidence_sources</code> values
+    <code><a href="get_network.html">get_network()</a></code> filters on, as a list with
+    <code>database</code> and <code>text_mined</code> elements, e.g.
+    <code><a href="indra_evidence_sources.html">INDRA_DATABASE_SOURCES</a></code></p></dd>
+
   <dt>max_nodes</dt>
 <dd><p>for each query type, the largest number of
     groundings one query can take</p></dd>
@@ -139,6 +145,19 @@ limits of a backend, so a choice can be checked before a query is sent.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [34] "Deribosylation"        "Methylation"           "Demethylation"        </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [37] "Complex"               "Association"           "Conversion"           </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [40] "Translocation"        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $evidence_sources</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $evidence_sources$database</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "acsn"       "bel"        "bel_lc"     "biogrid"    "cbn"       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6] "conib"      "creeds"     "crog"       "ctd"        "dgi"       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11] "drugbank"   "hprd"       "minerva"    "omnipath"   "pc"        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "pe"         "psp"        "signor"     "tas"        "trrust"    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [21] "ubibrowser" "vhn"       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $evidence_sources$text_mined</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "eidos"    "geneways" "gnbr"     "isi"      "medscan"  "reach"   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "rlimsp"   "semrep"   "sparser"  "tees"     "trips"   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $max_nodes</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> subnetwork </span>

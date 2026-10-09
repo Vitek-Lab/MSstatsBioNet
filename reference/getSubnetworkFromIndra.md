@@ -77,7 +77,10 @@ getSubnetworkFromIndra(
 - sources_filter:
 
   filtering only on specific sources. Default is no filter, i.e. NULL.
-  Otherwise, should be a list, e.g. c('reach', 'medscan').
+  See
+  [`INDRA_DATABASE_SOURCES`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_evidence_sources.md)
+  for INDRA's source names. Otherwise, should be a list, e.g. c('reach',
+  'medscan').
 
 - logfc_cutoff:
 

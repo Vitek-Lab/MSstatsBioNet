@@ -139,7 +139,11 @@ says how many. <code>NULL</code> applies no cutoff.</p></dd>
 
 <dt id="arg-evidence-sources">evidence_sources<a class="anchor" aria-label="anchor" href="#arg-evidence-sources"></a></dt>
 <dd><p>keeps edges with evidence from at least one of
-these sources, e.g. <code>c("reach")</code>. <code>NULL</code> keeps all.</p></dd>
+these sources, e.g. <code>c("reach")</code>. <code>NULL</code> keeps all.
+<code>backend_capabilities(backend)$evidence_sources</code> lists a backend's
+sources; for INDRA, <code><a href="indra_evidence_sources.html">INDRA_DATABASE_SOURCES</a></code> keeps edges
+with curated-database evidence and
+<code><a href="indra_evidence_sources.html">INDRA_TEXT_MINED_SOURCES</a></code> edges with text-mined evidence.</p></dd>
 
 
 <dt id="arg-include-entities">include_entities<a class="anchor" aria-label="anchor" href="#arg-include-entities"></a></dt>
