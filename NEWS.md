@@ -43,9 +43,10 @@ metabolites:
     `target`, `backend_database`, and `statement_id`) becomes one row with
     the `query_type` values joined by `;`, keeping the copy with the most
     evidence; the same relation from two backends stays two rows. Node
-    roles are joined by `;`. Node status must agree across the networks
-    unless `entities` is passed, in which case `measured`, `logFC`, and
-    `adj.pvalue` are recomputed from it.
+    roles are joined by `;`, and `included_in_query` is `TRUE` if the node
+    was in any query. `measured`, `logFC`, and `adj.pvalue` must agree
+    across the networks unless `entities` is passed, in which case they
+    are recomputed from it.
     * The S4 classes `NetworkBackend`, `IndraBackend`, `NetworkQuery`, and
     `SubnetworkQuery` are exported, so other packages can add backends.
 * New function `validate_network()` checks a `list(nodes, edges)` network

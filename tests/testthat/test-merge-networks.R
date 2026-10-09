@@ -148,9 +148,21 @@ test_that("the error names the columns that differ across all conflicting nodes"
     first <- .make_merge_network()
     second <- .make_merge_network(query_type = "mediated")
     second$nodes$logFC[second$nodes$id == "A"] <- 2
-    second$nodes$included_in_query[second$nodes$id == "B"] <- FALSE
+    second$nodes$adj.pvalue[second$nodes$id == "B"] <- 0.5
     expect_error(merge_networks(first, second),
-                 "disagree on included_in_query, logFC for node\\(s\\) A, B,")
+                 "disagree on logFC, adj.pvalue for node\\(s\\) A, B,")
+})
+
+test_that("included_in_query may differ and is TRUE if the node was in any query", {
+    subnetwork <- .make_merge_network()
+    regulators <- .make_merge_network(node_role = "upstream_regulator",
+                                      query_type = "upstream_regulators:shared")
+    regulators$nodes$included_in_query[regulators$nodes$id == "A"] <- FALSE
+    network <- merge_networks(regulators, subnetwork)
+    expect_equal(network$nodes$included_in_query, c(TRUE, TRUE))
+
+    only_latent <- merge_networks(regulators, regulators)
+    expect_equal(only_latent$nodes$included_in_query, c(FALSE, TRUE))
 })
 
 test_that("entities recompute measured and statistics, and unmatched nodes become latent", {

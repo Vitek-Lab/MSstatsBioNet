@@ -39,19 +39,20 @@ filled with \code{NA}.
 Nodes are the same node when they have the same \code{id} and
 \code{site} (a protein has one row per PTM site). Their
 \code{node_role} values are joined by \code{";"}, e.g.
-\code{"passed_cutoffs;mediator"}, \code{has_measured_sites} is
-\code{TRUE} if it is in any network, and other columns take the first
-non-\code{NA} value.
+\code{"passed_cutoffs;mediator"}, \code{included_in_query} and
+\code{has_measured_sites} are \code{TRUE} if they are in any network,
+and other columns take the first non-\code{NA} value.
+\code{included_in_query} describes the query, so it can differ between
+networks built from one entity table: a node can be a latent regulator
+in one query and part of another.
 
-Without \code{entities}, \code{measured}, \code{included_in_query},
-\code{logFC}, and \code{adj.pvalue} must agree for each node, because
-networks built from one entity table always agree; otherwise
-\code{merge_networks()} stops and names the nodes. To merge networks
-built from different selections or entity tables, pass the entity table
-as \code{entities}: \code{measured}, \code{logFC}, and \code{adj.pvalue}
-are then recomputed from it (nodes not in it are \code{measured = FALSE}
-with \code{NA} statistics), and \code{included_in_query} is \code{TRUE}
-if the node was in any query.
+Without \code{entities}, \code{measured}, \code{logFC}, and
+\code{adj.pvalue} must agree for each node, because networks built from
+one entity table always agree; otherwise \code{merge_networks()} stops
+and names the nodes. To merge networks built from different entity
+tables, pass the entity table as \code{entities}: \code{measured},
+\code{logFC}, and \code{adj.pvalue} are then recomputed from it (nodes
+not in it are \code{measured = FALSE} with \code{NA} statistics).
 
 The \code{regulators} and \code{provenance} tables of the networks, when
 present, are combined by row, with columns filled with \code{NA}. Other
