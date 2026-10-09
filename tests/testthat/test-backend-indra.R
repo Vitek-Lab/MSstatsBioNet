@@ -424,7 +424,9 @@ test_that("the new API is exported", {
     expect_true(all(c("prepare_entities", "select_entities", "indra_backend",
                       "convert_ids", "get_entity_properties",
                       "subnetwork_query", "get_network",
-                      "backend_capabilities") %in% exports))
+                      "backend_capabilities", "merge_networks",
+                      "INDRA_DATABASE_SOURCES", "INDRA_TEXT_MINED_SOURCES")
+                    %in% exports))
     # Helpers stay internal until a caller needs them
     expect_false(any(c("build_grounding_table", "parse_ptm_sites") %in% exports))
 })
@@ -433,7 +435,7 @@ test_that("backend_capabilities() describes the INDRA backend", {
     capabilities <- backend_capabilities(indra_backend())
     expect_named(capabilities, c("query_types", "id_conversions",
                                  "entity_properties", "interaction_types",
-                                 "max_nodes"))
+                                 "evidence_sources", "max_nodes"))
     expect_equal(capabilities$query_types, "subnetwork")
     expect_equal(capabilities$id_conversions$protein,
                  c("uniprot", "uniprot_mnemonic", "hgnc_symbol"))
@@ -531,4 +533,69 @@ test_that(".describe_entity_count() names the entity types", {
 test_that("the INDRA backend meets the shared backend contract", {
     .mock_indra_response()
     expect_backend_contract(indra_backend(), .selected_input())
+})
+
+test_that("INDRA's database and text-mined source lists don't overlap", {
+    expect_type(INDRA_DATABASE_SOURCES, "character")
+    expect_type(INDRA_TEXT_MINED_SOURCES, "character")
+    expect_length(intersect(INDRA_DATABASE_SOURCES, INDRA_TEXT_MINED_SOURCES), 0)
+    expect_false(anyDuplicated(INDRA_DATABASE_SOURCES) > 0)
+    expect_false(anyDuplicated(INDRA_TEXT_MINED_SOURCES) > 0)
+    expect_true(all(INDRA_SOURCE_ALIASES %in% INDRA_DATABASE_SOURCES))
+})
+
+test_that("the source lists cover every source in the saved INDRA response", {
+    statements <- readRDS(system.file("extdata/indraResponse.rds",
+                                      package = "MSstatsBioNet"))
+    sources <- unique(unlist(lapply(statements, function(statement) {
+        names(jsonlite::fromJSON(statement$data$source_counts))
+    })))
+    expect_gt(length(sources), 0)
+    expect_true(all(sources %in% c(INDRA_DATABASE_SOURCES,
+                                   INDRA_TEXT_MINED_SOURCES)))
+})
+
+test_that("backend_capabilities() lists INDRA's evidence sources", {
+    sources <- backend_capabilities(indra_backend())$evidence_sources
+    expect_identical(sources, list(database = INDRA_DATABASE_SOURCES,
+                                   text_mined = INDRA_TEXT_MINED_SOURCES))
+})
+
+test_that("evidence_sources = INDRA_DATABASE_SOURCES keeps edges with database evidence", {
+    .mock_indra_response()
+    input <- .selected_input()
+    has_any <- function(json, sources) {
+        any(names(jsonlite::fromJSON(json)) %in% sources)
+    }
+    curated <- suppressMessages(get_network(
+        indra_backend(), input, evidence_sources = INDRA_DATABASE_SOURCES))
+    expect_gt(nrow(curated$edges), 0)
+    expect_true(all(vapply(curated$edges$evidence_sources, has_any,
+                           logical(1), INDRA_DATABASE_SOURCES)))
+    text_mined <- suppressMessages(get_network(
+        indra_backend(), input, evidence_sources = INDRA_TEXT_MINED_SOURCES))
+    expect_gt(nrow(text_mined$edges), 0)
+    expect_true(all(vapply(text_mined$edges$evidence_sources, has_any,
+                           logical(1), INDRA_TEXT_MINED_SOURCES)))
+    expect_no_warning(suppressMessages(get_network(
+        indra_backend(), input,
+        evidence_sources = c(INDRA_DATABASE_SOURCES,
+                             INDRA_TEXT_MINED_SOURCES))))
+})
+
+test_that("unknown evidence source names warn and suggest INDRA's name", {
+    .mock_indra_response()
+    input <- .selected_input()
+    expect_warning(
+        suppressMessages(get_network(indra_backend(), input,
+                                     evidence_sources = c("signor",
+                                                          "phosphosite"))),
+        "phosphosite.*Use \"psp\" for \"phosphosite\"")
+    expect_warning(
+        suppressMessages(get_network(indra_backend(), input,
+                                     evidence_sources = c("signor",
+                                                          "not_a_source"))),
+        "not_a_source\\. See \\?indra_evidence_sources")
+    expect_no_warning(suppressMessages(
+        get_network(indra_backend(), input, evidence_sources = "signor")))
 })

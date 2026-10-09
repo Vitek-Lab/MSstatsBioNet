@@ -28,6 +28,10 @@ named list:
     \code{\link{get_entity_properties}()} can add}
   \item{interaction_types}{the \code{edges$interaction} values the
     backend returns}
+  \item{evidence_sources}{the \code{evidence_sources} values
+    \code{\link{get_network}()} filters on, as a list with
+    \code{database} and \code{text_mined} elements, e.g.
+    \code{\link{INDRA_DATABASE_SOURCES}}}
   \item{max_nodes}{for each query type, the largest number of
     groundings one query can take}
 }

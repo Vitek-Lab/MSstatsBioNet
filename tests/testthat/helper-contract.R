@@ -21,6 +21,13 @@ expect_backend_contract <- function(backend, entities, ...) {
     expect_type(capabilities$query_types, "character")
     expect_true(all(capabilities$interaction_types %in% INTERACTION_TYPES))
     expect_true(all(names(capabilities$id_conversions) %in% ENTITY_TYPES))
+    if (!is.null(capabilities$evidence_sources)) {
+        expect_type(capabilities$evidence_sources, "list")
+        expect_true(all(c("database", "text_mined") %in%
+                        names(capabilities$evidence_sources)))
+        expect_true(all(vapply(capabilities$evidence_sources, is.character,
+                               logical(1))))
+    }
 
     for (query_type in capabilities$query_types) {
         constructor <- .contract_query_constructors[[query_type]]

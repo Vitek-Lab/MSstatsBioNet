@@ -100,6 +100,9 @@ setMethod("backend_capabilities", "IndraBackend",
              id_conversions    = INDRA_ID_CONVERSIONS,
              entity_properties = names(INDRA_ENTITY_PROPERTIES),
              interaction_types = INTERACTION_TYPES,
+             evidence_sources  = list(
+                 database   = INDRA_DATABASE_SOURCES,
+                 text_mined = INDRA_TEXT_MINED_SOURCES),
              max_nodes         = INDRA_MAX_NODES)
     })
 
@@ -320,6 +323,7 @@ ENTITY_TYPE_NAMES <- list(
         if (!is.character(evidence_sources)) {
             stop("evidence_sources must be a character vector")
         }
+        .warn_unknown_indra_sources(evidence_sources)
     }
 }
 
@@ -599,6 +603,106 @@ NODE_COLUMN_ORDER <- c("id", "entity_type", "entity_name", "namespace",
                 return(NA_character_)
         }
         return(paste(members, collapse = ";"))
+}
+
+#' Evidence sources of INDRA
+#'
+#' The names INDRA gives its evidence sources, in two groups:
+#' \code{INDRA_DATABASE_SOURCES} for curated databases (e.g. SIGNOR,
+#' BioGRID, PhosphoSitePlus) and \code{INDRA_TEXT_MINED_SOURCES} for the
+#' text-mining systems that read the literature (e.g. REACH, Sparser). Pass
+#' one to \code{\link{get_network}(evidence_sources = )} to keep only the
+#' edges with evidence from a curated database, or only those with
+#' text-mined evidence.
+#'
+#' These are the names INDRA uses internally, which are the ones in
+#' \code{edges$evidence_sources}, and some differ from the full source
+#' names: \code{"psp"} (PhosphoSitePlus), \code{"pc"} (Pathway Commons),
+#' \code{"pe"} (Phospho.ELM), \code{"vhn"} (VirHostNet), and
+#' \code{"bel_lc"} (BEL large corpus).
+#'
+#' @format character vectors
+#' @source \code{db_sources} and \code{reader_sources} in INDRA's
+#' \code{indra.util.statement_presentation} module (INDRA 1.23.0), which
+#' INDRA CoGEx uses for its own source lists. \code{"bel"} is added to the
+#' databases, as CoGEx does.
+#' @seealso \code{\link{get_network}()}, \code{\link{backend_capabilities}()}
+#' @name indra_evidence_sources
+#' @examples
+#' INDRA_DATABASE_SOURCES
+#' INDRA_TEXT_MINED_SOURCES
+#' \donttest{
+#' input <- data.table::fread(system.file(
+#'     "extdata/groupComparisonModel.csv",
+#'     package = "MSstatsBioNet"
+#' ))
+#' indra <- indra_backend()
+#' entities <- prepare_entities(input, entity_type = "protein",
+#'                              id_type = "uniprot")
+#' entities <- convert_ids(indra, entities)
+#' entities <- select_entities(entities, pvalue_cutoff = 0.05)
+#' curated <- get_network(indra, entities,
+#'                        evidence_sources = INDRA_DATABASE_SOURCES)
+#' head(curated$edges$evidence_sources)
+#' }
+NULL
+
+#' @rdname indra_evidence_sources
+#' @export
+INDRA_DATABASE_SOURCES <- c(
+    "acsn", "bel", "bel_lc", "biogrid", "cbn", "conib", "creeds", "crog",
+    "ctd", "dgi", "drugbank", "hprd", "minerva", "omnipath", "pc", "pe",
+    "psp", "signor", "tas", "trrust", "ubibrowser", "vhn"
+)
+
+#' @rdname indra_evidence_sources
+#' @export
+INDRA_TEXT_MINED_SOURCES <- c(
+    "eidos", "geneways", "gnbr", "isi", "medscan", "reach", "rlimsp",
+    "semrep", "sparser", "tees", "trips"
+)
+
+#' Full INDRA source names and the internal names INDRA uses for them
+#'
+#' From \code{internal_source_mappings} in
+#' \code{indra.util.statement_presentation}. \code{"bel"} is left out
+#' because it is also in \code{INDRA_DATABASE_SOURCES}.
+#' @keywords internal
+#' @noRd
+INDRA_SOURCE_ALIASES <- c(
+    phosphosite = "psp",
+    biopax      = "pc",
+    phosphoelm  = "pe",
+    virhostnet  = "vhn"
+)
+
+#' Warn about evidence source names INDRA doesn't list
+#'
+#' Warns rather than stops, since INDRA adds sources between releases.
+#' Suggests the internal name for a full source name.
+#' @param evidence_sources character vector
+#' @return \code{NULL}, invisibly
+#' @keywords internal
+#' @noRd
+.warn_unknown_indra_sources <- function(evidence_sources) {
+    unknown <- setdiff(evidence_sources, c(INDRA_DATABASE_SOURCES,
+                                           INDRA_TEXT_MINED_SOURCES))
+    if (length(unknown) == 0) {
+        return(invisible(NULL))
+    }
+    aliased <- intersect(unknown, names(INDRA_SOURCE_ALIASES))
+    suggestions <- if (length(aliased) > 0) {
+        paste0(" Use ", paste0("\"", INDRA_SOURCE_ALIASES[aliased],
+                               "\" for \"", aliased, "\"",
+                               collapse = ", "), ".")
+    } else {
+        ""
+    }
+    warning("evidence_sources has name(s) INDRA doesn't list, which may ",
+            "match no edges: ", .list_values_for_message(unknown), ".",
+            suggestions, " See ?indra_evidence_sources for INDRA's names.",
+            call. = FALSE)
+    invisible(NULL)
 }
 
 #' Identifier systems the INDRA backend converts, by entity type

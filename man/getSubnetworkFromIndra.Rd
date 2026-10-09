@@ -56,6 +56,7 @@ absolute correlation is below this cutoff. Default is 0.3. Supplying it
 gives a deprecation warning.}
 
 \item{sources_filter}{filtering only on specific sources.  Default is no filter, i.e. NULL.
+See \code{\link{INDRA_DATABASE_SOURCES}} for INDRA's source names.
 Otherwise, should be a list, e.g. c('reach', 'medscan').}
 
 \item{logfc_cutoff}{absolute log fold change cutoff for filtering proteins. 
