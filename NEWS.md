@@ -50,6 +50,17 @@ metabolites:
     `adj.pvalue` must agree across the networks unless `entities` is
     passed, in which case they (and `has_measured_sites`) are recomputed
     from it.
+    * `INDRA_DATABASE_SOURCES` and `INDRA_TEXT_MINED_SOURCES` list INDRA's
+    evidence sources (curated databases, and text-mining systems), so
+    `get_network(evidence_sources = INDRA_DATABASE_SOURCES)` keeps only
+    edges with curated-database evidence. They use INDRA's internal names
+    (`"psp"` for PhosphoSitePlus, `"pc"` for Pathway Commons, ...), which
+    are the names in `edges$evidence_sources`.
+    `backend_capabilities()$evidence_sources` lists both. A name in neither
+    list, in `get_network(evidence_sources =)` or
+    `getSubnetworkFromIndra(sources_filter =)`, gives a warning that
+    suggests the internal name where there is one (e.g. `"psp"` for
+    `"phosphosite"`).
     * The S4 classes `NetworkBackend`, `IndraBackend`, `NetworkQuery`, and
     `SubnetworkQuery` are exported, so other packages can add backends.
 * New function `validate_network()` checks a `list(nodes, edges)` network

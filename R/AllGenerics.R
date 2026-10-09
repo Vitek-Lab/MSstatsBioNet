@@ -43,6 +43,10 @@
 #' says how many. \code{NULL} applies no cutoff.
 #' @param evidence_sources keeps edges with evidence from at least one of
 #' these sources, e.g. \code{c("reach")}. \code{NULL} keeps all.
+#' \code{backend_capabilities(backend)$evidence_sources} lists a backend's
+#' sources; for INDRA, \code{\link{INDRA_DATABASE_SOURCES}} keeps edges
+#' with curated-database evidence and
+#' \code{\link{INDRA_TEXT_MINED_SOURCES}} edges with text-mined evidence.
 #' @param include_entities \code{"namespace:identifier"} groundings to add to
 #' the query, e.g. \code{"HGNC:1234"}. Use this for entities outside the
 #' input; to keep entities of the input that fail the cutoffs, use
@@ -304,6 +308,10 @@ setMethod("get_curations", "NetworkBackend",
 #'     \code{\link{get_entity_properties}()} can add}
 #'   \item{interaction_types}{the \code{edges$interaction} values the
 #'     backend returns}
+#'   \item{evidence_sources}{the \code{evidence_sources} values
+#'     \code{\link{get_network}()} filters on, as a list with
+#'     \code{database} and \code{text_mined} elements, e.g.
+#'     \code{\link{INDRA_DATABASE_SOURCES}}}
 #'   \item{max_nodes}{for each query type, the largest number of
 #'     groundings one query can take}
 #' }

@@ -77,7 +77,11 @@ Edges with no confidence score (\code{NA}) are dropped too, and a message
 says how many. \code{NULL} applies no cutoff.}
 
 \item{evidence_sources}{keeps edges with evidence from at least one of
-these sources, e.g. \code{c("reach")}. \code{NULL} keeps all.}
+these sources, e.g. \code{c("reach")}. \code{NULL} keeps all.
+\code{backend_capabilities(backend)$evidence_sources} lists a backend's
+sources; for INDRA, \code{\link{INDRA_DATABASE_SOURCES}} keeps edges
+with curated-database evidence and
+\code{\link{INDRA_TEXT_MINED_SOURCES}} edges with text-mined evidence.}
 
 \item{include_entities}{\code{"namespace:identifier"} groundings to add to
 the query, e.g. \code{"HGNC:1234"}. Use this for entities outside the
