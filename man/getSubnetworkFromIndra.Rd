@@ -99,7 +99,7 @@ rows, such as two isoforms of one gene, gives each of them an edge):
 \code{evidence_url} (INDRA page for this statement), \code{statement_id}
 (INDRA statement hash, as character), \code{backend_database}
 (\code{"INDRA"}), \code{query_type} (\code{"subnetwork"}),
-\code{evidence_sources} (evidence count per source, as JSON), and the
+\code{evidence_sources} (the evidence sources, \code{";"}-joined, e.g. \code{"psp;reach"}), and the
 deprecated \code{paperCount} (and \code{correlation} when
 \code{protein_level_data} is given).
 

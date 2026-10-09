@@ -1,5 +1,16 @@
 # Edge filters shared by every backend's get_network() method.
 
+#' Join the evidence source names of one edge for edges$evidence_sources
+#' @param sources character vector of source names
+#' @return a single string: the unique names, sorted and \code{";"}-joined,
+#' or \code{NA} when there are none
+#' @keywords internal
+#' @noRd
+.join_evidence_sources <- function(sources) {
+    sources <- sort(unique(sources[!is.na(sources) & nzchar(sources)]))
+    if (length(sources) == 0) NA_character_ else paste(sources, collapse = ";")
+}
+
 #' Stop unless min_confidence is NULL or a single number in [0, 1]
 #' @param min_confidence the argument of get_network()
 #' @keywords internal
@@ -35,4 +46,28 @@
                 "score (NA confidence), because min_confidence is set.")
     }
     edges[!no_score & edges$confidence >= min_confidence, , drop = FALSE]
+}
+
+#' Drop edges below an evidence count cutoff
+#'
+#' Edges with no evidence count (\code{NA}, e.g. from STRING) pass the
+#' default \code{min_evidence = 1}, since every edge has at least one piece
+#' of evidence. A higher cutoff drops them, since they can't be shown to
+#' pass, and a message says how many.
+#' @param edges edges data.frame with an \code{evidence_count} column
+#' @param min_evidence cutoff
+#' @return \code{edges}, filtered
+#' @keywords internal
+#' @noRd
+.filter_by_min_evidence <- function(edges, min_evidence) {
+    no_count <- is.na(edges$evidence_count)
+    if (min_evidence <= 1) {
+        return(edges[no_count | edges$evidence_count >= min_evidence, ,
+                     drop = FALSE])
+    }
+    if (any(no_count)) {
+        message("Dropping ", sum(no_count), " edge(s) with no evidence ",
+                "count (NA evidence_count), because min_evidence is above 1.")
+    }
+    edges[!no_count & edges$evidence_count >= min_evidence, , drop = FALSE]
 }

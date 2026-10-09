@@ -270,6 +270,102 @@ build_grounding_table <- function(entities, namespaces = NULL) {
     long
 }
 
+#' Keep only some namespaces in an entity table's groundings
+#'
+#' Each backend reads only its own groundings, so that one entity table
+#' grounded by several backends (see \code{.replace_groundings()}) gives
+#' each backend's \code{get_network()} its own namespaces, and its nodes
+#' only those groundings.
+#' @param entities entity table
+#' @param keep_namespace function of a character vector of namespaces,
+#' returning \code{TRUE} for the ones to keep, e.g.
+#' \code{.is_indra_namespace}
+#' @return \code{entities}, with \code{namespace}, \code{entity_id}, and
+#' \code{entity_name} rebuilt from the kept groundings (\code{NA} for rows
+#' left with none). Unchanged when every grounding is kept.
+#' @keywords internal
+#' @noRd
+.keep_groundings <- function(entities, keep_namespace) {
+    long <- build_grounding_table(entities)
+    kept <- keep_namespace(long$namespace)
+    if (all(kept)) {
+        return(entities)
+    }
+    groundings <- .collapse_groundings(long[kept, , drop = FALSE],
+                                       entities$id)
+    entities$namespace <- groundings$namespace
+    entities$entity_id <- groundings$entity_id
+    entities$entity_name <- groundings$entity_name
+    entities
+}
+
+#' Replace a backend's groundings of some rows, keeping the others
+#'
+#' A backend's \code{convert_ids()} replaces only the groundings in its own
+#' namespaces and keeps those of other backends, so that one entity table
+#' can be grounded by INDRA and STRING and serve both. The kept groundings
+#' come first, then the new ones.
+#' @param entities entity table
+#' @param rows row numbers to replace the groundings of
+#' @param groundings data.frame with \code{namespace}, \code{entity_id},
+#' \code{entity_name}, one row per element of \code{rows}, \code{";"}-joined
+#' @param owned_namespace function of a character vector of namespaces,
+#' returning \code{TRUE} for the backend's own
+#' @return \code{entities} with the grounding columns of \code{rows} replaced
+#' @keywords internal
+#' @noRd
+.replace_groundings <- function(entities, rows, groundings,
+                                owned_namespace) {
+    columns <- c("namespace", "entity_id", "entity_name")
+    current <- build_grounding_table(entities[rows, , drop = FALSE])
+    others <- current[!owned_namespace(current$namespace), , drop = FALSE]
+    if (nrow(others) == 0) {
+        entities[rows, columns] <- groundings[, columns]
+        return(entities)
+    }
+    replaced <- entities[rows, , drop = FALSE]
+    replaced[, columns] <- groundings[, columns]
+    combined <- rbind(others, build_grounding_table(replaced))
+    # order() keeps ties in their original order, so other backends first
+    combined <- combined[order(match(combined$id, entities$id[rows])), ,
+                         drop = FALSE]
+    entities[rows, columns] <- .collapse_groundings(combined,
+                                                    entities$id[rows])
+    entities
+}
+
+#' Join a long grounding table back into the entity grounding columns
+#'
+#' The inverse of \code{build_grounding_table()}.
+#' @param long data.frame with \code{id}, \code{namespace},
+#' \code{entity_id}, \code{entity_name}, one row per grounding
+#' @param ids the \code{id} of each row to return
+#' @return data.frame with \code{namespace}, \code{entity_id},
+#' \code{entity_name}, one row per element of \code{ids}, \code{";"}-joined,
+#' and \code{NA} for ids with no grounding. \code{entity_name} has
+#' \code{"NA"} for a grounding with no name, and is \code{NA} when no
+#' grounding of the row has one.
+#' @keywords internal
+#' @noRd
+.collapse_groundings <- function(long, ids) {
+    collapsed <- .build_empty_groundings(length(ids))
+    rows_by_id <- split(seq_len(nrow(long)),
+                        factor(long$id, levels = unique(long$id)))
+    for (id in names(rows_by_id)) {
+        i <- match(id, ids)
+        rows <- rows_by_id[[id]]
+        collapsed$namespace[i] <- paste(long$namespace[rows], collapse = ";")
+        collapsed$entity_id[i] <- paste(long$entity_id[rows], collapse = ";")
+        entity_names <- long$entity_name[rows]
+        if (!all(is.na(entity_names))) {
+            collapsed$entity_name[i] <- paste(
+                ifelse(is.na(entity_names), "NA", entity_names),
+                collapse = ";")
+        }
+    }
+    collapsed
+}
+
 #' Flag the entities to query
 #'
 #' Sets \code{included_in_query} from the statistical cutoffs. Only these

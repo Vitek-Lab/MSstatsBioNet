@@ -25,7 +25,8 @@ Required edge columns: \code{source}, \code{target} (both matching
 \code{site} (PTM site on the target such as \code{"S148"}, \code{;}-joined
 when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 \code{NA} when the source provides no score), \code{evidence_count}
-(whole number, at least 1, not \code{NA}), \code{evidence_url},
+(whole number, at least 1, or \code{NA} when the source has no
+evidence count, as STRING), \code{evidence_url},
 \code{statement_id} (character), \code{backend_database}, and
 \code{query_type}.
 Edges of the symmetric statement types \code{"Complex"} and
@@ -33,6 +34,9 @@ Edges of the symmetric statement types \code{"Complex"} and
 can share a \code{statement_id}: an undirected statement can be listed
 in both directions, and a statement reaches every node with its
 grounding (see \code{\link{get_network}()}).
+When present, \code{evidence_sources} must be the names of the edge's
+evidence sources, joined by \code{";"} (e.g. \code{"psp;reach"}), or
+\code{NA}.
 
 Required node columns: \code{id}, \code{entity_type} (e.g.
 \code{"protein"}, \code{"ptm_site"}, \code{"metabolite"},

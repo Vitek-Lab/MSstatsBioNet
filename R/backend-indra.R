@@ -48,8 +48,9 @@ indra_backend <- function(cogex_url = INDRA_API_URL,
         curation_url = curation_url)
 }
 
-# INDRA subnetwork query. Sends the groundings of the included_in_query rows
-# to CoGEx indra_subnetwork_relations, filters the statements, and
+# INDRA subnetwork query. Reads only INDRA's groundings (not STRING's), and
+# sends those of the included_in_query rows to CoGEx
+# indra_subnetwork_relations, filters the statements, and
 # normalizes them to the edge contract. The source and target of each
 # statement are matched back to the rows of entities by grounding, so nodes
 # carry their statistics. A grounding shared by the rows of several nodes
@@ -61,6 +62,7 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
     function(backend, entities, query, interaction_types = NULL,
              min_evidence = 1, min_confidence = NULL,
              evidence_sources = NULL, include_entities = NULL, ...) {
+        entities <- .keep_groundings(entities, .is_indra_namespace)
         groundings <- .get_groundings_to_query(entities)
         .validateIndraSubnetworkInput(groundings, evidence_sources,
                                       include_entities)
@@ -96,6 +98,19 @@ setMethod("get_network", signature("IndraBackend", "SubnetworkQuery"),
         validate_network(network)
         network
     })
+
+#' Whether namespaces are INDRA's
+#'
+#' INDRA grounds to whichever namespace CoGEx or Gilda returns (HGNC,
+#' CHEBI, FPLX, ...), so it owns every namespace that isn't another
+#' backend's.
+#' @param namespaces character vector
+#' @return logical vector
+#' @keywords internal
+#' @noRd
+.is_indra_namespace <- function(namespaces) {
+    !namespaces %in% STRING_NAMESPACE
+}
 
 #' Largest number of groundings one INDRA query takes, by query type
 #'
@@ -245,11 +260,13 @@ EVIDENCE_EDGE_COLUMNS <- c("source", "target", "interaction", "site",
 #' @param groundings groundings of the rows to query, from
 #' \code{.get_groundings_to_query()}
 #' @param include_entities groundings added to the query
+#' @param backend_label the backend's name, first in the question
 #' @return a single string
 #' @keywords internal
 #' @noRd
 .describe_subnetwork_question <- function(entities, groundings,
-                                          include_entities) {
+                                          include_entities,
+                                          backend_label = "INDRA") {
     queried_types <- entities$entity_type[entities$id %in% groundings$id]
     selected <- .describe_entity_count(queried_types, "selected")
     if (length(include_entities) > 0) {
@@ -258,7 +275,7 @@ EVIDENCE_EDGE_COLUMNS <- c("source", "target", "interaction", "site",
                            if (length(include_entities) == 1) "entity"
                            else "entities")
     }
-    paste0("INDRA subnetwork: how are ", selected, " connected to each ",
+    paste0(backend_label, " subnetwork: how are ", selected, " connected to each ",
            "other, with no other nodes added?")
 }
 
@@ -754,7 +771,8 @@ INDRA_ENTITY_PROPERTIES <- list(
 # hgnc_symbol through Gilda restricted to HGNC and the row's organism, and
 # chemical_name through Gilda with no namespace restriction. Each
 # ";"-separated member of an identifier (a protein group) is grounded on its
-# own, and the groundings are pooled onto the row.
+# own, and the groundings are pooled onto the row. Groundings of other
+# backends (STRING) are kept.
 #' @rdname convert_ids
 #' @export
 setMethod("convert_ids", "IndraBackend",
@@ -775,9 +793,8 @@ setMethod("convert_ids", "IndraBackend",
                     organisms = as.list(unique(.get_entity_organisms(entities)[rows]))),
                 chemical_name = .ground_text_with_gilda(
                     members[rows], backend@grounding_url))
-            entities$namespace[rows] <- groundings$namespace
-            entities$entity_id[rows] <- groundings$entity_id
-            entities$entity_name[rows] <- groundings$entity_name
+            entities <- .replace_groundings(entities, rows, groundings,
+                                            .is_indra_namespace)
         }
         entities
     })
@@ -793,21 +810,24 @@ setMethod("get_entity_properties", "IndraBackend",
         .validate_entities(entities)
         properties <- .resolve_entity_properties(
             backend, properties, names(INDRA_ENTITY_PROPERTIES))
-        # A ";"-joined namespace (several groundings) never equals "HGNC"
-        single_hgnc <- entities$namespace %in% "HGNC" &
-            !is.na(entities$entity_name)
+        # A ";"-joined namespace (several groundings) never equals "HGNC".
+        # STRING groundings don't count.
+        indra_groundings <- .keep_groundings(entities, .is_indra_namespace)
+        single_hgnc <- indra_groundings$namespace %in% "HGNC" &
+            !is.na(indra_groundings$entity_name)
         for (property in properties) {
             spec <- INDRA_ENTITY_PROPERTIES[[property]]
             queried <- single_hgnc & entities$entity_type %in% spec$entity_types
             values <- rep(NA, nrow(entities))
-            genes <- unique(entities$entity_name[queried])
+            genes <- unique(indra_groundings$entity_name[queried])
             if (length(genes) > 0) {
                 # Looked up by name at call time, so tests can mock the call
                 call_api <- get(spec$api, mode = "function")
                 response <- call_api(as.list(genes), backend@cogex_url)
                 for (gene in names(response)) {
                     if (!is.null(response[[gene]])) {
-                        values[queried & entities$entity_name == gene] <-
+                        values[queried &
+                               indra_groundings$entity_name == gene] <-
                             response[[gene]]
                     }
                 }
@@ -827,20 +847,7 @@ setMethod("get_entity_properties", "IndraBackend",
 #' @keywords internal
 #' @noRd
 .check_indra_id_conversions <- function(entities) {
-    pairs <- unique(entities[, c("entity_type", "id_type")])
-    supported <- vapply(seq_len(nrow(pairs)), function(i) {
-        pairs$id_type[i] %in% INDRA_ID_CONVERSIONS[[pairs$entity_type[i]]]
-    }, logical(1))
-    if (any(!supported)) {
-        unsupported <- paste(pairs$entity_type[!supported],
-                             pairs$id_type[!supported], sep = " / ")
-        allowed <- unlist(lapply(names(INDRA_ID_CONVERSIONS), function(type) {
-            paste(type, INDRA_ID_CONVERSIONS[[type]], sep = " / ")
-        }))
-        stop("IndraBackend can't convert entity_type / id_type: ",
-             .list_values_for_message(unsupported), ". Supported: ",
-             paste(allowed, collapse = ", "), ".", call. = FALSE)
-    }
+    .check_id_conversions(entities, indra_backend(), INDRA_ID_CONVERSIONS)
     is_protein <- entities$entity_type %in% c("protein", "ptm_site")
     organisms <- unique(.get_entity_organisms(entities)[is_protein])
     non_human <- setdiff(organisms, "9606")

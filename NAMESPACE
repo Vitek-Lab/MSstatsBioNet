@@ -29,11 +29,13 @@ export(previewNetworkInBrowser)
 export(renderCytoscapeNetwork)
 export(save_network)
 export(select_entities)
+export(string_backend)
 export(subnetwork_query)
 export(validate_network)
 exportClasses(IndraBackend)
 exportClasses(NetworkBackend)
 exportClasses(NetworkQuery)
+exportClasses(StringBackend)
 exportClasses(SubnetworkQuery)
 exportMethods(backend_capabilities)
 exportMethods(convert_ids)
@@ -56,6 +58,7 @@ importFrom(httr,
   add_headers,
   content,
   content_type_json,
+  http_error,
   status_code
 )
 importFrom(jsonlite,

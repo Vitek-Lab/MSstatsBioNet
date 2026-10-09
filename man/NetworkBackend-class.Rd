@@ -3,6 +3,7 @@
 \name{NetworkBackend-class}
 \alias{NetworkBackend-class}
 \alias{IndraBackend-class}
+\alias{StringBackend-class}
 \title{Network backend classes}
 \description{
 A backend is a source of prior-knowledge networks, such as INDRA.
@@ -16,18 +17,35 @@ extending \code{NetworkBackend} and writing methods for the generics.
 \code{IndraBackend} queries INDRA CoGEx for networks and grounds names
 with Gilda, INDRA's grounding service. Curations come from the INDRA
 database.
+
+\code{StringBackend} queries the STRING database of protein-protein
+associations through its REST API, for one network type and one STRING
+version.
 }
 \section{Slots}{
 
 \describe{
-\item{\code{cogex_url}}{base URL of INDRA CoGEx}
+\item{\code{cogex_url}}{(\code{IndraBackend}) base URL of INDRA CoGEx}
 
-\item{\code{grounding_url}}{base URL of Gilda}
+\item{\code{grounding_url}}{(\code{IndraBackend}) base URL of Gilda}
 
-\item{\code{curation_url}}{base URL of the INDRA database, which holds the
-curations}
+\item{\code{curation_url}}{(\code{IndraBackend}) base URL of the INDRA
+database, which holds the curations}
+
+\item{\code{network_type}}{(\code{StringBackend}) \code{"physical"},
+\code{"functional"}, or \code{"regulatory"}}
+
+\item{\code{version}}{(\code{StringBackend}) the STRING version, e.g.
+\code{"12.5"}, or \code{NA} for the current one}
+
+\item{\code{caller_identity}}{(\code{StringBackend}) the name sent to STRING
+with each request}
+
+\item{\code{host}}{(\code{StringBackend}) environment holding the STRING
+version and address, once resolved}
 }}
 
 \seealso{
-\code{\link{indra_backend}()}, \code{\link{backend_capabilities}()}
+\code{\link{indra_backend}()}, \code{\link{string_backend}()},
+\code{\link{backend_capabilities}()}
 }
