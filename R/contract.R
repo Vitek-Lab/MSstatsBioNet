@@ -119,7 +119,8 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' \code{measured} (logical: the node is in the input data),
 #' \code{included_in_query} (logical: the node was part of the query), and
 #' \code{node_role} (why the node is in the network, e.g.
-#' \code{"passed_cutoffs"} or \code{"user_added"}). An \code{id} can repeat,
+#' \code{"passed_cutoffs"} or \code{"user_added"}, or several joined by
+#' \code{";"} after \code{\link{merge_networks}()}). An \code{id} can repeat,
 #' once per PTM site row of the same protein. When present, \code{site},
 #' \code{has_measured_sites}, \code{logFC}, and \code{adj.pvalue} are
 #' type-checked.
@@ -320,6 +321,10 @@ validate_network <- function(network) {
     vocabularies <- list(entity_type = ENTITY_TYPES, node_role = NODE_ROLES)
     for (column in intersect(names(vocabularies), colnames(nodes))) {
         values <- nodes[[column]][!is.na(nodes[[column]])]
+        if (column == "node_role" && is.character(values)) {
+            # merge_networks() joins the roles of a node with ";"
+            values <- unlist(strsplit(values, ";", fixed = TRUE))
+        }
         unknown <- setdiff(unique(values), vocabularies[[column]])
         if (length(unknown) > 0) {
             problems <- c(problems, paste0(

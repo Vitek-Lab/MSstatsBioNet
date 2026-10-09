@@ -41,7 +41,8 @@ Required node columns: \code{id}, \code{entity_type} (e.g.
 \code{measured} (logical: the node is in the input data),
 \code{included_in_query} (logical: the node was part of the query), and
 \code{node_role} (why the node is in the network, e.g.
-\code{"passed_cutoffs"} or \code{"user_added"}). An \code{id} can repeat,
+\code{"passed_cutoffs"} or \code{"user_added"}, or several joined by
+\code{";"} after \code{\link{merge_networks}()}). An \code{id} can repeat,
 once per PTM site row of the same protein. When present, \code{site},
 \code{has_measured_sites}, \code{logFC}, and \code{adj.pvalue} are
 type-checked.

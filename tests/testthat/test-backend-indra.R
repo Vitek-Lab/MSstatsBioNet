@@ -527,3 +527,8 @@ test_that(".describe_entity_count() names the entity types", {
     expect_equal(.describe_entity_count(rep("protein", 1200), "selected"),
                  "1,200 selected proteins")
 })
+
+test_that("the INDRA backend meets the shared backend contract", {
+    .mock_indra_response()
+    expect_backend_contract(indra_backend(), .selected_input())
+})
