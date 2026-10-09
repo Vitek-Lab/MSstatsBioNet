@@ -92,7 +92,18 @@ input; to keep entities of the input that fail the cutoffs, use
 }
 \value{
 list of \code{nodes} and \code{edges} data.frames that meets the
-contract checked by \code{\link{validate_network}()}
+contract checked by \code{\link{validate_network}()}, and
+\code{provenance}: a data.frame with one row recording the query, with
+the columns \code{backend_database}, \code{query_type},
+\code{retrieved_at} (when the response arrived, in UTC),
+\code{backend_version} (\code{NA} for INDRA, which has no data
+versions), \code{backend_url}, \code{organism} (NCBI taxon IDs of the
+queried rows), \code{parameters} (the query arguments, as JSON), and
+\code{package_version} (of MSstatsBioNet). It joins to the edges on
+\code{backend_database} and \code{query_type}.
+\code{\link{merge_networks}()} combines the provenance of its networks,
+and \code{\link{save_network}()} saves it with the network. It is lost
+when the network is rebuilt with \code{list(nodes = , edges = )}.
 }
 \description{
 Sends the selected entities to a backend and returns the network that

@@ -27,6 +27,17 @@ metabolites:
     `include_entities`. It prints the question it asks as a message, e.g.
     "INDRA subnetwork: how are 42 selected proteins connected to each
     other, with no other nodes added?".
+    * `get_network()` also returns `provenance`, a one-row table recording
+    when the network was retrieved (`retrieved_at`, UTC), from which
+    backend, URL, and data version (`NA` for INDRA, which has none), for
+    which organism, with which arguments, and with which MSstatsBioNet
+    version. INDRA's data changes over time, so this is the only record of
+    which data a network came from. `merge_networks()` combines the
+    provenance of its networks.
+    * `save_network(network, file)` saves a network, with its provenance, to
+    an `.rds` file (warning when the provenance was lost by rebuilding the
+    list), and `load_network(file)` reads it back and checks it with
+    `validate_network()`.
     * `?network_queries` describes the questions a query can ask, with a
     glossary. `subnetwork_query()` is the first; more are planned.
     * `get_evidence(backend, edges)` returns the evidence sentences and

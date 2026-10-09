@@ -12,8 +12,13 @@
         .callIndraCogexApi = function(ns, ids, fio, cogex_url) {
             readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet"))
         },
+        .get_current_time = function() .fixed_retrieval_time(),
         .env = env
     )
+}
+
+.fixed_retrieval_time <- function() {
+    as.POSIXct("2026-10-09 12:00:00", tz = "UTC")
 }
 
 test_that("indra_backend() defaults to the public CoGEx and Gilda URLs", {
@@ -41,7 +46,8 @@ test_that("get_network() reproduces the pinned golden output", {
     .mock_indra_response()
     network <- get_network(indra_backend(), .selected_input(), subnetwork_query())
     golden <- readRDS(test_path("_fixtures", "golden_subnetwork.rds"))
-    expect_identical(network, golden)
+    # provenance came after the golden output was pinned
+    expect_identical(network[c("nodes", "edges")], golden)
 })
 
 test_that("get_network() runs subnetwork_query() when query is missing", {
