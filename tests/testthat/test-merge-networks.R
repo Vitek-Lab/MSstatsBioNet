@@ -105,14 +105,56 @@ test_that("columns that only one network has are filled with NA", {
     expect_type(network$edges$interaction_raw, "character")
 })
 
-test_that("node roles are joined and has_measured_sites is TRUE if in any network", {
+test_that("node roles are joined", {
     first <- .make_merge_network()
     second <- .make_merge_network(node_role = "mediator",
                                   query_type = "mediated")
-    second$nodes$has_measured_sites[second$nodes$id == "B"] <- TRUE
     network <- merge_networks(first, second)
     expect_equal(network$nodes$node_role,
                  c("passed_cutoffs;mediator", "passed_cutoffs;mediator"))
+})
+
+# MSstatsPTM: one network from the PROTEIN.Model table, one from the
+# PTM.Model table. The PTM network's nodes are site rows with the parent
+# protein's id.
+.make_protein_and_ptm_networks <- function() {
+    protein <- .make_merge_network()
+    ptm <- .make_merge_network(statement_id = "2")
+    ptm$edges$site <- "S10"
+    ptm$nodes$site <- c("T5", "S10")
+    ptm$nodes$logFC <- c(2, 3)
+    ptm$nodes$has_measured_sites <- TRUE
+    list(protein = protein, ptm = ptm)
+}
+
+test_that("merging protein and PTM networks marks the protein rows as having measured sites", {
+    networks <- .make_protein_and_ptm_networks()
+    expect_equal(networks$protein$nodes$has_measured_sites, c(FALSE, FALSE))
+    network <- merge_networks(networks$protein, networks$ptm)
+    expect_equal(network$nodes$id, c("A", "B", "A", "B"))
+    expect_equal(network$nodes$site, c(NA, NA, "T5", "S10"))
+    expect_equal(network$nodes$logFC, c(1, 1, 2, 3))
+    expect_equal(network$nodes$has_measured_sites, c(TRUE, TRUE, TRUE, TRUE))
+})
+
+test_that("only proteins with sites in some network are marked", {
+    networks <- .make_protein_and_ptm_networks()
+    networks$ptm$nodes <- networks$ptm$nodes[2, ]
+    networks$ptm$edges$source <- "B"
+    networks$ptm$edges$target <- "B"
+    network <- merge_networks(networks$protein, networks$ptm)
+    expect_equal(network$nodes$id, c("A", "B", "B"))
+    expect_equal(network$nodes$has_measured_sites, c(FALSE, TRUE, TRUE))
+})
+
+test_that("entities recompute has_measured_sites from their PTM site rows", {
+    protein <- .make_merge_network()
+    entities <- prepare_entities(
+        data.frame(Protein = c("A", "B", "B_S10"), log2FC = c(1, 1, 3),
+                   adj.pvalue = c(0.01, 0.01, 0.02),
+                   type = c("protein", "protein", "ptm_site")),
+        entity_type = "type", id_type = "uniprot")
+    network <- merge_networks(protein, entities = entities)
     expect_equal(network$nodes$has_measured_sites, c(FALSE, TRUE))
 })
 

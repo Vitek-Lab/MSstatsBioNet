@@ -119,9 +119,12 @@ filter_by_curation <- function(network, min_evidence = 1, backend = NULL) {
 #' Nodes are the same node when they have the same \code{id} and
 #' \code{site} (a protein has one row per PTM site). Their
 #' \code{node_role} values are joined by \code{";"}, e.g.
-#' \code{"passed_cutoffs;mediator"}, \code{included_in_query} and
-#' \code{has_measured_sites} are \code{TRUE} if they are in any network,
-#' and other columns take the first non-\code{NA} value.
+#' \code{"passed_cutoffs;mediator"}, \code{included_in_query} is
+#' \code{TRUE} if it is in any network, and other columns take the first
+#' non-\code{NA} value. \code{has_measured_sites} describes the protein, so
+#' it is \code{TRUE} on every row of a protein that has it in any network:
+#' merging a protein network with a PTM network marks the protein's
+#' protein-level row too.
 #' \code{included_in_query} describes the query, so it can differ between
 #' networks built from one entity table: a node can be a latent regulator
 #' in one query and part of another.
@@ -131,8 +134,9 @@ filter_by_curation <- function(network, min_evidence = 1, backend = NULL) {
 #' one entity table always agree; otherwise \code{merge_networks()} stops
 #' and names the nodes. To merge networks built from different entity
 #' tables, pass the entity table as \code{entities}: \code{measured},
-#' \code{logFC}, and \code{adj.pvalue} are then recomputed from it (nodes
-#' not in it are \code{measured = FALSE} with \code{NA} statistics).
+#' \code{logFC}, \code{adj.pvalue}, and \code{has_measured_sites} are then
+#' recomputed from it (nodes not in it are \code{measured = FALSE} with
+#' \code{NA} statistics).
 #'
 #' The \code{regulators} and \code{provenance} tables of the networks, when
 #' present, are combined by row, with columns filled with \code{NA}. Other
@@ -297,11 +301,31 @@ NODE_STATUS_COLUMNS <- c("measured", "logFC", "adj.pvalue")
             collapse(values[rows])
         }, values[NA_integer_], USE.NAMES = FALSE)
     }
-    if (!is.null(entities)) {
+    if (is.null(entities)) {
+        merged <- .spread_measured_sites(merged)
+    } else {
         merged <- .apply_entity_status(merged, entities)
     }
     rownames(merged) <- NULL
     merged
+}
+
+#' Give every row of a protein has_measured_sites = TRUE when any row has it
+#'
+#' has_measured_sites describes the protein, not the row. Merging a protein
+#' network with a PTM network gives the protein a row from each, with
+#' different sites, so they aren't collapsed into one row and can disagree.
+#' @param nodes merged nodes data.frame
+#' @return \code{nodes}
+#' @keywords internal
+#' @noRd
+.spread_measured_sites <- function(nodes) {
+    if (!"has_measured_sites" %in% colnames(nodes)) {
+        return(nodes)
+    }
+    ids_with_sites <- nodes$id[nodes$has_measured_sites %in% TRUE]
+    nodes$has_measured_sites[nodes$id %in% ids_with_sites] <- TRUE
+    nodes
 }
 
 #' Stop when the copies of a node disagree on its status or statistics
@@ -333,14 +357,17 @@ NODE_STATUS_COLUMNS <- c("measured", "logFC", "adj.pvalue")
     invisible(NULL)
 }
 
-#' Recompute measured, logFC, and adj.pvalue from an entity table
+#' Recompute measured, logFC, adj.pvalue, and has_measured_sites from an
+#' entity table
 #'
 #' A node is measured when an entity row has its id (the parent protein's
-#' id for PTM sites, see \code{.get_node_ids()}) and site.
+#' id for PTM sites, see \code{.get_node_ids()}) and site. It has measured
+#' sites when the entity table has a PTM site row for its id, the rule
+#' get_network() uses.
 #' @param nodes merged nodes data.frame
 #' @param entities entity table
-#' @return \code{nodes}, with \code{measured}, \code{logFC}, and
-#' \code{adj.pvalue} from \code{entities}
+#' @return \code{nodes}, with \code{measured}, \code{logFC},
+#' \code{adj.pvalue}, and \code{has_measured_sites} from \code{entities}
 #' @keywords internal
 #' @noRd
 .apply_entity_status <- function(nodes, entities) {
@@ -355,6 +382,8 @@ NODE_STATUS_COLUMNS <- c("measured", "logFC", "adj.pvalue")
         nodes[[column]] <- as.numeric(.get_column_or_default(
             entities, column, NA_real_)[entity_rows])
     }
+    nodes$has_measured_sites <- nodes$id %in%
+        .get_node_ids(entities)[entities$entity_type == "ptm_site"]
     nodes
 }
 
