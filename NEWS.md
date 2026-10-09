@@ -38,6 +38,18 @@ metabolites:
     the nodes left without edges. Like `get_evidence()`, it uses the
     backend named in each edge's `backend_database` unless `backend` is
     given. `indra_backend(curation_url = )` sets the INDRA database URL.
+    * `merge_networks(..., entities = NULL)` combines networks from several
+    queries or backends. An edge from two queries (same `source`,
+    `target`, `backend_database`, and `statement_id`) becomes one row with
+    the `query_type` values joined by `;`, keeping the copy with the most
+    evidence; the same relation from two backends stays two rows. Node
+    roles are joined by `;`, and `included_in_query` is `TRUE` if the node
+    was in any query. `has_measured_sites` is set on every row of a
+    protein with sites in any network, so merging a protein network with a
+    PTM network marks the protein-level rows too. `measured`, `logFC`, and
+    `adj.pvalue` must agree across the networks unless `entities` is
+    passed, in which case they (and `has_measured_sites`) are recomputed
+    from it.
     * The S4 classes `NetworkBackend`, `IndraBackend`, `NetworkQuery`, and
     `SubnetworkQuery` are exported, so other packages can add backends.
 * New function `validate_network()` checks a `list(nodes, edges)` network
