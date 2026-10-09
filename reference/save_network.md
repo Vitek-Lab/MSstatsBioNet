@@ -1,0 +1,82 @@
+# Save a network to a file
+
+Saves the whole network, including `provenance` (when and from which
+backend it was retrieved) and `regulators`, to an `.rds` file that
+[`load_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/load_network.md)
+reads back. Backends such as INDRA have no data versions, so the same
+query can give a different network later: save the network to keep the
+one an analysis used.
+
+## Usage
+
+``` r
+save_network(network, file)
+```
+
+## Arguments
+
+- network:
+
+  list of `nodes` and `edges`, e.g. from
+  [`get_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.md)
+  or
+  [`merge_networks()`](https://vitek-lab.github.io/MSstatsBioNet/reference/merge_networks.md)
+
+- file:
+
+  path of the file to write, ending in `.rds`
+
+## Value
+
+`file`, invisibly
+
+## Details
+
+The network is checked with
+[`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md)
+first. A network without `provenance` is saved with a warning: it is
+lost when a network is rebuilt with `list(nodes = , edges = )`.
+
+## See also
+
+[`load_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/load_network.md)
+
+## Examples
+
+``` r
+network <- list(
+    nodes = data.frame(
+        id = c("CHK1_HUMAN", "CDC25A_HUMAN"),
+        entity_type = "protein",
+        entity_name = c("CHEK1", "CDC25A"),
+        namespace = "HGNC",
+        entity_id = c("1925", "1725"),
+        measured = TRUE,
+        included_in_query = TRUE,
+        node_role = "passed_cutoffs"
+    ),
+    edges = data.frame(
+        source = "CHK1_HUMAN",
+        target = "CDC25A_HUMAN",
+        interaction = "Phosphorylation",
+        directed = TRUE,
+        site = "S76",
+        confidence = 0.99,
+        evidence_count = 12L,
+        evidence_url = paste0("https://db.indra.bio/statements/",
+                                "from_hash/-1234?format=html"),
+        statement_id = "-1234",
+        backend_database = "INDRA",
+        query_type = "subnetwork"
+    ),
+    provenance = data.frame(
+        backend_database = "INDRA",
+        query_type = "subnetwork",
+        retrieved_at = as.POSIXct("2026-10-09 12:00:00", tz = "UTC")
+    )
+)
+file <- tempfile(fileext = ".rds")
+save_network(network, file)
+identical(load_network(file), network)
+#> [1] TRUE
+```

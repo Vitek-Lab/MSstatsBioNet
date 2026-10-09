@@ -54,6 +54,8 @@
 - [`INDRA_DATABASE_SOURCES`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_evidence_sources.md)
   [`INDRA_TEXT_MINED_SOURCES`](https://vitek-lab.github.io/MSstatsBioNet/reference/indra_evidence_sources.md)
   : Evidence sources of INDRA
+- [`load_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/load_network.md)
+  : Load a network saved with save_network()
 - [`merge_networks()`](https://vitek-lab.github.io/MSstatsBioNet/reference/merge_networks.md)
   : Combine networks from several queries or backends
 - [`network_queries`](https://vitek-lab.github.io/MSstatsBioNet/reference/network_queries.md)
@@ -68,6 +70,8 @@
   : Render a Cytoscape network in a Shiny application. This function is
   used to render a Cytoscape network visualization within a Shiny
   application.
+- [`save_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/save_network.md)
+  : Save a network to a file
 - [`select_entities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/select_entities.md)
   : Flag the entities to query
 - [`subnetwork_query()`](https://vitek-lab.github.io/MSstatsBioNet/reference/subnetwork_query.md)

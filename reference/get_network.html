@@ -160,7 +160,18 @@ input; to keep entities of the input that fail the cutoffs, use
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>list of <code>nodes</code> and <code>edges</code> data.frames that meets the
-contract checked by <code><a href="validate_network.html">validate_network()</a></code></p>
+contract checked by <code><a href="validate_network.html">validate_network()</a></code>, and
+<code>provenance</code>: a data.frame with one row recording the query, with
+the columns <code>backend_database</code>, <code>query_type</code>,
+<code>retrieved_at</code> (when the response arrived, in UTC),
+<code>backend_version</code> (<code>NA</code> for INDRA, which has no data
+versions), <code>backend_url</code>, <code>organism</code> (NCBI taxon IDs of the
+queried rows), <code>parameters</code> (the query arguments, as JSON), and
+<code>package_version</code> (of MSstatsBioNet). It joins to the edges on
+<code>backend_database</code> and <code>query_type</code>.
+<code><a href="merge_networks.html">merge_networks()</a></code> combines the provenance of its networks,
+and <code><a href="save_network.html">save_network()</a></code> saves it with the network. It is lost
+when the network is rebuilt with <code>list(nodes = , edges = )</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

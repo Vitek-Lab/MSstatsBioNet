@@ -36,6 +36,20 @@
     and `include_entities`. It prints the question it asks as a message,
     e.g. “INDRA subnetwork: how are 42 selected proteins connected to
     each other, with no other nodes added?”.
+  - [`get_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.md)
+    also returns `provenance`, a one-row table recording when the
+    network was retrieved (`retrieved_at`, UTC), from which backend,
+    URL, and data version (`NA` for INDRA, which has none), for which
+    organism, with which arguments, and with which MSstatsBioNet
+    version. INDRA’s data changes over time, so this is the only record
+    of which data a network came from.
+    [`merge_networks()`](https://vitek-lab.github.io/MSstatsBioNet/reference/merge_networks.md)
+    combines the provenance of its networks.
+  - `save_network(network, file)` saves a network, with its provenance,
+    to an `.rds` file (warning when the provenance was lost by
+    rebuilding the list), and `load_network(file)` reads it back and
+    checks it with
+    [`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md).
   - [`?network_queries`](https://vitek-lab.github.io/MSstatsBioNet/reference/network_queries.md)
     describes the questions a query can ask, with a glossary.
     [`subnetwork_query()`](https://vitek-lab.github.io/MSstatsBioNet/reference/subnetwork_query.md)

@@ -122,7 +122,19 @@ get_network(
 
 list of `nodes` and `edges` data.frames that meets the contract checked
 by
-[`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md)
+[`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md),
+and `provenance`: a data.frame with one row recording the query, with
+the columns `backend_database`, `query_type`, `retrieved_at` (when the
+response arrived, in UTC), `backend_version` (`NA` for INDRA, which has
+no data versions), `backend_url`, `organism` (NCBI taxon IDs of the
+queried rows), `parameters` (the query arguments, as JSON), and
+`package_version` (of MSstatsBioNet). It joins to the edges on
+`backend_database` and `query_type`.
+[`merge_networks()`](https://vitek-lab.github.io/MSstatsBioNet/reference/merge_networks.md)
+combines the provenance of its networks, and
+[`save_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/save_network.md)
+saves it with the network. It is lost when the network is rebuilt with
+`list(nodes = , edges = )`.
 
 ## Details
 

@@ -56,6 +56,10 @@
 <li>
 <code>get_network(backend, entities, query = subnetwork_query())</code> queries the backend and returns <code>nodes</code> and <code>edges</code> that meet the contract. It takes <code>interaction_types</code>, <code>min_evidence</code>, <code>min_confidence</code> (new: drops edges below it, and edges with no score), <code>evidence_sources</code>, and <code>include_entities</code>. It prints the question it asks as a message, e.g. “INDRA subnetwork: how are 42 selected proteins connected to each other, with no other nodes added?”.</li>
 <li>
+<code><a href="../reference/get_network.html">get_network()</a></code> also returns <code>provenance</code>, a one-row table recording when the network was retrieved (<code>retrieved_at</code>, UTC), from which backend, URL, and data version (<code>NA</code> for INDRA, which has none), for which organism, with which arguments, and with which MSstatsBioNet version. INDRA’s data changes over time, so this is the only record of which data a network came from. <code><a href="../reference/merge_networks.html">merge_networks()</a></code> combines the provenance of its networks.</li>
+<li>
+<code>save_network(network, file)</code> saves a network, with its provenance, to an <code>.rds</code> file (warning when the provenance was lost by rebuilding the list), and <code>load_network(file)</code> reads it back and checks it with <code><a href="../reference/validate_network.html">validate_network()</a></code>.</li>
+<li>
 <code><a href="../reference/network_queries.html">?network_queries</a></code> describes the questions a query can ask, with a glossary. <code><a href="../reference/subnetwork_query.html">subnetwork_query()</a></code> is the first; more are planned.</li>
 <li>
 <code>get_evidence(backend, edges)</code> returns the evidence sentences and PubMed IDs behind each edge, looked up by <code>statement_id</code>.</li>
