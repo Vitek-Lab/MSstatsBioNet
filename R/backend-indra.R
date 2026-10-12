@@ -866,6 +866,10 @@ setMethod("get_entity_properties", "IndraBackend",
 }
 
 #' The identifiers to ground for each entity row
+#'
+#' Members in UniProt FASTA header form (\code{sp|P32004|L1CAM_HUMAN}) are
+#' reduced to the accession, or to the mnemonic for
+#' \code{id_type = "uniprot_mnemonic"}.
 #' @param entities entity table
 #' @return list with one character vector per row: the members of
 #' \code{id}, or of \code{parent_id} for \code{ptm_site} rows
@@ -878,7 +882,11 @@ setMethod("get_entity_properties", "IndraBackend",
             !is.na(entities$parent_id)
         inputs[use_parent] <- entities$parent_id[use_parent]
     }
-    lapply(inputs, .splitProteinGroup)
+    members <- lapply(inputs, .splitProteinGroup)
+    is_uniprot <- entities$id_type %in% c("uniprot", "uniprot_mnemonic")
+    members[is_uniprot] <- Map(.parse_uniprot_headers, members[is_uniprot],
+                               entities$id_type[is_uniprot])
+    members
 }
 
 #' Map UniProt mnemonics to UniProt IDs through CoGEx

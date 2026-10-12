@@ -33,7 +33,11 @@ holding one per row.}
 \code{"chebi"}, \code{"chembl"}), or the name of a column of \code{df}
 holding one per row. Which of them a backend can convert is listed by
 \code{backend_capabilities(backend)$id_conversions}. For PTM sites, the identifier system of the parent
-protein. \code{"chemical_name"} is a metabolite, lipid, or drug name,
+protein. \code{"uniprot"} and \code{"uniprot_mnemonic"} identifiers may
+also be UniProt FASTA headers, as FragPipe writes them
+(\code{"sp|P32004|L1CAM_HUMAN"}, or \code{"sp|P32004|L1CAM_HUMAN_S1194"}
+for a site): \code{id} keeps the header, and \code{\link{convert_ids}()}
+uses its accession or mnemonic. \code{"chemical_name"} is a metabolite, lipid, or drug name,
 common or IUPAC (e.g. \code{"glucose"}), grounded by text matching.}
 
 \item{organism}{NCBI taxon ID, as a string.}
@@ -67,7 +71,8 @@ For PTM sites (\code{entity_type = "ptm_site"}), the site is parsed
 from the end of each identifier, e.g. \code{"P00533_S1039_S1042"} gives
 parent \code{"P00533"} and site \code{"S1039_S1042"}. A
 \code{GlobalProtein} column, as MSstatsPTM writes, overrides the parsed
-parent.
+parent, except where it is \code{"missing"} (MSstatsPTM's value for
+sites whose protein has no global profiling result).
 }
 \examples{
 input <- data.table::fread(system.file(

@@ -107,6 +107,14 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
                 }, character(1), USE.NAMES = FALSE)
         }
         df$GlobalProtein = as.character(df$GlobalProtein)
+        # MSstatsPTM writes "missing" for sites whose protein has no global
+        # profiling result
+        no_global <- is.na(df$GlobalProtein) | !nzchar(df$GlobalProtein) |
+                df$GlobalProtein == "missing"
+        if (any(no_global)) {
+                df$GlobalProtein[no_global] <- .stripPtmSite(
+                        as.character(df$Protein[no_global]))
+        }
         groupMembers <- lapply(df$GlobalProtein, .splitProteinGroup)
         protein_ids = unique(unlist(groupMembers, use.names = FALSE))
         df$UniprotId <- NA

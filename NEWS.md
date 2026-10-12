@@ -9,14 +9,18 @@ metabolites:
     * `prepare_entities()` builds an entity table with one row per analyte,
     its entity type (`"protein"`, `"ptm_site"`, `"metabolite"`, ...),
     identifier system, organism, and statistics. It copies `log2FC`,
-    `log10FC`, or `logFC` to `logFC`, parses PTM sites, and stops when the
+    `log10FC`, or `logFC` to `logFC`, parses PTM sites (with the parent
+    protein from `GlobalProtein`, except where MSstatsPTM wrote
+    `"missing"`), and stops when the
     input has several comparisons in `Label` unless `label` names one.
     * `indra_backend()` creates the INDRA backend, and
     `backend_capabilities()` lists what a backend supports.
     * `convert_ids()` grounds the entity table (CoGEx for UniProt IDs and
     mnemonics, Gilda for gene symbols and chemical names), and
     `get_entity_properties()` adds `is_transcription_factor`, `is_kinase`,
-    and `is_phosphatase`.
+    and `is_phosphatase`. UniProt IDs may be FASTA headers, as FragPipe
+    writes them (`sp|P32004|L1CAM_HUMAN`, or `sp|P32004|L1CAM_HUMAN_S1194`
+    for a site): `id` keeps the header and the accession is converted.
     * `select_entities()` flags the rows that pass the cutoffs, and drops
     none, so that nodes in the input are recognized even when they fail
     the cutoffs.
@@ -112,6 +116,11 @@ evidence comes from the backend named in its `backend_database` column, so a
 network subset or rebuilt with `list(nodes =, edges =)` still works. Pass
 `backend` to use one built with non-default settings, such as
 `indra_backend(cogex_url = )`.
+* The PTM-Analysis vignette is rewritten for the new API, with a CPTAC
+clear cell renal cell carcinoma dataset that has both a phosphoproteomics
+and a global profiling experiment (`extdata/cptac-ccrcc-ptm-adjusted.csv`,
+`extdata/cptac-ccrcc-protein.csv`). `extdata/garrido-2024.csv`, used only
+by the old vignette, is removed.
 
 ## Breaking changes
 
@@ -193,6 +202,14 @@ pass the cutoffs, since only those are sent to INDRA.
 * `validate_network()` requires the node columns `entity_type`,
 `entity_name`, `namespace`, `entity_id`, `measured`, `included_in_query`,
 and `node_role`.
+
+## Bug fixes
+
+* `annotateProteinInfoFromIndra()` grounds PTM sites whose `GlobalProtein`
+is `"missing"`, MSstatsPTM's value in `ADJUSTED.Model` for sites whose
+protein has no global profiling result. They were left ungrounded, and so
+were missing from the network of `getSubnetworkFromIndra()`. Their
+`GlobalProtein` is now the protein without its site.
 
 ## Deprecated
 

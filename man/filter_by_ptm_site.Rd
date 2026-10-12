@@ -38,23 +38,12 @@ Node sites are split on \code{"_"} (several sites of one peptide, e.g.
 edge sites on \code{";"}.
 }
 \examples{
-\donttest{
-input <- data.table::fread(system.file(
-    "extdata/garrido-2024.csv",
-    package = "MSstatsBioNet"
-))
-indra <- indra_backend()
-entities <- prepare_entities(input, entity_type = "ptm_site",
-                             id_type = "uniprot")
-entities <- convert_ids(indra, entities)
-entities <- select_entities(entities, pvalue_cutoff = 0.05,
-                            logfc_cutoff = 1)
-network <- get_network(indra, entities,
-                       interaction_types = "Phosphorylation",
-                       include_entities = "HGNC:3236")
-network <- filter_by_ptm_site(network)
-head(network$edges)
-}
+# A phosphorylation network of CPTAC CCRCC sites and ten kinases, saved
+# by inst/script/cptac-ccrcc-network.R
+saved <- readRDS(system.file("extdata/cptac-ccrcc-network.rds",
+                             package = "MSstatsBioNet"))
+network <- filter_by_ptm_site(saved$network)
+head(network$edges[, c("source", "target", "site")])
 }
 \seealso{
 \code{\link{add_entity_values}()}

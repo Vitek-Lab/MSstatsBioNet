@@ -197,6 +197,31 @@ test_that("convert_ids() grounds UniProt IDs to HGNC, pooling protein groups", {
     expect_length(calls$hgnc, 1)
 })
 
+test_that("convert_ids() reads the accession of UniProt FASTA headers (FragPipe IDs)", {
+    calls <- new.env()
+    .mock_cogex_id_mapping(calls)
+    ids <- c("sp|Q00610|CLH1_HUMAN", "sp|P13747|HLAE_HUMAN;tr|P23132|RD23A_HUMAN",
+             "sp|P04637|P53_HUMAN_S15")
+    entities <- convert_ids(indra_backend(), rbind(
+        .make_entities(ids[1:2]),
+        .make_entities(ids[3], entity_type = "ptm_site")))
+
+    expect_setequal(calls$hgnc[[1]]$ids, c("Q00610", "P13747", "P23132", "P04637"))
+    expect_equal(entities$entity_id, c("2092", "4962;10012", "11998"))
+    # id and parent_id keep the header, so PTM and protein tables still match
+    expect_equal(entities$id, ids)
+    expect_equal(entities$parent_id[3], "sp|P04637|P53_HUMAN")
+})
+
+test_that("convert_ids() reads the mnemonic of UniProt FASTA headers for uniprot_mnemonic", {
+    calls <- new.env()
+    .mock_cogex_id_mapping(calls)
+    entities <- convert_ids(indra_backend(), .make_entities(
+        "sp|Q00610|CLH1_HUMAN", id_type = "uniprot_mnemonic"))
+    expect_equal(calls$mnemonic[[1]]$ids, "CLH1_HUMAN")
+    expect_equal(entities$entity_id, "2092")
+})
+
 test_that("convert_ids() grounds PTM sites by their parent protein", {
     calls <- new.env()
     .mock_cogex_id_mapping(calls)
