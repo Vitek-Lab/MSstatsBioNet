@@ -58,6 +58,20 @@ filter_by_curation <- function(network, min_evidence = 1, backend = NULL) {
                 max(min_evidence, 1), " evidence after removing the ",
                 "evidence curated as incorrect.")
     }
+    .keep_edges(network, keep, edges)
+}
+
+#' Keep some edges of a network, and drop the nodes they leave without edges
+#'
+#' Nodes that had no edge before are kept, as are the other elements of
+#' the network.
+#' @param network network list
+#' @param keep logical, one per edge
+#' @param edges the edges to subset, \code{network$edges} by default
+#' @return \code{network}
+#' @keywords internal
+#' @noRd
+.keep_edges <- function(network, keep, edges = network$edges) {
     nodes <- network$nodes
     endpoints_before <- c(edges$source, edges$target)
     edges <- edges[keep, , drop = FALSE]
@@ -95,6 +109,305 @@ filter_by_curation <- function(network, min_evidence = 1, backend = NULL) {
         stop("`min_evidence` must be a single number.", call. = FALSE)
     }
     invisible(NULL)
+}
+
+#' Keep the edges that modify a PTM site in the network
+#'
+#' Keeps an edge when its \code{site} is one of the PTM sites of its
+#' target, that is, of a node row with the target's \code{id}. For a
+#' network built from MSstatsPTM results, these are the edges that explain
+#' a site in the input, e.g. a kinase phosphorylating a site whose
+#' phosphorylation changed. Each edge is checked on its own, so the order
+#' of this filter and \code{\link{filter_by_curation}()} doesn't matter.
+#'
+#' Edges without a \code{site} are dropped. These include every edge that
+#' isn't a modification (\code{Complex}, \code{Activation}, ...), and every
+#' edge from a backend that reports no sites, such as STRING: filter an
+#' INDRA network before merging it with one from such a backend, if those
+#' edges should stay. Nodes are dropped when they had edges and lost them
+#' all. Nodes that had no edge, and other elements of \code{network}, such
+#' as \code{provenance}, are kept.
+#'
+#' Node sites are split on \code{"_"} (several sites of one peptide, e.g.
+#' \code{"S1039_S1042"}) and \code{";"} (members of a protein group);
+#' edge sites on \code{";"}.
+#'
+#' @param network list of \code{nodes} and \code{edges} from
+#' \code{\link{get_network}()}, with PTM site rows in \code{nodes}
+#' (entity tables with \code{entity_type = "ptm_site"})
+#' @return \code{network}, with the edges whose site is not a site of
+#' their target removed, and the nodes they leave without edges. Stops
+#' when no edges remain.
+#' @seealso \code{\link{add_entity_values}()}
+#' @export
+#' @examples
+#' \donttest{
+#' input <- data.table::fread(system.file(
+#'     "extdata/garrido-2024.csv",
+#'     package = "MSstatsBioNet"
+#' ))
+#' indra <- indra_backend()
+#' entities <- prepare_entities(input, entity_type = "ptm_site",
+#'                              id_type = "uniprot")
+#' entities <- convert_ids(indra, entities)
+#' entities <- select_entities(entities, pvalue_cutoff = 0.05,
+#'                             logfc_cutoff = 1)
+#' network <- get_network(indra, entities,
+#'                        interaction_types = "Phosphorylation",
+#'                        include_entities = "HGNC:3236")
+#' network <- filter_by_ptm_site(network)
+#' head(network$edges)
+#' }
+filter_by_ptm_site <- function(network) {
+    validate_network(network)
+    nodes <- network$nodes
+    node_sites <- .get_column_or_default(nodes, "site", NA_character_)
+    site_rows <- !is.na(node_sites)
+    if (!any(site_rows)) {
+        stop("network$nodes has no PTM site rows (site), so ",
+             "filter_by_ptm_site() would drop every edge. Build the network ",
+             "from an entity table with entity_type = \"ptm_site\".",
+             call. = FALSE)
+    }
+    sites_by_node <- lapply(
+        split(strsplit(node_sites[site_rows], "[_;]"), nodes$id[site_rows]),
+        function(sites) unique(trimws(unlist(sites))))
+    edges <- network$edges
+    edge_sites <- .get_column_or_default(edges, "site", NA_character_)
+    keep <- vapply(seq_len(nrow(edges)), function(i) {
+        if (is.na(edge_sites[i])) {
+            return(FALSE)
+        }
+        sites <- trimws(strsplit(edge_sites[i], ";", fixed = TRUE)[[1]])
+        any(sites[nzchar(sites)] %in% sites_by_node[[edges$target[i]]])
+    }, logical(1))
+    if (!any(keep)) {
+        stop("No edges remain after filtering by PTM site: no edge's site ",
+             "is a site of its target in the network.", call. = FALSE)
+    }
+    if (any(!keep)) {
+        message("Dropping ", sum(!keep), " edge(s) whose site is not a PTM ",
+                "site of their target in the network.")
+    }
+    .keep_edges(network, keep)
+}
+
+#' Copy the values of an entity table onto a network's nodes
+#'
+#' Sets \code{logFC} and \code{adj.pvalue} of the nodes that match a row
+#' of \code{entities}, without querying a backend. Use it to show the
+#' results of another experiment on a network: for example, a network built
+#' from MSstatsPTM's \code{ADJUSTED.Model}, with its protein nodes colored
+#' by the global profiling results (\code{PROTEIN.Model}).
+#'
+#' A node row matches an entity row with the same node \code{id} and
+#' \code{site} (for a PTM site row, its parent protein and site; for a
+#' protein, \code{site = NA}). Node rows that match no entity row by
+#' \code{id} are then matched by grounding (\code{namespace} and
+#' \code{entity_id}) and \code{site}. This finds nodes whose \code{id} is
+#' the backend's name, such as a kinase added with
+#' \code{get_network(include_entities =)} that INDRA calls \code{"SRC"},
+#' while the entity table has \code{"P12931"}. An entity row that matched a
+#' node by \code{id} is not used again by grounding, so an isoform node
+#' doesn't take the values of its canonical protein. A node row that
+#' matches several entity rows gets no values, with a message.
+#'
+#' A protein that has only PTM site rows in the network, and matches a
+#' protein-level entity row, gets a new protein-level row (\code{site =
+#' NA}) with that row's values, so \code{\link{cytoscapeNetwork}()} colors
+#' the protein node by it.
+#'
+#' Matched node rows get \code{measured = TRUE}. Rows of \code{entities}
+#' that match no node are not added: \code{\link{get_network}()} decides
+#' which nodes are in the network. Edges and the other elements of
+#' \code{network} are unchanged. The node table does not record which
+#' experiment the values come from.
+#'
+#' @param network list of \code{nodes} and \code{edges} from
+#' \code{\link{get_network}()}
+#' @param entities entity table from \code{\link{prepare_entities}()},
+#' grounded by \code{\link{convert_ids}()}. Its \code{included_in_query}
+#' column is ignored.
+#' @param overwrite whether to replace the \code{logFC} and
+#' \code{adj.pvalue} of node rows that already have them. \code{FALSE}
+#' (default) stops and names those nodes.
+#' @return \code{network}, with the values of \code{entities} on the
+#' matching nodes
+#' @seealso \code{\link{filter_by_ptm_site}()}, \code{\link{merge_networks}()}
+#' @export
+#' @examples
+#' # A PTM network: phosphorylation of two EGFR sites by SRC, which is not
+#' # in the PTM results, so it has INDRA's name as its id
+#' network <- list(
+#'     nodes = data.frame(
+#'         id = c("P00533", "P00533", "SRC"),
+#'         entity_type = c("ptm_site", "ptm_site", "protein"),
+#'         entity_name = c("EGFR", "EGFR", "SRC"),
+#'         namespace = "HGNC", entity_id = c("3236", "3236", "11283"),
+#'         measured = c(TRUE, TRUE, FALSE), included_in_query = TRUE,
+#'         node_role = c("passed_cutoffs", "passed_cutoffs", "user_added"),
+#'         site = c("S1039", "Y1092", NA),
+#'         has_measured_sites = c(TRUE, TRUE, FALSE),
+#'         logFC = c(1.5, -0.4, NA), adj.pvalue = c(0.01, 0.3, NA)),
+#'     edges = data.frame(
+#'         source = "SRC", target = "P00533", interaction = "Phosphorylation",
+#'         directed = TRUE, site = "Y1092", confidence = 0.9,
+#'         evidence_count = 3L, evidence_url = "https://example.org/1",
+#'         statement_id = "1", backend_database = "INDRA",
+#'         query_type = "subnetwork")
+#' )
+#' # Global profiling results, grounded (convert_ids() would fill these)
+#' global <- prepare_entities(
+#'     data.frame(Protein = c("P00533", "P12931"), log2FC = c(0.2, 1.1),
+#'                adj.pvalue = c(0.6, 0.02)),
+#'     entity_type = "protein", id_type = "uniprot")
+#' global$namespace <- "HGNC"
+#' global$entity_id <- c("3236", "11283")
+#' global$entity_name <- c("EGFR", "SRC")
+#' network <- add_entity_values(network, global)
+#' network$nodes[, c("id", "site", "measured", "logFC")]
+add_entity_values <- function(network, entities, overwrite = FALSE) {
+    .check_add_entity_values_input(network, entities, overwrite)
+    nodes <- as.data.frame(network$nodes, stringsAsFactors = FALSE)
+    nodes$site <- .get_column_or_default(nodes, "site", NA_character_)
+    protein_rows <- .build_missing_protein_rows(nodes)
+    candidates <- rbind(nodes, protein_rows)
+    matched <- .match_nodes_to_entities(candidates, entities)
+    is_new <- seq_len(nrow(candidates)) > nrow(nodes)
+    matched_existing <- !is.na(matched) & !is_new
+    has_values <- !is.na(.get_column_or_default(candidates, "logFC",
+                                                NA_real_)) |
+        !is.na(.get_column_or_default(candidates, "adj.pvalue", NA_real_))
+    if (!overwrite && any(matched_existing & has_values)) {
+        stop("Node(s) ", .list_values_for_message(unique(
+            candidates$id[matched_existing & has_values])),
+            " already have logFC or adj.pvalue values. Use overwrite = TRUE ",
+            "to replace them.", call. = FALSE)
+    }
+    keep <- !is_new | !is.na(matched)
+    rows <- matched[keep]
+    nodes <- candidates[keep, , drop = FALSE]
+    has_match <- !is.na(rows)
+    for (column in c("logFC", "adj.pvalue")) {
+        values <- .get_column_or_default(nodes, column, NA_real_)
+        values[has_match] <- as.numeric(.get_column_or_default(
+            entities, column, NA_real_)[rows[has_match]])
+        nodes[[column]] <- values
+    }
+    nodes$measured[has_match] <- TRUE
+    added <- is_new[keep]
+    nodes$entity_type[added] <- entities$entity_type[rows[added]]
+    # Each new protein-level row goes just before the first row of its node
+    position <- seq_len(nrow(nodes))
+    position[added] <- match(nodes$id[added], nodes$id) - 0.5
+    nodes <- nodes[order(position), , drop = FALSE]
+    rownames(nodes) <- NULL
+    message("Copied the values of entities to ", sum(has_match & !added),
+            " node row(s), and added a protein-level row to ", sum(added),
+            " protein(s) with only PTM site rows.")
+    network$nodes <- nodes
+    validate_network(network)
+    network
+}
+
+#' Check the input of add_entity_values()
+#' @param network,entities,overwrite the arguments
+#' @return \code{NULL}, invisibly; errors otherwise
+#' @keywords internal
+#' @noRd
+.check_add_entity_values_input <- function(network, entities, overwrite) {
+    validate_network(network)
+    .validate_entities(entities)
+    if (!is.logical(overwrite) || length(overwrite) != 1 || is.na(overwrite)) {
+        stop("`overwrite` must be TRUE or FALSE.", call. = FALSE)
+    }
+    grounded <- !is.na(entities$namespace) & !is.na(entities$entity_id)
+    if (!any(grounded)) {
+        stop("No row of entities has a grounding. Run convert_ids() on ",
+             "entities first.", call. = FALSE)
+    }
+    if (any(!grounded)) {
+        message(sum(!grounded), " row(s) of entities have no grounding and ",
+                "can match nodes only by id.")
+    }
+    invisible(NULL)
+}
+
+#' Build a protein-level row for each protein with only PTM site rows
+#'
+#' A copy of the protein's first row with \code{site = NA}, the roles of
+#' all its rows, \code{measured = FALSE}, and no statistics, until
+#' add_entity_values() fills it from a matching entity row.
+#' @param nodes nodes data.frame with a \code{site} column
+#' @return nodes data.frame, one row per such protein
+#' @keywords internal
+#' @noRd
+.build_missing_protein_rows <- function(nodes) {
+    has_protein_row <- unique(nodes$id[is.na(nodes$site)])
+    site_only_ids <- setdiff(unique(nodes$id), has_protein_row)
+    rows <- nodes[match(site_only_ids, nodes$id), , drop = FALSE]
+    rows$site <- rep(NA_character_, nrow(rows))
+    rows$measured <- rep(FALSE, nrow(rows))
+    for (column in intersect(c("logFC", "adj.pvalue"), colnames(rows))) {
+        rows[[column]] <- rep(NA_real_, nrow(rows))
+    }
+    rows$node_role <- vapply(site_only_ids, function(id) {
+        .join_unique_values(nodes$node_role[nodes$id == id])
+    }, character(1), USE.NAMES = FALSE)
+    rows$included_in_query <- vapply(site_only_ids, function(id) {
+        .any_or_na(nodes$included_in_query[nodes$id == id])
+    }, logical(1), USE.NAMES = FALSE)
+    rows
+}
+
+#' Match node rows to entity rows, by id and site, then by grounding and
+#' site
+#'
+#' @param nodes nodes data.frame with a \code{site} column
+#' @param entities entity table
+#' @return integer vector, one per node row: the matching entity row, or
+#' \code{NA} when none or several match (with a message for several)
+#' @keywords internal
+#' @noRd
+.match_nodes_to_entities <- function(nodes, entities) {
+    entity_sites <- .get_column_or_default(entities, "site", NA_character_)
+    entity_keys <- .build_node_keys(.get_node_ids(entities), entity_sites)
+    rows_by_key <- split(seq_len(nrow(entities)), entity_keys)
+    by_id <- rows_by_key[.build_node_keys(nodes$id, nodes$site)]
+    matched <- vapply(by_id, function(rows) {
+        if (length(rows) == 1) rows else NA_integer_
+    }, integer(1), USE.NAMES = FALSE)
+    ambiguous <- lengths(by_id) > 1
+
+    groundings <- build_grounding_table(entities)
+    grounding_rows <- match(groundings$id, entities$id)
+    grounding_keys <- .build_node_keys(
+        paste(groundings$namespace, groundings$entity_id, sep = ":"),
+        entity_sites[grounding_rows])
+    available <- !grounding_rows %in% matched
+    rows_by_grounding <- split(grounding_rows[available],
+                               grounding_keys[available])
+    for (i in which(is.na(matched) & !ambiguous)) {
+        if (is.na(nodes$namespace[i]) || is.na(nodes$entity_id[i])) {
+            next
+        }
+        node_groundings <- paste(
+            strsplit(nodes$namespace[i], ";", fixed = TRUE)[[1]],
+            strsplit(nodes$entity_id[i], ";", fixed = TRUE)[[1]], sep = ":")
+        rows <- unique(unlist(rows_by_grounding[
+            .build_node_keys(node_groundings, nodes$site[i])]))
+        if (length(rows) == 1) {
+            matched[i] <- rows
+        } else if (length(rows) > 1) {
+            ambiguous[i] <- TRUE
+        }
+    }
+    if (any(ambiguous)) {
+        message(sum(ambiguous), " node row(s) match several rows of entities ",
+                "and got no values: ",
+                .list_values_for_message(unique(nodes$id[ambiguous])), ".")
+    }
+    matched
 }
 
 #' Combine networks from several queries or backends

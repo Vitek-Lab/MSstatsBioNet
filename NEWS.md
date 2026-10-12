@@ -72,6 +72,23 @@ metabolites:
     `getSubnetworkFromIndra(sources_filter =)`, gives a warning that
     suggests the internal name where there is one (e.g. `"psp"` for
     `"phosphosite"`).
+    * `filter_by_ptm_site(network)` keeps the edges whose `site` is a PTM
+    site of their target in the network, checking each edge on its own,
+    and drops the nodes left without edges; it stops when no edges remain.
+    Unlike `getSubnetworkFromIndra(filter_by_ptm_site = TRUE)`, which is
+    unchanged, it doesn't keep an edge for an unmeasured site because
+    another statement between the same two nodes hits a measured one,
+    splits node sites of protein groups on `;`, and keeps isolated nodes
+    and `provenance`.
+    * `add_entity_values(network, entities, overwrite = FALSE)` copies the
+    `logFC` and `adj.pvalue` of a grounded entity table onto the matching
+    nodes of a network, without a query: for example, global profiling
+    results (MSstatsPTM's `PROTEIN.Model`) onto a network built from PTM
+    results. Nodes match by `id` and `site`, then by grounding, so a node
+    named by the backend (e.g. a kinase added with `include_entities`)
+    matches too. A protein with only PTM site rows gets a protein-level
+    row, so its node is colored by the global result. Nodes that already
+    have values stop the call unless `overwrite = TRUE`.
     * The S4 classes `NetworkBackend`, `IndraBackend`, `NetworkQuery`, and
     `SubnetworkQuery` are exported, so other packages can add backends.
 * New function `validate_network()` checks a `list(nodes, edges)` network
