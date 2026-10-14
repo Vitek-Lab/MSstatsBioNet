@@ -10,5 +10,5 @@
   Analysis](https://vitek-lab.github.io/MSstatsBioNet/articles/Metabolomics-Analysis.md):
 - [MSstatsBioNet
   Introduction](https://vitek-lab.github.io/MSstatsBioNet/articles/MSstatsBioNet.md):
-- [PTM
-  Analysis](https://vitek-lab.github.io/MSstatsBioNet/articles/PTM-Analysis.md):
+- [PTM Analysis with Global
+  Profiling](https://vitek-lab.github.io/MSstatsBioNet/articles/PTM-Analysis.md):

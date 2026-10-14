@@ -12,6 +12,7 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/news/index.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkBackend-class.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkQuery-class.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/add_entity_values.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/backend_capabilities.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/bootstrapTopicModels.html</loc></url>
@@ -26,6 +27,7 @@
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/exportNetworkToHTML.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/filter_by_curation.html</loc></url>
+<url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/filter_by_ptm_site.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/get_curations.html</loc></url>
 <url><loc>https://vitek-lab.github.io/MSstatsBioNet/reference/get_entity_properties.html</loc></url>

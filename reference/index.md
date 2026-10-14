@@ -8,6 +8,8 @@
 - [`NetworkQuery-class`](https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkQuery-class.md)
   [`SubnetworkQuery-class`](https://vitek-lab.github.io/MSstatsBioNet/reference/NetworkQuery-class.md)
   : Network query classes
+- [`add_entity_values()`](https://vitek-lab.github.io/MSstatsBioNet/reference/add_entity_values.md)
+  : Copy the values of an entity table onto a network's nodes
 - [`annotateProteinInfoFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/annotateProteinInfoFromIndra.md)
   : Annotate Protein Information from Indra
 - [`backend_capabilities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/backend_capabilities.md)
@@ -39,6 +41,8 @@
   : Filter a subnetwork by contextual relevance
 - [`filter_by_curation()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filter_by_curation.md)
   : Remove evidence curated as incorrect
+- [`filter_by_ptm_site()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filter_by_ptm_site.md)
+  : Keep the edges that modify a PTM site in the network
 - [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md)
   : Get subnetwork from INDRA database
 - [`get_curations()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_curations.md)

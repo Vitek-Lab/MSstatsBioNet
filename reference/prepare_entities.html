@@ -30,7 +30,7 @@ recognized as being in the input."></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/Cytoscape-Visualization.html">Visualization Engine with CytoscapeJS</a></li>
     <li><a class="dropdown-item" href="../articles/Filter-By-Context.html">Filtering Subnetworks by Biological Context</a></li>
     <li><a class="dropdown-item" href="../articles/Metabolomics-Analysis.html">Metabolomics Analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/PTM-Analysis.html">PTM Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/PTM-Analysis.html">PTM Analysis with Global Profiling</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -98,7 +98,11 @@ holding one per row.</p></dd>
 <code>"chebi"</code>, <code>"chembl"</code>), or the name of a column of <code>df</code>
 holding one per row. Which of them a backend can convert is listed by
 <code>backend_capabilities(backend)$id_conversions</code>. For PTM sites, the identifier system of the parent
-protein. <code>"chemical_name"</code> is a metabolite, lipid, or drug name,
+protein. <code>"uniprot"</code> and <code>"uniprot_mnemonic"</code> identifiers may
+also be UniProt FASTA headers, as FragPipe writes them
+(<code>"sp|P32004|L1CAM_HUMAN"</code>, or <code>"sp|P32004|L1CAM_HUMAN_S1194"</code>
+for a site): <code>id</code> keeps the header, and <code><a href="convert_ids.html">convert_ids()</a></code>
+uses its accession or mnemonic. <code>"chemical_name"</code> is a metabolite, lipid, or drug name,
 common or IUPAC (e.g. <code>"glucose"</code>), grounded by text matching.</p></dd>
 
 
@@ -134,7 +138,8 @@ columns of <code>df</code> are not copied; join them back on <code>id</code>.</p
 from the end of each identifier, e.g. <code>"P00533_S1039_S1042"</code> gives
 parent <code>"P00533"</code> and site <code>"S1039_S1042"</code>. A
 <code>GlobalProtein</code> column, as MSstatsPTM writes, overrides the parsed
-parent.</p>
+parent, except where it is <code>"missing"</code> (MSstatsPTM's value for
+sites whose protein has no global profiling result).</p>
     </div>
 
     <div class="section level2">

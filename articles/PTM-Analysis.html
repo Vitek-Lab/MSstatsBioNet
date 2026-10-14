@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>PTM Analysis • MSstatsBioNet</title>
+<title>PTM Analysis with Global Profiling • MSstatsBioNet</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="PTM Analysis">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="PTM Analysis with Global Profiling">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -37,7 +37,7 @@
 <li><a class="dropdown-item" href="../articles/Cytoscape-Visualization.html">Visualization Engine with CytoscapeJS</a></li>
     <li><a class="dropdown-item" href="../articles/Filter-By-Context.html">Filtering Subnetworks by Biological Context</a></li>
     <li><a class="dropdown-item" href="../articles/Metabolomics-Analysis.html">Metabolomics Analysis</a></li>
-    <li><a class="dropdown-item" href="../articles/PTM-Analysis.html">PTM Analysis</a></li>
+    <li><a class="dropdown-item" href="../articles/PTM-Analysis.html">PTM Analysis with Global Profiling</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -55,11 +55,11 @@
 
 
 
-
-<div class="row">
+<link href="PTM-Analysis_files/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+<script src="PTM-Analysis_files/htmlwidgets-1.6.4/htmlwidgets.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/graphlib/2.1.8/graphlib.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.32.0/cytoscape.min.js"></script><script src="https://unpkg.com/cytoscape-dagre@2.3.0/cytoscape-dagre.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="PTM-Analysis_files/cytoscapeNetwork-binding-1.5.4/cytoscapeNetwork.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>PTM Analysis</h1>
+      <h1>PTM Analysis with Global Profiling</h1>
                         <h4 data-toc-skip class="author">Anthony Wu</h4>
             
       
@@ -79,47 +79,161 @@
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu"><a href="https://bioconductor.github.io/BiocManager/reference/install.html" class="external-link">install</a></span><span class="op">(</span><span class="st">"MSstatsBioNet"</span><span class="op">)</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="dataset">Dataset<a class="anchor" aria-label="anchor" href="#dataset"></a>
-</h3>
-<p>We will be taking a subset of the dataset found in this <a href="https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1" class="external-link">paper</a>.
-The table is the output of the MSstatsPTM function
-<code>groupComparisonPTM</code> (filtered down to the columns that are
-actually needed)</p>
+</div>
+<div class="section level2">
+<h2 id="purpose-of-this-vignette">Purpose of this vignette<a class="anchor" aria-label="anchor" href="#purpose-of-this-vignette"></a>
+</h2>
+<p>A change in a phosphorylation site means little on its own. The site
+may change because its protein’s abundance changed, or because a kinase
+or phosphatase acted on it. A global profiling experiment, run on the
+same samples, separates the two. This vignette shows how to:</p>
+<ol style="list-style-type: decimal">
+<li>build a network of the kinases known to phosphorylate the sites that
+changed,</li>
+<li>keep only the edges that act on a measured site, with
+<code>filter_by_ptm_site</code>, and</li>
+<li>color each protein by its change in the global profiling experiment,
+with <code>add_entity_values</code>.</li>
+</ol>
+</div>
+<div class="section level2">
+<h2 id="dataset">Dataset<a class="anchor" aria-label="anchor" href="#dataset"></a>
+</h2>
+<p>The data come from the clear cell renal cell carcinoma (CCRCC) cohort
+of the Clinical Proteomic Tumor Analysis Consortium (CPTAC), described
+in this <a href="https://doi.org/10.1016/j.ccell.2023.06.009" class="external-link">paper</a>
+(Li et al., Cancer Cell 2023). The study is labeled with TMT and
+compares tumor (<code>T</code>) with normal adjacent tissue
+(<code>N</code>). It has a phosphopeptide-enriched experiment and a
+global profiling experiment on the same samples. The CPTAC pan-cancer
+data, including the FragPipe search results used here, can be downloaded
+from the <a href="https://pdc.cancer.gov/pdc/cptac-pancancer" class="external-link">Proteomic
+Data Commons</a>. The results were analyzed with MSstatsPTM; the script
+<code>inst/script/cptac-ccrcc.R</code> records the steps.</p>
+<p>MSstatsPTM’s <code>groupComparisonPTM</code> returns three
+tables:</p>
+<ul>
+<li>
+<code>PTM.Model</code>: the change of each site,</li>
+<li>
+<code>PROTEIN.Model</code>: the change of each protein in the global
+profiling experiment,</li>
+<li>
+<code>ADJUSTED.Model</code>: the change of each site adjusted for
+the change of its protein.</li>
+</ul>
+<p>We use <code>ADJUSTED.Model</code> for the sites. A site that changes
+only because its protein does is not a signaling event, and the
+adjustment removes it. <code>PROTEIN.Model</code> gives the
+protein-level context.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">input</span> <span class="op">=</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
-<span>    <span class="st">"extdata/garrido-2024.csv"</span>,</span>
+<code class="sourceCode R"><span><span class="va">ptm</span> <span class="op">=</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>    <span class="st">"extdata/cptac-ccrcc-ptm-adjusted.csv"</span>,</span>
 <span>    package <span class="op">=</span> <span class="st">"MSstatsBioNet"</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">input</span><span class="op">)</span></span>
-<span><span class="co">#&gt;               Protein    Label     log2FC         SE    DF      pvalue</span></span>
-<span><span class="co">#&gt;                &lt;char&gt;   &lt;char&gt;      &lt;num&gt;      &lt;num&gt; &lt;int&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: P00533_S1039_S1042 t0 vs t1 -0.3200363 0.14994312     9 0.061580951</span></span>
-<span><span class="co">#&gt; 2:       P00533_S1064 t0 vs t1  0.3566531 0.08915347     9 0.003108364</span></span>
-<span><span class="co">#&gt; 3:   P00533_S991_S995 t0 vs t1 -0.1229037 0.10858298     9 0.286937655</span></span>
-<span><span class="co">#&gt; 4:        P00533_T693 t0 vs t1 -0.0233444 0.17724459     9 0.898113182</span></span>
-<span><span class="co">#&gt; 5:   P00533_T693_S695 t0 vs t1 -0.1659957 0.15000754     9 0.297173769</span></span>
-<span><span class="co">#&gt; 6:       P00533_Y1110 t0 vs t1  0.2106324 0.09279031     9 0.049364434</span></span>
-<span><span class="co">#&gt;    adj.pvalue  issue</span></span>
-<span><span class="co">#&gt;         &lt;num&gt; &lt;lgcl&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.28024590     NA</span></span>
-<span><span class="co">#&gt; 2: 0.06863598     NA</span></span>
-<span><span class="co">#&gt; 3: 0.57907374     NA</span></span>
-<span><span class="co">#&gt; 4: 0.96083634     NA</span></span>
-<span><span class="co">#&gt; 5: 0.58809108     NA</span></span>
-<span><span class="co">#&gt; 6: 0.25258914     NA</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="id-conversion">ID Conversion<a class="anchor" aria-label="anchor" href="#id-conversion"></a>
-</h3>
-<p>First, we need to convert the group comparison results to a format
-that can be processed by INDRA. We can use the
-<code>annotateProteinInfoFromIndra</code> function to obtain these
-mappings.</p>
-<p>In the below example, we convert uniprot IDs to their corresponding
-Hgnc IDs. We can also extract other information, such as hgnc gene name
-and protein function.</p>
+<span><span class="va">global</span> <span class="op">=</span> <span class="fu">data.table</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>    <span class="st">"extdata/cptac-ccrcc-protein.csv"</span>,</span>
+<span>    package <span class="op">=</span> <span class="st">"MSstatsBioNet"</span></span>
+<span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">ptm</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="35%">
+<col width="6%">
+<col width="8%">
+<col width="10%">
+<col width="30%">
+<col width="8%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Protein</th>
+<th align="left">Label</th>
+<th align="right">log2FC</th>
+<th align="right">adj.pvalue</th>
+<th align="left">GlobalProtein</th>
+<th align="left">Adjusted</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">sp|A0MZ66|SHOT1_HUMAN_S249</td>
+<td align="left">T vs N</td>
+<td align="right">0.59650</td>
+<td align="right">0.6746</td>
+<td align="left">sp|A0MZ66|SHOT1_HUMAN</td>
+<td align="left">TRUE</td>
+</tr>
+<tr class="even">
+<td align="left">sp|A0MZ66|SHOT1_HUMAN_S473</td>
+<td align="left">T vs N</td>
+<td align="right">-0.41070</td>
+<td align="right">0.5830</td>
+<td align="left">sp|A0MZ66|SHOT1_HUMAN</td>
+<td align="left">TRUE</td>
+</tr>
+<tr class="odd">
+<td align="left">sp|A1IGU5|ARH37_HUMAN_S15</td>
+<td align="left">T vs N</td>
+<td align="right">0.04957</td>
+<td align="right">0.9747</td>
+<td align="left">sp|A1IGU5|ARH37_HUMAN</td>
+<td align="left">TRUE</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">global</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Protein</th>
+<th align="left">Label</th>
+<th align="right">log2FC</th>
+<th align="right">adj.pvalue</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">sp|A0A024RBG1|NUD4B_HUMAN</td>
+<td align="left">T vs N</td>
+<td align="right">-0.8327</td>
+<td align="right">0.1436</td>
+</tr>
+<tr class="even">
+<td align="left">sp|A0A075B6K0|LV316_HUMAN</td>
+<td align="left">T vs N</td>
+<td align="right">1.1660</td>
+<td align="right">0.2180</td>
+</tr>
+<tr class="odd">
+<td align="left">sp|A0A075B6K5|LV39_HUMAN</td>
+<td align="left">T vs N</td>
+<td align="right">1.5630</td>
+<td align="right">0.5190</td>
+</tr>
+</tbody>
+</table>
+<p>The identifiers are in FragPipe’s form,
+<code>sp|&lt;UniProt accession&gt;|&lt;UniProt mnemonic&gt;</code>,
+followed by the site for PTMs. <code>GlobalProtein</code> names the
+protein of each site. Sites whose protein was not measured in the global
+profiling experiment cannot be adjusted: MSstatsPTM sets their
+<code>GlobalProtein</code> to <code>"missing"</code> and
+<code>Adjusted</code> to <code>FALSE</code>, and reports their
+unadjusted change.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span>Adjusted <span class="op">=</span> <span class="va">ptm</span><span class="op">$</span><span class="va">Adjusted</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Adjusted</span></span>
+<span><span class="co">#&gt; FALSE  TRUE </span></span>
+<span><span class="co">#&gt;  1141  1972</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="building-the-entity-tables">Building the entity tables<a class="anchor" aria-label="anchor" href="#building-the-entity-tables"></a>
+</h2>
+<p><code>prepare_entities</code> builds one entity table per experiment.
+For the sites, <code>entity_type = "ptm_site"</code> parses the site
+from the end of each identifier and takes the parent protein from
+<code>GlobalProtein</code> (or from the identifier, where it is
+<code>"missing"</code>). FragPipe identifiers can be used as they are
+with <code>id_type = "uniprot"</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="http://msstats.org" class="external-link">MSstatsBioNet</a></span><span class="op">)</span></span>
 <span><span class="co">#&gt; Loading required package: MSstats</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -127,105 +241,643 @@ and protein function.</p>
 <span><span class="co">#&gt; The following object is masked from 'package:grDevices':</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     savePlot</span></span>
-<span><span class="va">annotated_df</span> <span class="op">=</span> <span class="fu"><a href="../reference/annotateProteinInfoFromIndra.html">annotateProteinInfoFromIndra</a></span><span class="op">(</span><span class="va">input</span>, <span class="st">"Uniprot"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">annotated_df</span><span class="op">)</span></span>
-<span><span class="co">#&gt;               Protein    Label     log2FC         SE    DF      pvalue</span></span>
-<span><span class="co">#&gt;                &lt;char&gt;   &lt;char&gt;      &lt;num&gt;      &lt;num&gt; &lt;int&gt;       &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: P00533_S1039_S1042 t0 vs t1 -0.3200363 0.14994312     9 0.061580951</span></span>
-<span><span class="co">#&gt; 2:       P00533_S1064 t0 vs t1  0.3566531 0.08915347     9 0.003108364</span></span>
-<span><span class="co">#&gt; 3:   P00533_S991_S995 t0 vs t1 -0.1229037 0.10858298     9 0.286937655</span></span>
-<span><span class="co">#&gt; 4:        P00533_T693 t0 vs t1 -0.0233444 0.17724459     9 0.898113182</span></span>
-<span><span class="co">#&gt; 5:   P00533_T693_S695 t0 vs t1 -0.1659957 0.15000754     9 0.297173769</span></span>
-<span><span class="co">#&gt; 6:       P00533_Y1110 t0 vs t1  0.2106324 0.09279031     9 0.049364434</span></span>
-<span><span class="co">#&gt;    adj.pvalue  issue GlobalProtein UniprotId EntityNamespace EntityId</span></span>
-<span><span class="co">#&gt;         &lt;num&gt; &lt;lgcl&gt;        &lt;char&gt;    &lt;char&gt;          &lt;char&gt;   &lt;char&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.28024590     NA        P00533    P00533            HGNC     3236</span></span>
-<span><span class="co">#&gt; 2: 0.06863598     NA        P00533    P00533            HGNC     3236</span></span>
-<span><span class="co">#&gt; 3: 0.57907374     NA        P00533    P00533            HGNC     3236</span></span>
-<span><span class="co">#&gt; 4: 0.96083634     NA        P00533    P00533            HGNC     3236</span></span>
-<span><span class="co">#&gt; 5: 0.58809108     NA        P00533    P00533            HGNC     3236</span></span>
-<span><span class="co">#&gt; 6: 0.25258914     NA        P00533    P00533            HGNC     3236</span></span>
-<span><span class="co">#&gt;    EntityName IsTranscriptionFactor IsKinase IsPhosphatase</span></span>
-<span><span class="co">#&gt;        &lt;char&gt;                &lt;lgcl&gt;   &lt;lgcl&gt;        &lt;lgcl&gt;</span></span>
-<span><span class="co">#&gt; 1:       EGFR                 FALSE     TRUE         FALSE</span></span>
-<span><span class="co">#&gt; 2:       EGFR                 FALSE     TRUE         FALSE</span></span>
-<span><span class="co">#&gt; 3:       EGFR                 FALSE     TRUE         FALSE</span></span>
-<span><span class="co">#&gt; 4:       EGFR                 FALSE     TRUE         FALSE</span></span>
-<span><span class="co">#&gt; 5:       EGFR                 FALSE     TRUE         FALSE</span></span>
-<span><span class="co">#&gt; 6:       EGFR                 FALSE     TRUE         FALSE</span></span></code></pre></div>
+<span><span class="va">sites</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/prepare_entities.html">prepare_entities</a></span><span class="op">(</span><span class="va">ptm</span>, entity_type <span class="op">=</span> <span class="st">"ptm_site"</span>, id_type <span class="op">=</span> <span class="st">"uniprot"</span><span class="op">)</span></span>
+<span><span class="va">proteins</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/prepare_entities.html">prepare_entities</a></span><span class="op">(</span><span class="va">global</span>, entity_type <span class="op">=</span> <span class="st">"protein"</span>,</span>
+<span>                             id_type <span class="op">=</span> <span class="st">"uniprot"</span><span class="op">)</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sites</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"parent_id"</span>, <span class="st">"site"</span>, <span class="st">"logFC"</span>,</span>
+<span>                            <span class="st">"adj.pvalue"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="39%">
+<col width="34%">
+<col width="5%">
+<col width="9%">
+<col width="11%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">id</th>
+<th align="left">parent_id</th>
+<th align="left">site</th>
+<th align="right">logFC</th>
+<th align="right">adj.pvalue</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">sp|A0MZ66|SHOT1_HUMAN_S249</td>
+<td align="left">sp|A0MZ66|SHOT1_HUMAN</td>
+<td align="left">S249</td>
+<td align="right">0.59650</td>
+<td align="right">0.6746</td>
+</tr>
+<tr class="even">
+<td align="left">sp|A0MZ66|SHOT1_HUMAN_S473</td>
+<td align="left">sp|A0MZ66|SHOT1_HUMAN</td>
+<td align="left">S473</td>
+<td align="right">-0.41070</td>
+<td align="right">0.5830</td>
+</tr>
+<tr class="odd">
+<td align="left">sp|A1IGU5|ARH37_HUMAN_S15</td>
+<td align="left">sp|A1IGU5|ARH37_HUMAN</td>
+<td align="left">S15</td>
+<td align="right">0.04957</td>
+<td align="right">0.9747</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="id-conversion">ID Conversion<a class="anchor" aria-label="anchor" href="#id-conversion"></a>
+</h2>
+<p><code>convert_ids</code> maps each UniProt accession to its HGNC
+gene, which INDRA uses. Sites are mapped through their parent
+protein.</p>
+<p>So that this vignette builds without network access, the chunks that
+call INDRA (<code>convert_ids</code> and <code>get_network</code>) are
+not run when the vignette is built. Their results were saved with
+<code>inst/script/cptac-ccrcc-network.R</code> and are loaded from
+<code>extdata/cptac-ccrcc-network.rds</code> instead. The output below
+comes from those saved results.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">indra</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/indra_backend.html">indra_backend</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">sites</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_ids.html">convert_ids</a></span><span class="op">(</span><span class="va">indra</span>, <span class="va">sites</span><span class="op">)</span></span>
+<span><span class="va">proteins</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_ids.html">convert_ids</a></span><span class="op">(</span><span class="va">indra</span>, <span class="va">proteins</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sites</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"id"</span>, <span class="st">"namespace"</span>, <span class="st">"entity_id"</span>,</span>
+<span>                            <span class="st">"entity_name"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="53%">
+<col width="14%">
+<col width="14%">
+<col width="17%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">id</th>
+<th align="left">namespace</th>
+<th align="left">entity_id</th>
+<th align="left">entity_name</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">sp|A0MZ66|SHOT1_HUMAN_S249</td>
+<td align="left">HGNC</td>
+<td align="left">29319</td>
+<td align="left">SHTN1</td>
+</tr>
+<tr class="even">
+<td align="left">sp|A0MZ66|SHOT1_HUMAN_S473</td>
+<td align="left">HGNC</td>
+<td align="left">29319</td>
+<td align="left">SHTN1</td>
+</tr>
+<tr class="odd">
+<td align="left">sp|A1IGU5|ARH37_HUMAN_S15</td>
+<td align="left">HGNC</td>
+<td align="left">34430</td>
+<td align="left">ARHGEF37</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>sites <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">sites</span><span class="op">$</span><span class="va">entity_id</span><span class="op">)</span><span class="op">)</span>, of <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">sites</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; sites    of </span></span>
+<span><span class="co">#&gt;  3113  3113</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>proteins <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">proteins</span><span class="op">$</span><span class="va">entity_id</span><span class="op">)</span><span class="op">)</span>, of <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">proteins</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; proteins       of </span></span>
+<span><span class="co">#&gt;     4404     4405</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="selecting-sites">Selecting Sites<a class="anchor" aria-label="anchor" href="#selecting-sites"></a>
+</h2>
+<p><code>select_entities</code> flags the sites to send to INDRA. Here
+we keep the sites with an adjusted p-value below 0.05.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">selected</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/select_entities.html">select_entities</a></span><span class="op">(</span><span class="va">sites</span>, pvalue_cutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">selected</span><span class="op">$</span><span class="va">included_in_query</span><span class="op">)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; FALSE  TRUE </span></span>
+<span><span class="co">#&gt;  2877   236</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="network-query">Network Query<a class="anchor" aria-label="anchor" href="#network-query"></a>
+</h2>
+<div class="section level3">
+<h3 id="sites-only">Sites only<a class="anchor" aria-label="anchor" href="#sites-only"></a>
+</h3>
+<p><code>get_network</code> with <code><a href="../reference/subnetwork_query.html">subnetwork_query()</a></code> asks
+how the proteins of the selected sites are connected to each other. We
+keep only <code>Phosphorylation</code> statements.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network_sites</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_network.html">get_network</a></span><span class="op">(</span><span class="va">indra</span>, <span class="va">selected</span>, <span class="fu"><a href="../reference/subnetwork_query.html">subnetwork_query</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>                             interaction_types <span class="op">=</span> <span class="st">"Phosphorylation"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; INDRA subnetwork: how are 236 selected PTM sites connected to each other, with no other nodes added?</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">network_sites</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 30</span></span></code></pre></div>
+<p>INDRA reports the site each phosphorylation acts on, in the
+<code>site</code> column of the edges. Most of these edges act on a site
+that was not measured, or that did not change.
+<code>filter_by_ptm_site</code> keeps only the edges whose site is one
+of the sites of their target in the network.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">filtered_sites</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_by_ptm_site.html">filter_by_ptm_site</a></span><span class="op">(</span><span class="va">network_sites</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Dropping 29 edge(s) whose site is not a PTM site of their target in the network.</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">filtered_sites</span><span class="op">$</span><span class="va">edges</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"source"</span>, <span class="st">"target"</span>, <span class="st">"interaction"</span>,</span>
+<span>                                      <span class="st">"site"</span>, <span class="st">"evidence_count"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="2%">
+<col width="31%">
+<col width="30%">
+<col width="15%">
+<col width="4%">
+<col width="14%">
+</colgroup>
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">source</th>
+<th align="left">target</th>
+<th align="left">interaction</th>
+<th align="left">site</th>
+<th align="right">evidence_count</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="left">21</td>
+<td align="left">sp|Q07002|CDK18_HUMAN</td>
+<td align="left">sp|P41181|AQP2_HUMAN</td>
+<td align="left">Phosphorylation</td>
+<td align="left">S261</td>
+<td align="right">4</td>
+</tr></tbody>
+</table>
+<p>Few of the proteins whose sites changed are known to phosphorylate
+each other, so one edge remains.</p>
 </div>
 <div class="section level3">
-<h3 id="subnetwork-query">Subnetwork Query<a class="anchor" aria-label="anchor" href="#subnetwork-query"></a>
+<h3 id="adding-kinases-with-include_entities">Adding kinases with <code>include_entities</code><a class="anchor" aria-label="anchor" href="#adding-kinases-with-include_entities"></a>
 </h3>
-<p>The package provides a function <code>getSubnetworkFromIndra</code>
-that retrieves a subnetwork of proteins from the INDRA database based on
-differential abundance analysis results. This function may help finding
-off target subnetworks.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">subnetwork</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSubnetworkFromIndra.html">getSubnetworkFromIndra</a></span><span class="op">(</span><span class="va">annotated_df</span>, pvalueCutoff <span class="op">=</span> <span class="fl">0.05</span>, statement_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Phosphorylation"</span><span class="op">)</span>, logfc_cutoff <span class="op">=</span> <span class="fl">1</span>, force_include_other <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HGNC:3236"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; INDRA subnetwork: how are 11 selected PTM sites and 1 added entity connected to each other, with no other nodes added?</span></span>
-<span><span class="co">#&gt; Warning in getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), : NOTICE: This function includes third-party software components</span></span>
-<span><span class="co">#&gt;         that are licensed under the BSD 2-Clause License. Please ensure to</span></span>
-<span><span class="co">#&gt;         include the third-party licensing agreements if redistributing this</span></span>
-<span><span class="co">#&gt;         package or utilizing the results based on this package.</span></span>
-<span><span class="co">#&gt;         See the LICENSE file for more details.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span>
-<span><span class="co">#&gt;       id entity_type entity_name namespace entity_id measured included_in_query</span></span>
-<span><span class="co">#&gt; 1 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE</span></span>
-<span><span class="co">#&gt; 2 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE</span></span>
-<span><span class="co">#&gt; 3 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE</span></span>
-<span><span class="co">#&gt; 4 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE</span></span>
-<span><span class="co">#&gt; 5 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE</span></span>
-<span><span class="co">#&gt; 6 P00533    ptm_site        EGFR      HGNC      3236     TRUE              TRUE</span></span>
-<span><span class="co">#&gt;    node_role        site has_measured_sites      logFC adj.pvalue</span></span>
-<span><span class="co">#&gt; 1 user_added S1039_S1042               TRUE -0.3200363 0.28024590</span></span>
-<span><span class="co">#&gt; 2 user_added       S1064               TRUE  0.3566531 0.06863598</span></span>
-<span><span class="co">#&gt; 3 user_added   S991_S995               TRUE -0.1229037 0.57907374</span></span>
-<span><span class="co">#&gt; 4 user_added        T693               TRUE -0.0233444 0.96083634</span></span>
-<span><span class="co">#&gt; 5 user_added   T693_S695               TRUE -0.1659957 0.58809108</span></span>
-<span><span class="co">#&gt; 6 user_added       Y1110               TRUE  0.2106324 0.25258914</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   source target     interaction directed site confidence evidence_count</span></span>
-<span><span class="co">#&gt; 1 P28482 P00533 Phosphorylation     TRUE T693  0.7828815              5</span></span>
-<span><span class="co">#&gt; 2 P00533 Q13480 Phosphorylation     TRUE Y589  0.8034668              4</span></span>
-<span><span class="co">#&gt; 3 P28482 Q13480 Phosphorylation     TRUE S551  0.6600850              2</span></span>
-<span><span class="co">#&gt; 4 P28482 P00533 Phosphorylation     TRUE &lt;NA&gt;  0.8417233              4</span></span>
-<span><span class="co">#&gt; 5 P00533 Q13480 Phosphorylation     TRUE Y659  0.8030378             12</span></span>
-<span><span class="co">#&gt; 6 P00533 Q13480 Phosphorylation     TRUE Y317  0.5316003              1</span></span>
-<span><span class="co">#&gt;                                                               evidence_url</span></span>
-<span><span class="co">#&gt; 1 https://db.indra.bio/statements/from_hash/-27349256206351689?format=html</span></span>
-<span><span class="co">#&gt; 2   https://db.indra.bio/statements/from_hash/8278162666099689?format=html</span></span>
-<span><span class="co">#&gt; 3  https://db.indra.bio/statements/from_hash/-4764665757498136?format=html</span></span>
-<span><span class="co">#&gt; 4  https://db.indra.bio/statements/from_hash/16405949435170631?format=html</span></span>
-<span><span class="co">#&gt; 5  https://db.indra.bio/statements/from_hash/28792790420132101?format=html</span></span>
-<span><span class="co">#&gt; 6  https://db.indra.bio/statements/from_hash/16300905780198239?format=html</span></span>
-<span><span class="co">#&gt;         statement_id backend_database query_type</span></span>
-<span><span class="co">#&gt; 1 -27349256206351689            INDRA subnetwork</span></span>
-<span><span class="co">#&gt; 2   8278162666099689            INDRA subnetwork</span></span>
-<span><span class="co">#&gt; 3  -4764665757498136            INDRA subnetwork</span></span>
-<span><span class="co">#&gt; 4  16405949435170631            INDRA subnetwork</span></span>
-<span><span class="co">#&gt; 5  28792790420132101            INDRA subnetwork</span></span>
-<span><span class="co">#&gt; 6  16300905780198239            INDRA subnetwork</span></span>
-<span><span class="co">#&gt;                                             evidence_sources paperCount</span></span>
-<span><span class="co">#&gt; 1 {"sparser": 1, "reach": 1, "pe": 1, "psp": 1, "signor": 1}          1</span></span>
-<span><span class="co">#&gt; 2                {"pe": 1, "hprd": 1, "psp": 1, "signor": 1}          1</span></span>
-<span><span class="co">#&gt; 3                                   {"hprd": 1, "signor": 1}          1</span></span>
-<span><span class="co">#&gt; 4                                 {"sparser": 2, "reach": 2}          1</span></span>
-<span><span class="co">#&gt; 5       {"pc": 1, "pe": 1, "hprd": 8, "psp": 1, "signor": 1}          1</span></span>
-<span><span class="co">#&gt; 6                                              {"rlimsp": 1}          1</span></span></code></pre></div>
+<p>The kinases that act on these sites may not have changed sites
+themselves, so they are not selected. They can be added to the query
+with <code>include_entities</code>, using
+<code>"namespace:identifier"</code> IDs. Here we add ten kinases that
+act on many substrates.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">kinases</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>MTOR <span class="op">=</span> <span class="st">"HGNC:3942"</span>, AKT1 <span class="op">=</span> <span class="st">"HGNC:391"</span>, MAPK1 <span class="op">=</span> <span class="st">"HGNC:6871"</span>,</span>
+<span>             MAPK3 <span class="op">=</span> <span class="st">"HGNC:6877"</span>, CDK1 <span class="op">=</span> <span class="st">"HGNC:1722"</span>, CSNK2A1 <span class="op">=</span> <span class="st">"HGNC:2457"</span>,</span>
+<span>             PRKACA <span class="op">=</span> <span class="st">"HGNC:9380"</span>, GSK3B <span class="op">=</span> <span class="st">"HGNC:4617"</span>, SRC <span class="op">=</span> <span class="st">"HGNC:11283"</span>,</span>
+<span>             PRKCA <span class="op">=</span> <span class="st">"HGNC:9393"</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_network.html">get_network</a></span><span class="op">(</span><span class="va">indra</span>, <span class="va">selected</span>, <span class="fu"><a href="../reference/subnetwork_query.html">subnetwork_query</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>                       interaction_types <span class="op">=</span> <span class="st">"Phosphorylation"</span>,</span>
+<span>                       include_entities <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/unname.html" class="external-link">unname</a></span><span class="op">(</span><span class="va">kinases</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; INDRA subnetwork: how are 236 selected PTM sites and 10 added entities connected to each other, with no other nodes added?</span></span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 599</span></span>
+<span><span class="va">network</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/filter_by_ptm_site.html">filter_by_ptm_site</a></span><span class="op">(</span><span class="va">network</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Dropping 580 edge(s) whose site is not a PTM site of their target in the network.</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">edges</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"source"</span>, <span class="st">"target"</span>, <span class="st">"site"</span>,</span>
+<span>                               <span class="st">"evidence_count"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="4%">
+<col width="35%">
+<col width="35%">
+<col width="6%">
+<col width="16%">
+</colgroup>
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">source</th>
+<th align="left">target</th>
+<th align="left">site</th>
+<th align="right">evidence_count</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">31</td>
+<td align="left">PRKCA</td>
+<td align="left">sp|P29353|SHC1_HUMAN</td>
+<td align="left">S139</td>
+<td align="right">10</td>
+</tr>
+<tr class="even">
+<td align="left">144</td>
+<td align="left">MAPK1</td>
+<td align="left">sp|P29590|PML_HUMAN</td>
+<td align="left">S36</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">147</td>
+<td align="left">MAPK1</td>
+<td align="left">sp|P29590|PML_HUMAN</td>
+<td align="left">S38</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">148</td>
+<td align="left">MAPK1</td>
+<td align="left">sp|P78536|ADA17_HUMAN</td>
+<td align="left">T735</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="left">157</td>
+<td align="left">MAPK1</td>
+<td align="left">sp|P29590|PML_HUMAN</td>
+<td align="left">S40</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">213</td>
+<td align="left">PRKCA</td>
+<td align="left">sp|P78536|ADA17_HUMAN</td>
+<td align="left">T735</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">235</td>
+<td align="left">AKT1</td>
+<td align="left">sp|P02545|LMNA_HUMAN</td>
+<td align="left">S301</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">249</td>
+<td align="left">MAPK3</td>
+<td align="left">sp|P29590|PML_HUMAN</td>
+<td align="left">S36</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">254</td>
+<td align="left">MAPK3</td>
+<td align="left">sp|P29590|PML_HUMAN</td>
+<td align="left">S38</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">257</td>
+<td align="left">PRKCA</td>
+<td align="left">sp|P41181|AQP2_HUMAN</td>
+<td align="left">S256</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">266</td>
+<td align="left">MAPK3</td>
+<td align="left">sp|P29590|PML_HUMAN</td>
+<td align="left">S40</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">284</td>
+<td align="left">PRKACA</td>
+<td align="left">sp|Q16665|HIF1A_HUMAN</td>
+<td align="left">T455</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">316</td>
+<td align="left">MAPK3</td>
+<td align="left">sp|P78536|ADA17_HUMAN</td>
+<td align="left">T735</td>
+<td align="right">6</td>
+</tr>
+<tr class="even">
+<td align="left">332</td>
+<td align="left">CDK1</td>
+<td align="left">sp|P41181|AQP2_HUMAN</td>
+<td align="left">S261</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">345</td>
+<td align="left">CDK1</td>
+<td align="left">sp|O60885|BRD4_HUMAN</td>
+<td align="left">S1117</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">422</td>
+<td align="left">CSNK2A1</td>
+<td align="left">sp|P25788|PSA3_HUMAN</td>
+<td align="left">S250</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="left">462</td>
+<td align="left">SRC</td>
+<td align="left">sp|P46940|IQGA1_HUMAN</td>
+<td align="left">Y1510</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">505</td>
+<td align="left">sp|Q07002|CDK18_HUMAN</td>
+<td align="left">sp|P41181|AQP2_HUMAN</td>
+<td align="left">S261</td>
+<td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">513</td>
+<td align="left">PRKACA</td>
+<td align="left">sp|P41181|AQP2_HUMAN</td>
+<td align="left">S256</td>
+<td align="right">2</td>
+</tr>
+</tbody>
+</table>
+<p>The added kinases are not in the PTM entity table, so their nodes
+have INDRA’s gene symbol as <code>id</code>,
+<code>measured = FALSE</code>, and no statistics.</p>
+<p>Run <code>filter_by_ptm_site</code> before
+<code>merge_networks</code> when combining with a backend that reports
+no sites: it drops every edge without a site.</p>
 </div>
-<div class="section level3">
-<h3 id="network-visualization">Network Visualization<a class="anchor" aria-label="anchor" href="#network-visualization"></a>
-</h3>
-<p>Visualize the subnetwork on your browser</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/previewNetworkInBrowser.html">previewNetworkInBrowser</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span>, displayLabelType <span class="op">=</span> <span class="st">"entity_name"</span><span class="op">)</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="adding-global-profiling-values">Adding global profiling values<a class="anchor" aria-label="anchor" href="#adding-global-profiling-values"></a>
+</h2>
+<p><code>add_entity_values</code> copies the <code>logFC</code> and
+<code>adj.pvalue</code> of an entity table onto the matching nodes of a
+network, without a new query. With the global profiling table:</p>
+<ul>
+<li>a protein with only site rows in the network gets a protein-level
+row, with the protein’s change;</li>
+<li>a kinase added with <code>include_entities</code> is matched by its
+HGNC grounding, since its <code>id</code> is INDRA’s gene symbol, and
+gets its change too.</li>
+</ul>
+<p>The entity table must come from <code>convert_ids</code>, so that
+nodes can be matched by grounding.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">network</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_entity_values.html">add_entity_values</a></span><span class="op">(</span><span class="va">network</span>, <span class="va">proteins</span><span class="op">)</span></span>
+<span><span class="co">#&gt; 1 row(s) of entities have no grounding and can match nodes only by id.</span></span>
+<span><span class="co">#&gt; Copied the values of entities to 4 node row(s), and added a protein-level row to 5 protein(s) with only PTM site rows.</span></span>
+<span><span class="va">protein_rows</span> <span class="op">&lt;-</span> <span class="va">network</span><span class="op">$</span><span class="va">nodes</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">nodes</span><span class="op">$</span><span class="va">site</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">protein_rows</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"entity_name"</span>, <span class="st">"node_role"</span>, <span class="st">"measured"</span>,</span>
+<span>                              <span class="st">"logFC"</span>, <span class="st">"adj.pvalue"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">entity_name</th>
+<th align="left">node_role</th>
+<th align="left">measured</th>
+<th align="right">logFC</th>
+<th align="right">adj.pvalue</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="left">BRD4</td>
+<td align="left">passed_cutoffs</td>
+<td align="left">TRUE</td>
+<td align="right">-0.3303</td>
+<td align="right">0.026840</td>
+</tr>
+<tr class="even">
+<td align="left">3</td>
+<td align="left">LMNA</td>
+<td align="left">passed_cutoffs</td>
+<td align="left">TRUE</td>
+<td align="right">0.4678</td>
+<td align="right">0.016000</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="left">PML</td>
+<td align="left">passed_cutoffs</td>
+<td align="left">TRUE</td>
+<td align="right">1.0720</td>
+<td align="right">0.000125</td>
+</tr>
+<tr class="even">
+<td align="left">7</td>
+<td align="left">IQGAP1</td>
+<td align="left">passed_cutoffs</td>
+<td align="left">TRUE</td>
+<td align="right">0.7732</td>
+<td align="right">0.003143</td>
+</tr>
+<tr class="odd">
+<td align="left">9</td>
+<td align="left">CDK18</td>
+<td align="left">passed_cutoffs</td>
+<td align="left">TRUE</td>
+<td align="right">1.0550</td>
+<td align="right">0.019570</td>
+</tr>
+<tr class="even">
+<td align="left">16</td>
+<td align="left">MAPK3</td>
+<td align="left">user_added</td>
+<td align="left">TRUE</td>
+<td align="right">0.4066</td>
+<td align="right">0.308800</td>
+</tr>
+<tr class="odd">
+<td align="left">17</td>
+<td align="left">AKT1</td>
+<td align="left">user_added</td>
+<td align="left">TRUE</td>
+<td align="right">0.4694</td>
+<td align="right">0.004076</td>
+</tr>
+<tr class="even">
+<td align="left">18</td>
+<td align="left">CDK1</td>
+<td align="left">user_added</td>
+<td align="left">FALSE</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">19</td>
+<td align="left">CSNK2A1</td>
+<td align="left">user_added</td>
+<td align="left">FALSE</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">20</td>
+<td align="left">MAPK1</td>
+<td align="left">user_added</td>
+<td align="left">TRUE</td>
+<td align="right">0.3307</td>
+<td align="right">0.532000</td>
+</tr>
+<tr class="odd">
+<td align="left">21</td>
+<td align="left">SRC</td>
+<td align="left">user_added</td>
+<td align="left">FALSE</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="even">
+<td align="left">22</td>
+<td align="left">PRKCA</td>
+<td align="left">user_added</td>
+<td align="left">FALSE</td>
+<td align="right">NA</td>
+<td align="right">NA</td>
+</tr>
+<tr class="odd">
+<td align="left">23</td>
+<td align="left">PRKACA</td>
+<td align="left">user_added</td>
+<td align="left">TRUE</td>
+<td align="right">-0.1899</td>
+<td align="right">0.151600</td>
+</tr>
+</tbody>
+</table>
+<p>Kinases that were not measured in the global profiling experiment
+keep <code>measured = FALSE</code>. Proteins that have sites in the
+network but no protein-level row, such as HIF1A, were not measured in
+the global profiling experiment either. Their sites are the
+<code>Adjusted = FALSE</code> rows of <code>ADJUSTED.Model</code>, so
+their change is not adjusted for protein abundance.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">site_rows</span> <span class="op">&lt;-</span> <span class="va">network</span><span class="op">$</span><span class="va">nodes</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">nodes</span><span class="op">$</span><span class="va">site</span><span class="op">)</span>, <span class="op">]</span></span>
+<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">site_rows</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"entity_name"</span>, <span class="st">"site"</span>, <span class="st">"logFC"</span>, <span class="st">"adj.pvalue"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">entity_name</th>
+<th align="left">site</th>
+<th align="right">logFC</th>
+<th align="right">adj.pvalue</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">2</td>
+<td align="left">BRD4</td>
+<td align="left">S1117</td>
+<td align="right">0.6929</td>
+<td align="right">0.034570</td>
+</tr>
+<tr class="even">
+<td align="left">4</td>
+<td align="left">LMNA</td>
+<td align="left">S301</td>
+<td align="right">-0.8042</td>
+<td align="right">0.041350</td>
+</tr>
+<tr class="odd">
+<td align="left">6</td>
+<td align="left">PML</td>
+<td align="left">S36_S38_S40</td>
+<td align="right">-0.6853</td>
+<td align="right">0.042960</td>
+</tr>
+<tr class="even">
+<td align="left">8</td>
+<td align="left">IQGAP1</td>
+<td align="left">Y1510</td>
+<td align="right">-0.8199</td>
+<td align="right">0.034370</td>
+</tr>
+<tr class="odd">
+<td align="left">10</td>
+<td align="left">CDK18</td>
+<td align="left">S132</td>
+<td align="right">3.3970</td>
+<td align="right">0.001939</td>
+</tr>
+<tr class="even">
+<td align="left">11</td>
+<td align="left">PSMA3</td>
+<td align="left">S250</td>
+<td align="right">0.6722</td>
+<td align="right">0.017440</td>
+</tr>
+<tr class="odd">
+<td align="left">12</td>
+<td align="left">SHC1</td>
+<td align="left">S139</td>
+<td align="right">0.7772</td>
+<td align="right">0.008324</td>
+</tr>
+<tr class="even">
+<td align="left">13</td>
+<td align="left">AQP2</td>
+<td align="left">S256_S261_S264</td>
+<td align="right">-1.5560</td>
+<td align="right">0.012470</td>
+</tr>
+<tr class="odd">
+<td align="left">14</td>
+<td align="left">ADAM17</td>
+<td align="left">T735</td>
+<td align="right">0.5357</td>
+<td align="right">0.013300</td>
+</tr>
+<tr class="even">
+<td align="left">15</td>
+<td align="left">HIF1A</td>
+<td align="left">S451_T455</td>
+<td align="right">1.4060</td>
+<td align="right">0.011440</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="reading-the-network">Reading the network<a class="anchor" aria-label="anchor" href="#reading-the-network"></a>
+</h2>
+<p>With both levels on one network, each site can be read against its
+protein. For example:</p>
+<ul>
+<li>PML is more abundant in tumor (protein <code>logFC</code> above 1),
+while its phosphorylation at S36/S38/S40, adjusted for that, is lower.
+MAPK1 and MAPK3 are known to phosphorylate these sites, and neither
+changed in abundance, so a change in their activity, not their amount,
+is one possible explanation.</li>
+<li>AKT1 is slightly more abundant in tumor, and its substrate site LMNA
+S301 is less phosphorylated after adjustment.</li>
+</ul>
+<p>Edges are prior knowledge from INDRA, not evidence from this
+experiment. Click an edge in the visualization below to read the
+evidence behind it.</p>
+</div>
+<div class="section level2">
+<h2 id="network-visualization">Network Visualization<a class="anchor" aria-label="anchor" href="#network-visualization"></a>
+</h2>
+<p><code>cytoscapeNetwork</code> draws a protein with sites as one node,
+with a small node for each site around it. The protein node is colored
+by the protein’s change in the global profiling experiment, and each
+site node by the site’s adjusted change. The legend’s <code>logFC</code>
+covers both, so read a protein’s color and its sites’ colors as changes
+from different experiments. A protein with no global profiling result,
+such as HIF1A, has no fill and a solid border. Kinases that were not
+measured have no fill and a dashed border.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cytoscapeNetwork.html">cytoscapeNetwork</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">network</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>                 displayLabelType <span class="op">=</span> <span class="st">"entity_name"</span><span class="op">)</span></span></code></pre></div>
+<div class="cytoscapeNetwork html-widget html-fill-item" id="htmlwidget-ac96cb3ee4656e2e9ec3" style="width:700px;height:432.632880098888px;"></div>
+<script type="application/json" data-for="htmlwidget-ac96cb3ee4656e2e9ec3">{"x":{"elements":[{"data":{"id":"sp|O60885|BRD4_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|O60885|BRD4_HUMAN","label":"BRD4","color":"#CBD3D6","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40,"parent":"sp|O60885|BRD4_HUMAN__compound__"}},{"data":{"id":"sp|O60885|BRD4_HUMAN__ptm__S1117","label":"S1117","color":"#E4C0B7","status":"measured","parent_protein":"sp|O60885|BRD4_HUMAN","parent":"sp|O60885|BRD4_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|O60885|BRD4_HUMAN__ptm_edge__S1117","source":"sp|O60885|BRD4_HUMAN","target":"sp|O60885|BRD4_HUMAN__ptm__S1117","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#E4C0B7","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P02545|LMNA_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|P02545|LMNA_HUMAN","label":"LMNA","color":"#DFC6C0","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40,"parent":"sp|P02545|LMNA_HUMAN__compound__"}},{"data":{"id":"sp|P02545|LMNA_HUMAN__ptm__S301","label":"S301","color":"#C1D5DB","status":"measured","parent_protein":"sp|P02545|LMNA_HUMAN","parent":"sp|P02545|LMNA_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P02545|LMNA_HUMAN__ptm_edge__S301","source":"sp|P02545|LMNA_HUMAN","target":"sp|P02545|LMNA_HUMAN__ptm__S301","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#C1D5DB","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P29590|PML_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|P29590|PML_HUMAN","label":"PML","color":"#EEB5A8","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40,"parent":"sp|P29590|PML_HUMAN__compound__"}},{"data":{"id":"sp|P29590|PML_HUMAN__ptm__S36","label":"S36","color":"#C3D5DA","status":"measured","parent_protein":"sp|P29590|PML_HUMAN","parent":"sp|P29590|PML_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P29590|PML_HUMAN__ptm_edge__S36","source":"sp|P29590|PML_HUMAN","target":"sp|P29590|PML_HUMAN__ptm__S36","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#C3D5DA","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P29590|PML_HUMAN__ptm__S38","label":"S38","color":"#C3D5DA","status":"measured","parent_protein":"sp|P29590|PML_HUMAN","parent":"sp|P29590|PML_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P29590|PML_HUMAN__ptm_edge__S38","source":"sp|P29590|PML_HUMAN","target":"sp|P29590|PML_HUMAN__ptm__S38","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#C3D5DA","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P29590|PML_HUMAN__ptm__S40","label":"S40","color":"#C3D5DA","status":"measured","parent_protein":"sp|P29590|PML_HUMAN","parent":"sp|P29590|PML_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P29590|PML_HUMAN__ptm_edge__S40","source":"sp|P29590|PML_HUMAN","target":"sp|P29590|PML_HUMAN__ptm__S40","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#C3D5DA","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P46940|IQGA1_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|P46940|IQGA1_HUMAN","label":"IQGAP1","color":"#E7BEB4","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":68,"height":42,"parent":"sp|P46940|IQGA1_HUMAN__compound__"}},{"data":{"id":"sp|P46940|IQGA1_HUMAN__ptm__Y1510","label":"Y1510","color":"#C0D5DC","status":"measured","parent_protein":"sp|P46940|IQGA1_HUMAN","parent":"sp|P46940|IQGA1_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P46940|IQGA1_HUMAN__ptm_edge__Y1510","source":"sp|P46940|IQGA1_HUMAN","target":"sp|P46940|IQGA1_HUMAN__ptm__Y1510","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#C0D5DC","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|Q07002|CDK18_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|Q07002|CDK18_HUMAN","label":"CDK18","color":"#EEB6A9","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40,"parent":"sp|Q07002|CDK18_HUMAN__compound__"}},{"data":{"id":"sp|Q07002|CDK18_HUMAN__ptm__S132","label":"S132","color":"#FFA590","status":"measured","parent_protein":"sp|Q07002|CDK18_HUMAN","parent":"sp|Q07002|CDK18_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|Q07002|CDK18_HUMAN__ptm_edge__S132","source":"sp|Q07002|CDK18_HUMAN","target":"sp|Q07002|CDK18_HUMAN__ptm__S132","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#FFA590","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P25788|PSA3_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|P25788|PSA3_HUMAN","label":"PSMA3","color":"#FFFFFF","status":"sites_only","shape":"round-rectangle","entity_type":"ptm_site","node_type":"protein","width":60,"height":40,"parent":"sp|P25788|PSA3_HUMAN__compound__"}},{"data":{"id":"sp|P25788|PSA3_HUMAN__ptm__S250","label":"S250","color":"#E4C0B8","status":"measured","parent_protein":"sp|P25788|PSA3_HUMAN","parent":"sp|P25788|PSA3_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P25788|PSA3_HUMAN__ptm_edge__S250","source":"sp|P25788|PSA3_HUMAN","target":"sp|P25788|PSA3_HUMAN__ptm__S250","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#E4C0B8","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P29353|SHC1_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|P29353|SHC1_HUMAN","label":"SHC1","color":"#FFFFFF","status":"sites_only","shape":"round-rectangle","entity_type":"ptm_site","node_type":"protein","width":60,"height":40,"parent":"sp|P29353|SHC1_HUMAN__compound__"}},{"data":{"id":"sp|P29353|SHC1_HUMAN__ptm__S139","label":"S139","color":"#E7BDB4","status":"measured","parent_protein":"sp|P29353|SHC1_HUMAN","parent":"sp|P29353|SHC1_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P29353|SHC1_HUMAN__ptm_edge__S139","source":"sp|P29353|SHC1_HUMAN","target":"sp|P29353|SHC1_HUMAN__ptm__S139","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#E7BDB4","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P41181|AQP2_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|P41181|AQP2_HUMAN","label":"AQP2","color":"#FFFFFF","status":"sites_only","shape":"round-rectangle","entity_type":"ptm_site","node_type":"protein","width":60,"height":40,"parent":"sp|P41181|AQP2_HUMAN__compound__"}},{"data":{"id":"sp|P41181|AQP2_HUMAN__ptm__S256","label":"S256","color":"#B0D7E4","status":"measured","parent_protein":"sp|P41181|AQP2_HUMAN","parent":"sp|P41181|AQP2_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P41181|AQP2_HUMAN__ptm_edge__S256","source":"sp|P41181|AQP2_HUMAN","target":"sp|P41181|AQP2_HUMAN__ptm__S256","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#B0D7E4","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P41181|AQP2_HUMAN__ptm__S261","label":"S261","color":"#B0D7E4","status":"measured","parent_protein":"sp|P41181|AQP2_HUMAN","parent":"sp|P41181|AQP2_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P41181|AQP2_HUMAN__ptm_edge__S261","source":"sp|P41181|AQP2_HUMAN","target":"sp|P41181|AQP2_HUMAN__ptm__S261","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#B0D7E4","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P41181|AQP2_HUMAN__ptm__S264","label":"S264","color":"#B0D7E4","status":"measured","parent_protein":"sp|P41181|AQP2_HUMAN","parent":"sp|P41181|AQP2_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P41181|AQP2_HUMAN__ptm_edge__S264","source":"sp|P41181|AQP2_HUMAN","target":"sp|P41181|AQP2_HUMAN__ptm__S264","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#B0D7E4","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|P78536|ADA17_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|P78536|ADA17_HUMAN","label":"ADAM17","color":"#FFFFFF","status":"sites_only","shape":"round-rectangle","entity_type":"ptm_site","node_type":"protein","width":68,"height":42,"parent":"sp|P78536|ADA17_HUMAN__compound__"}},{"data":{"id":"sp|P78536|ADA17_HUMAN__ptm__T735","label":"T735","color":"#E0C4BD","status":"measured","parent_protein":"sp|P78536|ADA17_HUMAN","parent":"sp|P78536|ADA17_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|P78536|ADA17_HUMAN__ptm_edge__T735","source":"sp|P78536|ADA17_HUMAN","target":"sp|P78536|ADA17_HUMAN__ptm__T735","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#E0C4BD","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|Q16665|HIF1A_HUMAN__compound__","node_type":"compound"}},{"data":{"id":"sp|Q16665|HIF1A_HUMAN","label":"HIF1A","color":"#FFFFFF","status":"sites_only","shape":"round-rectangle","entity_type":"ptm_site","node_type":"protein","width":60,"height":40,"parent":"sp|Q16665|HIF1A_HUMAN__compound__"}},{"data":{"id":"sp|Q16665|HIF1A_HUMAN__ptm__S451","label":"S451","color":"#F7AC9B","status":"measured","parent_protein":"sp|Q16665|HIF1A_HUMAN","parent":"sp|Q16665|HIF1A_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|Q16665|HIF1A_HUMAN__ptm_edge__S451","source":"sp|Q16665|HIF1A_HUMAN","target":"sp|Q16665|HIF1A_HUMAN__ptm__S451","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#F7AC9B","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"sp|Q16665|HIF1A_HUMAN__ptm__T455","label":"T455","color":"#F7AC9B","status":"measured","parent_protein":"sp|Q16665|HIF1A_HUMAN","parent":"sp|Q16665|HIF1A_HUMAN__compound__","node_type":"ptm"}},{"data":{"id":"sp|Q16665|HIF1A_HUMAN__ptm_edge__T455","source":"sp|Q16665|HIF1A_HUMAN","target":"sp|Q16665|HIF1A_HUMAN__ptm__T455","edge_type":"ptm_attachment","category":"ptm_attachment","interaction":"","color":"#F7AC9B","line_style":"dotted","arrow_shape":"none","width":1.5,"tooltip":""}},{"data":{"id":"MAPK3","label":"MAPK3","color":"#DDC7C2","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40}},{"data":{"id":"AKT1","label":"AKT1","color":"#DFC6C0","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40}},{"data":{"id":"CDK1","label":"CDK1","color":"#FFFFFF","status":"latent","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40}},{"data":{"id":"CSNK2A1","label":"CSNK2A1","color":"#FFFFFF","status":"latent","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":76,"height":44}},{"data":{"id":"MAPK1","label":"MAPK1","color":"#DBCAC5","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40}},{"data":{"id":"SRC","label":"SRC","color":"#FFFFFF","status":"latent","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40}},{"data":{"id":"PRKCA","label":"PRKCA","color":"#FFFFFF","status":"latent","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":60,"height":40}},{"data":{"id":"PRKACA","label":"PRKACA","color":"#CED3D5","status":"measured","shape":"round-rectangle","entity_type":"protein","node_type":"protein","width":68,"height":42}},{"data":{"id":"PRKCA-sp|P29353|SHC1_HUMAN-Phosphorylation","source":"PRKCA","target":"sp|P29353|SHC1_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/23709119426265795?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: S139"}},{"data":{"id":"MAPK1-sp|P29590|PML_HUMAN-Phosphorylation","source":"MAPK1","target":"sp|P29590|PML_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/-15380643855808607?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM sites: S36, S38, S40"}},{"data":{"id":"MAPK1-sp|P78536|ADA17_HUMAN-Phosphorylation","source":"MAPK1","target":"sp|P78536|ADA17_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/5463134113677899?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: T735"}},{"data":{"id":"PRKCA-sp|P78536|ADA17_HUMAN-Phosphorylation","source":"PRKCA","target":"sp|P78536|ADA17_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/8241516989150139?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: T735"}},{"data":{"id":"AKT1-sp|P02545|LMNA_HUMAN-Phosphorylation","source":"AKT1","target":"sp|P02545|LMNA_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/-35618720917376716?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: S301"}},{"data":{"id":"MAPK3-sp|P29590|PML_HUMAN-Phosphorylation","source":"MAPK3","target":"sp|P29590|PML_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/-12408421747450740?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM sites: S36, S38, S40"}},{"data":{"id":"PRKCA-sp|P41181|AQP2_HUMAN-Phosphorylation","source":"PRKCA","target":"sp|P41181|AQP2_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/28728354345766674?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: S256"}},{"data":{"id":"PRKACA-sp|Q16665|HIF1A_HUMAN-Phosphorylation","source":"PRKACA","target":"sp|Q16665|HIF1A_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/27482259612134623?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: T455"}},{"data":{"id":"MAPK3-sp|P78536|ADA17_HUMAN-Phosphorylation","source":"MAPK3","target":"sp|P78536|ADA17_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/-28420330290078683?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: T735"}},{"data":{"id":"CDK1-sp|P41181|AQP2_HUMAN-Phosphorylation","source":"CDK1","target":"sp|P41181|AQP2_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/18143594370336842?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: S261"}},{"data":{"id":"CDK1-sp|O60885|BRD4_HUMAN-Phosphorylation","source":"CDK1","target":"sp|O60885|BRD4_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/2390250037065303?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: S1117"}},{"data":{"id":"CSNK2A1-sp|P25788|PSA3_HUMAN-Phosphorylation","source":"CSNK2A1","target":"sp|P25788|PSA3_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/1047137914162684?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: S250"}},{"data":{"id":"SRC-sp|P46940|IQGA1_HUMAN-Phosphorylation","source":"SRC","target":"sp|P46940|IQGA1_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/14957972353284523?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: Y1510"}},{"data":{"id":"sp|Q07002|CDK18_HUMAN-sp|P41181|AQP2_HUMAN-Phosphorylation","source":"sp|Q07002|CDK18_HUMAN","target":"sp|P41181|AQP2_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/26031508455643143?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: S261"}},{"data":{"id":"PRKACA-sp|P41181|AQP2_HUMAN-Phosphorylation","source":"PRKACA","target":"sp|P41181|AQP2_HUMAN","interaction":"Phosphorylation","edge_type":"directed","category":"phosphorylation","evidence_url":"https://db.indra.bio/statements/from_hash/-4391991615815426?format=html","color":"#9932CC","line_style":"dashed","arrow_shape":"triangle","width":2,"tooltip":"Overlapping PTM site: S256"}}],"layout":{"name":"dagre","rankDir":"TB","animate":true,"fit":true,"padding":30,"spacingFactor":1.5,"nodeSep":50,"edgeSep":20,"rankSep":80},"node_font_size":12},"evals":[],"jsHooks":[]}</script><p>To open the network in a browser instead, use
+<code>previewNetworkInBrowser</code>.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/previewNetworkInBrowser.html">previewNetworkInBrowser</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">nodes</span>, <span class="va">network</span><span class="op">$</span><span class="va">edges</span>,</span>
+<span>                        displayLabelType <span class="op">=</span> <span class="st">"entity_name"</span><span class="op">)</span></span></code></pre></div>
+<p>This package is distributed under the <a href="https://opensource.org/licenses/Artistic-2.0" class="external-link">Artistic-2.0</a>
+license. However, its dependencies may have different licenses. In this
+example, get_network with the INDRA backend depends on INDRA, which is
+distributed under the <a href="https://opensource.org/license/bsd-2-clause" class="external-link">BSD 2-Clause</a>
+license. Furthermore, INDRA’s knowledge sources may have different
+licenses for commercial applications. Please refer to the <a href="https://github.com/sorgerlab/indra?tab=readme-ov-file#indra-modules" class="external-link">INDRA
+README</a> for more information on its knowledge sources and their
+associated licenses.</p>
 </div>
 <div class="section level2">
 <h2 id="session-info">Session info<a class="anchor" aria-label="anchor" href="#session-info"></a>
 </h2>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
@@ -258,30 +910,30 @@ off target subnetworks.</p>
 <span><span class="co">#&gt; [13] magrittr_2.0.5        compiler_4.6.1        r2r_0.1.2            </span></span>
 <span><span class="co">#&gt; [16] rlang_1.3.0           sass_0.4.10           tools_4.6.1          </span></span>
 <span><span class="co">#&gt; [19] yaml_2.3.12           data.table_1.18.6.1   knitr_1.52           </span></span>
-<span><span class="co">#&gt; [22] stopwords_2.3         htmlwidgets_1.6.4     curl_8.0.0           </span></span>
-<span><span class="co">#&gt; [25] MSstatsConvert_1.22.1 marray_1.90.0         xml2_1.6.0           </span></span>
-<span><span class="co">#&gt; [28] RColorBrewer_1.1-3    KernSmooth_2.23-26    purrr_1.2.2          </span></span>
-<span><span class="co">#&gt; [31] desc_1.4.3            grid_4.6.1            preprocessCore_1.74.0</span></span>
-<span><span class="co">#&gt; [34] caTools_1.18.4        ggplot2_4.0.3         scales_1.4.0         </span></span>
-<span><span class="co">#&gt; [37] gtools_3.9.5          MASS_7.3-65           cli_3.6.6            </span></span>
-<span><span class="co">#&gt; [40] crayon_1.5.3          rmarkdown_2.32        ragg_1.5.2           </span></span>
-<span><span class="co">#&gt; [43] reformulas_0.4.4      generics_0.1.4        otel_0.2.0           </span></span>
-<span><span class="co">#&gt; [46] httr_1.4.9            minqa_1.2.8           cachem_1.1.0         </span></span>
-<span><span class="co">#&gt; [49] splines_4.6.1         parallel_4.6.1        BiocManager_1.30.27  </span></span>
-<span><span class="co">#&gt; [52] vctrs_0.7.3           boot_1.3-32           Matrix_1.7-5         </span></span>
-<span><span class="co">#&gt; [55] jsonlite_2.0.0        bookdown_0.48         ggrepel_0.9.8        </span></span>
-<span><span class="co">#&gt; [58] systemfonts_1.3.2     limma_3.68.5          plotly_4.12.1        </span></span>
-<span><span class="co">#&gt; [61] lgr_0.5.2             tidyr_1.3.2           jquerylib_0.1.4      </span></span>
-<span><span class="co">#&gt; [64] glue_1.8.1            nloptr_2.2.1          pkgdown_2.2.1        </span></span>
-<span><span class="co">#&gt; [67] gtable_0.3.6          lme4_2.0-6            mlapi_0.1.1          </span></span>
-<span><span class="co">#&gt; [70] tibble_3.3.1          pillar_1.11.1         htmltools_0.5.9      </span></span>
-<span><span class="co">#&gt; [73] gplots_3.3.0          float_0.3-4           rsparse_0.5.3        </span></span>
-<span><span class="co">#&gt; [76] R6_2.6.1              textshaping_1.0.5     Rdpack_2.6.6         </span></span>
-<span><span class="co">#&gt; [79] evaluate_1.0.5        lattice_0.22-9        rentrez_1.2.4        </span></span>
-<span><span class="co">#&gt; [82] rbibutils_2.4.1       backports_1.5.1       RhpcBLASctl_0.23-42  </span></span>
-<span><span class="co">#&gt; [85] bslib_0.12.0          text2vec_0.6.6        Rcpp_1.1.2           </span></span>
-<span><span class="co">#&gt; [88] nlme_3.1-169          checkmate_2.3.4       xfun_0.61            </span></span>
-<span><span class="co">#&gt; [91] fs_2.1.0              pkgconfig_2.0.3</span></span></code></pre></div>
+<span><span class="co">#&gt; [22] stopwords_2.3         htmlwidgets_1.6.4     MSstatsConvert_1.22.1</span></span>
+<span><span class="co">#&gt; [25] marray_1.90.0         xml2_1.6.0            RColorBrewer_1.1-3   </span></span>
+<span><span class="co">#&gt; [28] KernSmooth_2.23-26    purrr_1.2.2           desc_1.4.3           </span></span>
+<span><span class="co">#&gt; [31] grid_4.6.1            preprocessCore_1.74.0 caTools_1.18.4       </span></span>
+<span><span class="co">#&gt; [34] ggplot2_4.0.3         scales_1.4.0          gtools_3.9.5         </span></span>
+<span><span class="co">#&gt; [37] MASS_7.3-65           cli_3.6.6             crayon_1.5.3         </span></span>
+<span><span class="co">#&gt; [40] rmarkdown_2.32        ragg_1.5.2            reformulas_0.4.4     </span></span>
+<span><span class="co">#&gt; [43] generics_0.1.4        otel_0.2.0            httr_1.4.9           </span></span>
+<span><span class="co">#&gt; [46] minqa_1.2.8           cachem_1.1.0          splines_4.6.1        </span></span>
+<span><span class="co">#&gt; [49] parallel_4.6.1        BiocManager_1.30.27   vctrs_0.7.3          </span></span>
+<span><span class="co">#&gt; [52] boot_1.3-32           Matrix_1.7-5          jsonlite_2.0.0       </span></span>
+<span><span class="co">#&gt; [55] bookdown_0.48         ggrepel_0.9.8         systemfonts_1.3.2    </span></span>
+<span><span class="co">#&gt; [58] limma_3.68.5          plotly_4.12.1         lgr_0.5.2            </span></span>
+<span><span class="co">#&gt; [61] tidyr_1.3.2           jquerylib_0.1.4       glue_1.8.1           </span></span>
+<span><span class="co">#&gt; [64] nloptr_2.2.1          pkgdown_2.2.1         gtable_0.3.6         </span></span>
+<span><span class="co">#&gt; [67] lme4_2.0-6            mlapi_0.1.1           tibble_3.3.1         </span></span>
+<span><span class="co">#&gt; [70] pillar_1.11.1         htmltools_0.5.9       gplots_3.3.0         </span></span>
+<span><span class="co">#&gt; [73] float_0.3-4           rsparse_0.5.3         R6_2.6.1             </span></span>
+<span><span class="co">#&gt; [76] textshaping_1.0.5     Rdpack_2.6.6          evaluate_1.0.5       </span></span>
+<span><span class="co">#&gt; [79] lattice_0.22-9        rentrez_1.2.4         rbibutils_2.4.1      </span></span>
+<span><span class="co">#&gt; [82] backports_1.5.1       RhpcBLASctl_0.23-42   bslib_0.12.0         </span></span>
+<span><span class="co">#&gt; [85] text2vec_0.6.6        Rcpp_1.1.2            nlme_3.1-169         </span></span>
+<span><span class="co">#&gt; [88] checkmate_2.3.4       xfun_0.61             fs_2.1.0             </span></span>
+<span><span class="co">#&gt; [91] pkgconfig_2.0.3</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

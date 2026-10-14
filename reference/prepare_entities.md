@@ -51,9 +51,15 @@ prepare_entities(
   `"hmdb"`, `"chebi"`, `"chembl"`), or the name of a column of `df`
   holding one per row. Which of them a backend can convert is listed by
   `backend_capabilities(backend)$id_conversions`. For PTM sites, the
-  identifier system of the parent protein. `"chemical_name"` is a
-  metabolite, lipid, or drug name, common or IUPAC (e.g. `"glucose"`),
-  grounded by text matching.
+  identifier system of the parent protein. `"uniprot"` and
+  `"uniprot_mnemonic"` identifiers may also be UniProt FASTA headers, as
+  FragPipe writes them (`"sp|P32004|L1CAM_HUMAN"`, or
+  `"sp|P32004|L1CAM_HUMAN_S1194"` for a site): `id` keeps the header,
+  and
+  [`convert_ids()`](https://vitek-lab.github.io/MSstatsBioNet/reference/convert_ids.md)
+  uses its accession or mnemonic. `"chemical_name"` is a metabolite,
+  lipid, or drug name, common or IUPAC (e.g. `"glucose"`), grounded by
+  text matching.
 
 - organism:
 
@@ -86,7 +92,9 @@ copied; join them back on `id`.
 For PTM sites (`entity_type = "ptm_site"`), the site is parsed from the
 end of each identifier, e.g. `"P00533_S1039_S1042"` gives parent
 `"P00533"` and site `"S1039_S1042"`. A `GlobalProtein` column, as
-MSstatsPTM writes, overrides the parsed parent.
+MSstatsPTM writes, overrides the parsed parent, except where it is
+`"missing"` (MSstatsPTM's value for sites whose protein has no global
+profiling result).
 
 ## Examples
 
