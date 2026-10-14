@@ -92,6 +92,23 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
                       x))
 }
 
+#' Strip the PTM site suffix from each member of protein groups
+#'
+#' Splits each identifier into its \code{;}-separated members, strips each
+#' member with \code{.stripPtmSite()}, and joins the unique parents, so
+#' that \code{"P13747_S148;P23132_T20"} gives \code{"P13747;P23132"}.
+#'
+#' @param x A character vector of identifiers.
+#' @return The character vector with site suffixes removed.
+#' @keywords internal
+#' @noRd
+.stripPtmSiteFromGroups <- function(x) {
+        return(vapply(as.character(x), function(protein) {
+                members <- .splitProteinGroup(protein)
+                .joinProteinGroup(unique(.stripPtmSite(members)))
+        }, character(1), USE.NAMES = FALSE))
+}
+
 #' Populate Uniprot IDs in Data Frame
 #'
 #'
@@ -102,11 +119,17 @@ annotateProteinInfoFromIndra <- function(df, proteinIdType) {
 .populateUniprotIdsInDataFrame <- function(df, proteinIdType) {
         if (!("GlobalProtein" %in% colnames(df))) {
                 df$Protein = as.character(df$Protein)
-                df$GlobalProtein = vapply(df$Protein, function(protein) {
-                        .stripPtmSite(protein)
-                }, character(1), USE.NAMES = FALSE)
+                df$GlobalProtein = .stripPtmSiteFromGroups(df$Protein)
         }
         df$GlobalProtein = as.character(df$GlobalProtein)
+        # MSstatsPTM writes "missing" for sites whose protein has no global
+        # profiling result
+        no_global <- is.na(df$GlobalProtein) | !nzchar(df$GlobalProtein) |
+                df$GlobalProtein == "missing"
+        if (any(no_global)) {
+                df$GlobalProtein[no_global] <- .stripPtmSiteFromGroups(
+                        as.character(df$Protein[no_global]))
+        }
         groupMembers <- lapply(df$GlobalProtein, .splitProteinGroup)
         protein_ids = unique(unlist(groupMembers, use.names = FALSE))
         df$UniprotId <- NA

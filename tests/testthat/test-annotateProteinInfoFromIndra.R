@@ -164,6 +164,34 @@ test_that("PTM site suffixes are stripped from every protein group member", {
     expect_equal(out$UniprotId,     c("P13747;P23132", "P13747"))
 })
 
+test_that("a GlobalProtein of 'missing' is replaced by the protein without its site", {
+    # MSstatsPTM's ADJUSTED.Model, for sites with no global profiling result
+    df <- data.frame(Protein = c("P13747_S148", "P23132_T20"),
+                     GlobalProtein = c("P13747", "missing"),
+                     stringsAsFactors = FALSE)
+    out <- MSstatsBioNet:::.populateUniprotIdsInDataFrame(df, "Uniprot")
+
+    expect_equal(out$GlobalProtein, c("P13747", "P23132"))
+    expect_equal(out$UniprotId,     c("P13747", "P23132"))
+})
+
+test_that("a GlobalProtein of 'missing' keeps every member of the protein group", {
+    df <- data.frame(Protein = c("P13747_S148;P23132_T20", "P13747_S148;P13747_S150"),
+                     GlobalProtein = c("missing", "missing"),
+                     stringsAsFactors = FALSE)
+    out <- MSstatsBioNet:::.populateUniprotIdsInDataFrame(df, "Uniprot")
+
+    expect_equal(out$GlobalProtein, c("P13747;P23132", "P13747"))
+    expect_equal(out$UniprotId,     c("P13747;P23132", "P13747"))
+})
+
+test_that("PTM sites on every protein group member are stripped without GlobalProtein", {
+    df <- data.frame(Protein = "P13747_S148;P23132_T20", stringsAsFactors = FALSE)
+    out <- MSstatsBioNet:::.populateUniprotIdsInDataFrame(df, "Uniprot")
+
+    expect_equal(out$GlobalProtein, "P13747;P23132")
+})
+
 test_that("annotateProteinInfoFromIndra grounds each Uniprot protein group member", {
     df <- data.frame(Protein = c("P13747;P23132", "Q00610"),
                      stringsAsFactors = FALSE)

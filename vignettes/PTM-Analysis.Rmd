@@ -1,10 +1,10 @@
 ---
-title: "PTM Analysis"
+title: "PTM Analysis with Global Profiling"
 author: "Anthony Wu"
 package: MSstatsBioNet
 output: BiocStyle::html_document
 vignette: >
-  %\VignetteIndexEntry{MSstatsBioNet: PTM Analysis}
+  %\VignetteIndexEntry{MSstatsBioNet: PTM Analysis with Global Profiling}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -28,47 +28,210 @@ if (!require("BiocManager", quietly = TRUE)) {
 BiocManager::install("MSstatsBioNet")
 ```
 
-## Dataset
+# Purpose of this vignette
 
-We will be taking a subset of the dataset found in this [paper](https://www.biorxiv.org/content/10.1101/2024.10.21.619348v1). The table is the output of the MSstatsPTM function `groupComparisonPTM` (filtered down to the columns that are actually needed)
+A change in a phosphorylation site means little on its own. The site may change because its protein's abundance changed, or because a kinase or phosphatase acted on it. A global profiling experiment, run on the same samples, separates the two. This vignette shows how to:
+
+1.  build a network of the kinases known to phosphorylate the sites that changed,
+2.  keep only the edges that act on a measured site, with `filter_by_ptm_site`, and
+3.  color each protein by its change in the global profiling experiment, with `add_entity_values`.
+
+# Dataset
+
+The data come from the clear cell renal cell carcinoma (CCRCC) cohort of the Clinical Proteomic Tumor Analysis Consortium (CPTAC), described in this [paper](https://doi.org/10.1016/j.ccell.2023.06.009) (Li et al., Cancer Cell 2023). The study is labeled with TMT and compares tumor (`T`) with normal adjacent tissue (`N`). It has a phosphopeptide-enriched experiment and a global profiling experiment on the same samples. The CPTAC pan-cancer data, including the FragPipe search results used here, can be downloaded from the [Proteomic Data Commons](https://pdc.cancer.gov/pdc/cptac-pancancer). The results were analyzed with MSstatsPTM; the script `inst/script/cptac-ccrcc.R` records the steps.
+
+MSstatsPTM's `groupComparisonPTM` returns three tables:
+
+- `PTM.Model`: the change of each site,
+- `PROTEIN.Model`: the change of each protein in the global profiling experiment,
+- `ADJUSTED.Model`: the change of each site adjusted for the change of its protein.
+
+We use `ADJUSTED.Model` for the sites. A site that changes only because its protein does is not a signaling event, and the adjustment removes it. `PROTEIN.Model` gives the protein-level context.
 
 ```{r}
-input = data.table::fread(system.file(
-    "extdata/garrido-2024.csv",
+ptm = data.table::fread(system.file(
+    "extdata/cptac-ccrcc-ptm-adjusted.csv",
     package = "MSstatsBioNet"
 ))
-head(input)
+global = data.table::fread(system.file(
+    "extdata/cptac-ccrcc-protein.csv",
+    package = "MSstatsBioNet"
+))
+knitr::kable(head(ptm, 3))
+knitr::kable(head(global, 3))
 ```
 
-## ID Conversion
+The identifiers are in FragPipe's form, `sp|<UniProt accession>|<UniProt mnemonic>`, followed by the site for PTMs. `GlobalProtein` names the protein of each site. Sites whose protein was not measured in the global profiling experiment cannot be adjusted: MSstatsPTM sets their `GlobalProtein` to `"missing"` and `Adjusted` to `FALSE`, and reports their unadjusted change.
 
-First, we need to convert the group comparison results to a format that can be processed by INDRA. We can use the `annotateProteinInfoFromIndra` function to obtain these mappings.
+```{r}
+table(Adjusted = ptm$Adjusted)
+```
 
-In the below example, we convert uniprot IDs to their corresponding Hgnc IDs. We can also extract other information, such as hgnc gene name and protein function.
+# Building the entity tables
+
+`prepare_entities` builds one entity table per experiment. For the sites, `entity_type = "ptm_site"` parses the site from the end of each identifier and takes the parent protein from `GlobalProtein` (or from the identifier, where it is `"missing"`). FragPipe identifiers can be used as they are with `id_type = "uniprot"`.
 
 ```{r}
 library(MSstatsBioNet)
-annotated_df = annotateProteinInfoFromIndra(input, "Uniprot")
-head(annotated_df)
+sites <- prepare_entities(ptm, entity_type = "ptm_site", id_type = "uniprot")
+proteins <- prepare_entities(global, entity_type = "protein",
+                             id_type = "uniprot")
+knitr::kable(head(sites[, c("id", "parent_id", "site", "logFC",
+                            "adj.pvalue")], 3))
 ```
 
-## Subnetwork Query
+# ID Conversion
 
-The package provides a function `getSubnetworkFromIndra` that retrieves a subnetwork of proteins from the INDRA database based on differential abundance analysis results. This function may help finding off target subnetworks.
+`convert_ids` maps each UniProt accession to its HGNC gene, which INDRA uses. Sites are mapped through their parent protein.
+
+So that this vignette builds without network access, the chunks that call INDRA (`convert_ids` and `get_network`) are not run when the vignette is built. Their results were saved with `inst/script/cptac-ccrcc-network.R` and are loaded from `extdata/cptac-ccrcc-network.rds` instead. The output below comes from those saved results.
+
+```{r, include = FALSE}
+saved <- readRDS(system.file(
+    "extdata/cptac-ccrcc-network.rds",
+    package = "MSstatsBioNet"
+))
+```
+
+```{r, eval = FALSE}
+indra <- indra_backend()
+sites <- convert_ids(indra, sites)
+proteins <- convert_ids(indra, proteins)
+```
+
+```{r, include = FALSE}
+sites <- saved$sites
+proteins <- saved$proteins
+```
 
 ```{r}
-subnetwork <- getSubnetworkFromIndra(annotated_df, pvalueCutoff = 0.05, statement_types = c("Phosphorylation"), logfc_cutoff = 1, force_include_other = c("HGNC:3236"))
-head(subnetwork$nodes)
-head(subnetwork$edges)
+knitr::kable(head(sites[, c("id", "namespace", "entity_id",
+                            "entity_name")], 3))
+c(sites = sum(!is.na(sites$entity_id)), of = nrow(sites))
+c(proteins = sum(!is.na(proteins$entity_id)), of = nrow(proteins))
 ```
 
-## Network Visualization
+# Selecting Sites
 
-Visualize the subnetwork on your browser
+`select_entities` flags the sites to send to INDRA. Here we keep the sites with an adjusted p-value below 0.05.
 
 ```{r}
-previewNetworkInBrowser(subnetwork$nodes, subnetwork$edges, displayLabelType = "entity_name")
+selected <- select_entities(sites, pvalue_cutoff = 0.05)
+table(selected$included_in_query)
 ```
+
+# Network Query
+
+## Sites only
+
+`get_network` with `subnetwork_query()` asks how the proteins of the selected sites are connected to each other. We keep only `Phosphorylation` statements.
+
+```{r, eval = FALSE}
+network_sites <- get_network(indra, selected, subnetwork_query(),
+                             interaction_types = "Phosphorylation")
+#> INDRA subnetwork: how are 236 selected PTM sites connected to each other, with no other nodes added?
+```
+
+```{r, include = FALSE}
+network_sites <- saved$network_sites
+```
+
+```{r}
+nrow(network_sites$edges)
+```
+
+INDRA reports the site each phosphorylation acts on, in the `site` column of the edges. Most of these edges act on a site that was not measured, or that did not change. `filter_by_ptm_site` keeps only the edges whose site is one of the sites of their target in the network.
+
+```{r}
+filtered_sites <- filter_by_ptm_site(network_sites)
+knitr::kable(filtered_sites$edges[, c("source", "target", "interaction",
+                                      "site", "evidence_count")])
+```
+
+Few of the proteins whose sites changed are known to phosphorylate each other, so one edge remains.
+
+## Adding kinases with `include_entities`
+
+The kinases that act on these sites may not have changed sites themselves, so they are not selected. They can be added to the query with `include_entities`, using `"namespace:identifier"` IDs. Here we add ten kinases that act on many substrates.
+
+```{r}
+kinases <- c(MTOR = "HGNC:3942", AKT1 = "HGNC:391", MAPK1 = "HGNC:6871",
+             MAPK3 = "HGNC:6877", CDK1 = "HGNC:1722", CSNK2A1 = "HGNC:2457",
+             PRKACA = "HGNC:9380", GSK3B = "HGNC:4617", SRC = "HGNC:11283",
+             PRKCA = "HGNC:9393")
+```
+
+```{r, eval = FALSE}
+network <- get_network(indra, selected, subnetwork_query(),
+                       interaction_types = "Phosphorylation",
+                       include_entities = unname(kinases))
+#> INDRA subnetwork: how are 236 selected PTM sites and 10 added entities connected to each other, with no other nodes added?
+```
+
+```{r, include = FALSE}
+network <- saved$network
+```
+
+```{r}
+nrow(network$edges)
+network <- filter_by_ptm_site(network)
+knitr::kable(network$edges[, c("source", "target", "site",
+                               "evidence_count")])
+```
+
+The added kinases are not in the PTM entity table, so their nodes have INDRA's gene symbol as `id`, `measured = FALSE`, and no statistics.
+
+Run `filter_by_ptm_site` before `merge_networks` when combining with a backend that reports no sites: it drops every edge without a site.
+
+# Adding global profiling values
+
+`add_entity_values` copies the `logFC` and `adj.pvalue` of an entity table onto the matching nodes of a network, without a new query. With the global profiling table:
+
+- a protein with only site rows in the network gets a protein-level row, with the protein's change;
+- a kinase added with `include_entities` is matched by its HGNC grounding, since its `id` is INDRA's gene symbol, and gets its change too.
+
+The entity table must come from `convert_ids`, so that nodes can be matched by grounding.
+
+```{r}
+network <- add_entity_values(network, proteins)
+protein_rows <- network$nodes[is.na(network$nodes$site), ]
+knitr::kable(protein_rows[, c("entity_name", "node_role", "measured",
+                              "logFC", "adj.pvalue")])
+```
+
+Kinases that were not measured in the global profiling experiment keep `measured = FALSE`. Proteins that have sites in the network but no protein-level row, such as HIF1A, were not measured in the global profiling experiment either. Their sites are the `Adjusted = FALSE` rows of `ADJUSTED.Model`, so their change is not adjusted for protein abundance.
+
+```{r}
+site_rows <- network$nodes[!is.na(network$nodes$site), ]
+knitr::kable(site_rows[, c("entity_name", "site", "logFC", "adj.pvalue")])
+```
+
+# Reading the network
+
+With both levels on one network, each site can be read against its protein. For example:
+
+- PML is more abundant in tumor (protein `logFC` above 1), while its phosphorylation at S36/S38/S40, adjusted for that, is lower. MAPK1 and MAPK3 are known to phosphorylate these sites, and neither changed in abundance, so a change in their activity, not their amount, is one possible explanation.
+- AKT1 is slightly more abundant in tumor, and its substrate site LMNA S301 is less phosphorylated after adjustment.
+
+Edges are prior knowledge from INDRA, not evidence from this experiment. Click an edge in the visualization below to read the evidence behind it.
+
+# Network Visualization
+
+`cytoscapeNetwork` draws a protein with sites as one node, with a small node for each site around it. The protein node is colored by the protein's change in the global profiling experiment, and each site node by the site's adjusted change. The legend's `logFC` covers both, so read a protein's color and its sites' colors as changes from different experiments. A protein with no global profiling result, such as HIF1A, has no fill and a solid border. Kinases that were not measured have no fill and a dashed border.
+
+```{r}
+cytoscapeNetwork(network$nodes, network$edges,
+                 displayLabelType = "entity_name")
+```
+
+To open the network in a browser instead, use `previewNetworkInBrowser`.
+
+```{r eval = FALSE}
+previewNetworkInBrowser(network$nodes, network$edges,
+                        displayLabelType = "entity_name")
+```
+
+This package is distributed under the [Artistic-2.0](https://opensource.org/licenses/Artistic-2.0) license. However, its dependencies may have different licenses. In this example, get_network with the INDRA backend depends on INDRA, which is distributed under the [BSD 2-Clause](https://opensource.org/license/bsd-2-clause) license. Furthermore, INDRA's knowledge sources may have different licenses for commercial applications. Please refer to the [INDRA README](https://github.com/sorgerlab/indra?tab=readme-ov-file#indra-modules) for more information on its knowledge sources and their associated licenses.
 
 # Session info
 

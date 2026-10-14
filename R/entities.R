@@ -28,6 +28,31 @@ LOGFC_COLUMNS <- c("log2FC", "log10FC", "logFC")
 #' @noRd
 MSSTATS_PTM_SITE_PATTERN <- "^(.*?)((?:_[A-Z][0-9]+)+)$"
 
+#' Pattern for UniProt FASTA headers, as FragPipe writes protein IDs
+#'
+#' Matches e.g. \code{sp|P32004|L1CAM_HUMAN}: the database (\code{sp} or
+#' \code{tr}), then the accession (first capture group) and the mnemonic
+#' (second).
+#' @keywords internal
+#' @noRd
+UNIPROT_HEADER_PATTERN <- "^(?:sp|tr)\\|([^|]+)\\|([^|]+)$"
+
+#' Reduce UniProt FASTA headers to an accession or mnemonic
+#' @param ids character vector; values not in header form are returned
+#' unchanged
+#' @param id_type \code{"uniprot"} for the accession,
+#' \code{"uniprot_mnemonic"} for the mnemonic
+#' @return character vector
+#' @keywords internal
+#' @noRd
+.parse_uniprot_headers <- function(ids, id_type) {
+    part <- if (id_type == "uniprot_mnemonic") "\\2" else "\\1"
+    is_header <- grepl(UNIPROT_HEADER_PATTERN, ids, perl = TRUE)
+    ids[is_header] <- sub(UNIPROT_HEADER_PATTERN, part, ids[is_header],
+                          perl = TRUE)
+    ids
+}
+
 #' Required entity columns and their types
 #' @keywords internal
 #' @noRd
@@ -53,7 +78,8 @@ REQUIRED_ENTITY_COLUMNS <- c(
 #' from the end of each identifier, e.g. \code{"P00533_S1039_S1042"} gives
 #' parent \code{"P00533"} and site \code{"S1039_S1042"}. A
 #' \code{GlobalProtein} column, as MSstatsPTM writes, overrides the parsed
-#' parent.
+#' parent, except where it is \code{"missing"} (MSstatsPTM's value for
+#' sites whose protein has no global profiling result).
 #'
 #' @param df output of \code{groupComparison()}'s \code{ComparisonResult}
 #' table, or any table with one row per analyte.
@@ -70,7 +96,11 @@ REQUIRED_ENTITY_COLUMNS <- c(
 #' \code{"chebi"}, \code{"chembl"}), or the name of a column of \code{df}
 #' holding one per row. Which of them a backend can convert is listed by
 #' \code{backend_capabilities(backend)$id_conversions}. For PTM sites, the identifier system of the parent
-#' protein. \code{"chemical_name"} is a metabolite, lipid, or drug name,
+#' protein. \code{"uniprot"} and \code{"uniprot_mnemonic"} identifiers may
+#' also be UniProt FASTA headers, as FragPipe writes them
+#' (\code{"sp|P32004|L1CAM_HUMAN"}, or \code{"sp|P32004|L1CAM_HUMAN_S1194"}
+#' for a site): \code{id} keeps the header, and \code{\link{convert_ids}()}
+#' uses its accession or mnemonic. \code{"chemical_name"} is a metabolite, lipid, or drug name,
 #' common or IUPAC (e.g. \code{"glucose"}), grounded by text matching.
 #' @param organism NCBI taxon ID, as a string.
 #' @param label the comparison to keep, when \code{df} has a \code{Label}
@@ -154,7 +184,10 @@ prepare_entities <- function(df, id_column = "Protein", entity_type, id_type,
         entities$parent_id[is_ptm] <- sites$parent_id
         if ("GlobalProtein" %in% colnames(df)) {
             global <- as.character(df$GlobalProtein[is_ptm])
-            has_global <- !is.na(global) & nzchar(global)
+            # MSstatsPTM writes "missing" for sites whose protein has no
+            # global profiling result (Adjusted = FALSE)
+            has_global <- !is.na(global) & nzchar(global) &
+                global != "missing"
             entities$parent_id[is_ptm][has_global] <- global[has_global]
         }
         no_site <- is.na(entities$site[is_ptm])

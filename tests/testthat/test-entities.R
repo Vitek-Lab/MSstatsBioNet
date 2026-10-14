@@ -191,6 +191,16 @@ test_that("prepare_entities() takes parent_id from GlobalProtein when present", 
     expect_identical(entities$site, c("S1064", "S15"))
 })
 
+test_that("prepare_entities() parses the parent where GlobalProtein is 'missing'", {
+    # MSstatsPTM's ADJUSTED.Model, for sites with no global profiling result
+    df <- data.frame(Protein = c("P00533_S1064", "P04637_S15"),
+                     GlobalProtein = c("P00533", "missing"),
+                     Adjusted = c(TRUE, FALSE))
+    entities <- prepare_entities(df, entity_type = "ptm_site",
+                                 id_type = "uniprot")
+    expect_identical(entities$parent_id, c("P00533", "P04637"))
+})
+
 test_that("prepare_entities() warns on ptm_site rows without a site", {
     df <- data.frame(Protein = c("P00533_S1064", "P04637"))
     expect_warning(
