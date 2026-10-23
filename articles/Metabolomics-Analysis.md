@@ -459,7 +459,7 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] MSstatsBioNet_1.5.4 MSstats_4.20.0      BiocStyle_2.40.0   
+#> [1] MSstatsBioNet_1.5.5 MSstats_4.20.0      BiocStyle_2.40.0   
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1      viridisLite_0.4.3     dplyr_1.2.1          
@@ -491,6 +491,6 @@ sessionInfo()
 #> [79] lattice_0.22-9        rentrez_1.2.4         rbibutils_2.4.1      
 #> [82] backports_1.5.1       RhpcBLASctl_0.23-42   bslib_0.12.0         
 #> [85] text2vec_0.6.6        Rcpp_1.1.2            nlme_3.1-169         
-#> [88] checkmate_2.3.4       xfun_0.61             fs_2.1.0             
+#> [88] checkmate_2.3.4       xfun_0.62             fs_2.1.0             
 #> [91] pkgconfig_2.0.3
 ```
