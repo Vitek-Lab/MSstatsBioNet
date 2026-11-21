@@ -223,6 +223,8 @@ test_that("validate_network checks node vocabularies", {
     network$nodes$node_role <- c("passed_cutoffs", "user_added",
                                  "upstream_regulator")
     expect_silent(validate_network(network))
+    network$nodes$node_role[2] <- "one_condition_missing"
+    expect_silent(validate_network(network))
 
     network$nodes$node_role[3] <- "regulator"
     expect_error(validate_network(network),
