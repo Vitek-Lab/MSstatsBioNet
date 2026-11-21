@@ -124,7 +124,8 @@ grounded by <code><a href="convert_ids.html">convert_ids()</a></code> and flagge
 
 <dt id="arg-interaction-types">interaction_types<a class="anchor" aria-label="anchor" href="#arg-interaction-types"></a></dt>
 <dd><p>values of <code>edges$interaction</code> to keep
-(INDRA statement types, e.g. <code>"Activation"</code>). <code>NULL</code> keeps all.</p></dd>
+(INDRA statement types, e.g. <code>"Activation"</code>; INDRA's <code>"Complex"</code>
+is called <code>"Binding"</code>). <code>NULL</code> keeps all.</p></dd>
 
 
 <dt id="arg-min-evidence">min_evidence<a class="anchor" aria-label="anchor" href="#arg-min-evidence"></a></dt>
@@ -214,7 +215,7 @@ backends. For INDRA, <code>confidence</code> is the INDRA belief score.</p>
 <span class="r-in"><span><span class="va">entities</span> <span class="op">&lt;-</span> <span class="fu"><a href="convert_ids.html">convert_ids</a></span><span class="op">(</span><span class="va">indra</span>, <span class="va">entities</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">entities</span> <span class="op">&lt;-</span> <span class="fu"><a href="select_entities.html">select_entities</a></span><span class="op">(</span><span class="va">entities</span>, pvalue_cutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">network</span> <span class="op">&lt;-</span> <span class="fu">get_network</span><span class="op">(</span><span class="va">indra</span>, <span class="va">entities</span>, <span class="fu"><a href="subnetwork_query.html">subnetwork_query</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                       interaction_types <span class="op">=</span> <span class="st">"Complex"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>                       interaction_types <span class="op">=</span> <span class="st">"Binding"</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> INDRA subnetwork: how are 10 selected proteins connected to each other, with no other nodes added?</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">nodes</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       id entity_type entity_name namespace entity_id measured included_in_query</span>
@@ -233,12 +234,12 @@ backends. For INDRA, <code>confidence</code> is the INDRA belief score.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 passed_cutoffs &lt;NA&gt;              FALSE 0.5683951 0.013715050</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">network</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   source target interaction directed site confidence evidence_count</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 P05023 O75306     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 O00217 O60313     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 P08574 O75306     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 P05067 O60313     Complex    FALSE &lt;NA&gt;  0.6896123             23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 P05067 P05362     Complex    FALSE &lt;NA&gt;  0.6549329             13</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 O75306 P05067     Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 P05023 O75306     Binding    FALSE &lt;NA&gt;  0.8302067              1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 O00217 O60313     Binding    FALSE &lt;NA&gt;  0.8302067              1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 P08574 O75306     Binding    FALSE &lt;NA&gt;  0.8302067              1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 P05067 O60313     Binding    FALSE &lt;NA&gt;  0.6896123             23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 P05067 P05362     Binding    FALSE &lt;NA&gt;  0.6549329             13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 O75306 P05067     Binding    FALSE &lt;NA&gt;  0.8302067              1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                               evidence_url</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1  https://db.indra.bio/statements/from_hash/-5813063534036006?format=html</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 https://db.indra.bio/statements/from_hash/-19747883270157675?format=html</span>

@@ -66,18 +66,18 @@ entities <- prepare_entities(input, entity_type = "protein",
                              id_type = "uniprot")
 entities <- convert_ids(indra, entities)
 entities <- select_entities(entities, pvalue_cutoff = 0.05)
-network <- get_network(indra, entities, interaction_types = "Complex")
+network <- get_network(indra, entities, interaction_types = "Binding")
 #> INDRA subnetwork: how are 10 selected proteins connected to each other, with no other nodes added?
 network <- filter_by_curation(network, min_evidence = 2)
 #> Dropping 12 edge(s) with fewer than 2 evidence after removing the evidence curated as incorrect.
 head(network$edges)
 #>    source target interaction directed site confidence evidence_count
-#> 4  P05067 O60313     Complex    FALSE <NA>  0.6896123             23
-#> 5  P05067 P05362     Complex    FALSE <NA>  0.6549329             13
-#> 8  O60313 P05067     Complex    FALSE <NA>  0.6896123             23
-#> 9  O00217 O75306     Complex    FALSE <NA>  0.7981153              3
-#> 12 O00217 P08574     Complex    FALSE <NA>  0.8216256              3
-#> 14 P05362 P05067     Complex    FALSE <NA>  0.6549329             13
+#> 4  P05067 O60313     Binding    FALSE <NA>  0.6896123             23
+#> 5  P05067 P05362     Binding    FALSE <NA>  0.6549329             13
+#> 8  O60313 P05067     Binding    FALSE <NA>  0.6896123             23
+#> 9  O00217 O75306     Binding    FALSE <NA>  0.7981153              3
+#> 12 O00217 P08574     Binding    FALSE <NA>  0.8216256              3
+#> 14 P05362 P05067     Binding    FALSE <NA>  0.6549329             13
 #>                                                                evidence_url
 #> 4  https://db.indra.bio/statements/from_hash/-12253697417005038?format=html
 #> 5  https://db.indra.bio/statements/from_hash/-20220236678417803?format=html

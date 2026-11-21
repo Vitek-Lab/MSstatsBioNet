@@ -52,7 +52,8 @@ getSubnetworkFromIndra(
 - statement_types:
 
   list of interaction types to filter on. Equivalent to statement type
-  in INDRA. Default is NULL.
+  in INDRA, except that INDRA's `Complex` is called `Binding`. Default
+  is NULL.
 
 - paper_count_cutoff:
 
@@ -128,14 +129,15 @@ checked by
 `edges` has one row per INDRA statement and pair of nodes it connects (a
 statement whose grounding matches several `Protein` rows, such as two
 isoforms of one gene, gives each of them an edge): `source`, `target`,
-`interaction` (INDRA statement type), `directed` (`FALSE` for symmetric
-types such as `Complex`), `site` (PTM site on the target, or `NA`),
-`confidence` (INDRA belief score), `evidence_count`, `evidence_url`
-(INDRA page for this statement), `statement_id` (INDRA statement hash,
-as character), `backend_database` (`"INDRA"`), `query_type`
-(`"subnetwork"`), `evidence_sources` (evidence count per source, as
-JSON), and the deprecated `paperCount` (and `correlation` when
-`protein_level_data` is given).
+`interaction` (INDRA statement type, with `Complex` renamed to
+`Binding`), `directed` (`FALSE` for symmetric types such as `Binding`),
+`site` (PTM site on the target, or `NA`), `confidence` (INDRA belief
+score), `evidence_count`, `evidence_url` (INDRA page for this
+statement), `statement_id` (INDRA statement hash, as character),
+`backend_database` (`"INDRA"`), `query_type` (`"subnetwork"`),
+`evidence_sources` (evidence count per source, as JSON), and the
+deprecated `paperCount` (and `correlation` when `protein_level_data` is
+given).
 
 `nodes` has one row per analyte (one per site for PTM input, all with
 the protein's `id`): `id`, `entity_type` (`"protein"`, `"ptm_site"`,
@@ -178,12 +180,12 @@ head(subnetwork$nodes)
 #> 6 passed_cutoffs <NA>              FALSE 0.5683951 0.013715050
 head(subnetwork$edges)
 #>   source target    interaction directed site confidence evidence_count
-#> 1 O75306 O00217        Complex    FALSE <NA>  0.7981153              3
-#> 2 P08574 O75306        Complex    FALSE <NA>  0.8302067              1
+#> 1 O75306 O00217        Binding    FALSE <NA>  0.7981153              3
+#> 2 P08574 O75306        Binding    FALSE <NA>  0.8302067              1
 #> 3 P05067 O60313 DecreaseAmount     TRUE <NA>  0.5115171              3
 #> 4 P05067 P05362 IncreaseAmount     TRUE <NA>  0.5028536              3
 #> 5 P05067 P05090 IncreaseAmount     TRUE <NA>  0.4715316              2
-#> 6 O00217 O75306        Complex    FALSE <NA>  0.7981153              3
+#> 6 O00217 O75306        Binding    FALSE <NA>  0.7981153              3
 #>                                                              evidence_url
 #> 1 https://db.indra.bio/statements/from_hash/35453498871697150?format=html
 #> 2  https://db.indra.bio/statements/from_hash/6349003830434161?format=html

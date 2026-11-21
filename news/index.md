@@ -126,7 +126,7 @@
 - [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
   draws the node status columns. Nodes not in the input data
   (`measured = FALSE`) have no fill and a grey border, and the legend
-  lists them as “not in input data”; nodes with
+  lists them as “Not in input data”; nodes with
   `included_in_query = FALSE` are faded; nodes with an `NA` `logFC` have
   no fill. `node_role` sets the border: solid for nodes that passed the
   cutoffs, dashed for nodes in the network for another reason, such as
@@ -158,11 +158,18 @@
 
 ### Breaking changes
 
+- The INDRA statement type `Complex` is called `Binding` in
+  `edges$interaction`, in the `statement_types` argument of
+  [`getSubnetworkFromIndra()`](https://vitek-lab.github.io/MSstatsBioNet/reference/getSubnetworkFromIndra.md),
+  and in the `interaction_types` argument of
+  [`get_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/get_network.md).
+  Passing `"Complex"` no longer matches any edge.
+
 - [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
   reads the edge `directed` column: an undirected edge has no arrow and
   is drawn once for both directions, even when the reverse edge is
-  missing. Edges without the column treat `Complex` and `Association` as
-  undirected. Previously a `Complex` edge without its reverse was drawn
+  missing. Edges without the column treat `Binding` and `Association` as
+  undirected. Previously a `Binding` edge without its reverse was drawn
   as directed.
 
 - [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
@@ -181,7 +188,7 @@
   INDRA’s full-precision `matches_hash`), `evidenceLink` to
   `evidence_url`, `evidenceCount` to `evidence_count` (now integer), and
   `sourceCounts` to `evidence_sources`. New columns: `directed` (`FALSE`
-  for symmetric types such as `Complex`), `confidence` (INDRA belief
+  for symmetric types such as `Binding`), `confidence` (INDRA belief
   score), `backend_database` (`"INDRA"`), and `query_type`
   (`"subnetwork"`).
   [`filterSubnetworkByContext()`](https://vitek-lab.github.io/MSstatsBioNet/reference/filterSubnetworkByContext.md),

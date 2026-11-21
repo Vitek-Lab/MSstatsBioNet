@@ -68,7 +68,7 @@ entities <- prepare_entities(input, entity_type = "protein",
                              id_type = "uniprot")
 entities <- convert_ids(indra, entities)
 entities <- select_entities(entities, pvalue_cutoff = 0.05)
-network <- get_network(indra, entities, interaction_types = "Complex")
+network <- get_network(indra, entities, interaction_types = "Binding")
 #> INDRA subnetwork: how are 10 selected proteins connected to each other, with no other nodes added?
 evidence <- get_evidence(indra, head(network$edges, 2))
 #> Processing 2 unique statement hashes...

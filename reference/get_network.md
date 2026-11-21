@@ -84,7 +84,8 @@ get_network(
 - interaction_types:
 
   values of `edges$interaction` to keep (INDRA statement types, e.g.
-  `"Activation"`). `NULL` keeps all.
+  `"Activation"`; INDRA's `"Complex"` is called `"Binding"`). `NULL`
+  keeps all.
 
 - min_evidence:
 
@@ -179,7 +180,7 @@ indra <- indra_backend()
 entities <- convert_ids(indra, entities)
 entities <- select_entities(entities, pvalue_cutoff = 0.05)
 network <- get_network(indra, entities, subnetwork_query(),
-                       interaction_types = "Complex")
+                       interaction_types = "Binding")
 #> INDRA subnetwork: how are 10 selected proteins connected to each other, with no other nodes added?
 head(network$nodes)
 #>       id entity_type entity_name namespace entity_id measured included_in_query
@@ -198,12 +199,12 @@ head(network$nodes)
 #> 6 passed_cutoffs <NA>              FALSE 0.5683951 0.013715050
 head(network$edges)
 #>   source target interaction directed site confidence evidence_count
-#> 1 P05023 O75306     Complex    FALSE <NA>  0.8302067              1
-#> 2 O00217 O60313     Complex    FALSE <NA>  0.8302067              1
-#> 3 P08574 O75306     Complex    FALSE <NA>  0.8302067              1
-#> 4 P05067 O60313     Complex    FALSE <NA>  0.6896123             23
-#> 5 P05067 P05362     Complex    FALSE <NA>  0.6549329             13
-#> 6 O75306 P05067     Complex    FALSE <NA>  0.8302067              1
+#> 1 P05023 O75306     Binding    FALSE <NA>  0.8302067              1
+#> 2 O00217 O60313     Binding    FALSE <NA>  0.8302067              1
+#> 3 P08574 O75306     Binding    FALSE <NA>  0.8302067              1
+#> 4 P05067 O60313     Binding    FALSE <NA>  0.6896123             23
+#> 5 P05067 P05362     Binding    FALSE <NA>  0.6549329             13
+#> 6 O75306 P05067     Binding    FALSE <NA>  0.8302067              1
 #>                                                               evidence_url
 #> 1  https://db.indra.bio/statements/from_hash/-5813063534036006?format=html
 #> 2 https://db.indra.bio/statements/from_hash/-19747883270157675?format=html

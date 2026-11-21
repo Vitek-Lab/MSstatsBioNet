@@ -95,7 +95,8 @@ filtering</p></dd>
 
 <dt id="arg-statement-types">statement_types<a class="anchor" aria-label="anchor" href="#arg-statement-types"></a></dt>
 <dd><p>list of interaction types to filter on.  Equivalent to
-statement type in INDRA.  Default is NULL.</p></dd>
+statement type in INDRA, except that INDRA's <code>Complex</code> is called
+<code>Binding</code>.  Default is NULL.</p></dd>
 
 
 <dt id="arg-paper-count-cutoff">paper_count_cutoff<a class="anchor" aria-label="anchor" href="#arg-paper-count-cutoff"></a></dt>
@@ -169,9 +170,10 @@ the contract checked by <code><a href="validate_network.html">validate_network</
 connects (a statement whose grounding matches several <code>Protein</code>
 rows, such as two isoforms of one gene, gives each of them an edge):
 <code>source</code>,
-<code>target</code>, <code>interaction</code> (INDRA statement type),
+<code>target</code>, <code>interaction</code> (INDRA statement type, with
+<code>Complex</code> renamed to <code>Binding</code>),
 <code>directed</code> (<code>FALSE</code> for symmetric types such as
-<code>Complex</code>), <code>site</code> (PTM site on the target, or <code>NA</code>),
+<code>Binding</code>), <code>site</code> (PTM site on the target, or <code>NA</code>),
 <code>confidence</code> (INDRA belief score), <code>evidence_count</code>,
 <code>evidence_url</code> (INDRA page for this statement), <code>statement_id</code>
 (INDRA statement hash, as character), <code>backend_database</code>
@@ -222,12 +224,12 @@ PTM site rows), <code>logFC</code>, and <code>adj.pvalue</code>. Nodes from
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6 passed_cutoffs &lt;NA&gt;              FALSE 0.5683951 0.013715050</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">subnetwork</span><span class="op">$</span><span class="va">edges</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   source target    interaction directed site confidence evidence_count</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 O75306 O00217        Complex    FALSE &lt;NA&gt;  0.7981153              3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 P08574 O75306        Complex    FALSE &lt;NA&gt;  0.8302067              1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 O75306 O00217        Binding    FALSE &lt;NA&gt;  0.7981153              3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 P08574 O75306        Binding    FALSE &lt;NA&gt;  0.8302067              1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 P05067 O60313 DecreaseAmount     TRUE &lt;NA&gt;  0.5115171              3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 P05067 P05362 IncreaseAmount     TRUE &lt;NA&gt;  0.5028536              3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 P05067 P05090 IncreaseAmount     TRUE &lt;NA&gt;  0.4715316              2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 O00217 O75306        Complex    FALSE &lt;NA&gt;  0.7981153              3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 O00217 O75306        Binding    FALSE &lt;NA&gt;  0.7981153              3</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                              evidence_url</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 https://db.indra.bio/statements/from_hash/35453498871697150?format=html</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  https://db.indra.bio/statements/from_hash/6349003830434161?format=html</span>

@@ -33,7 +33,7 @@ remain.
 ## Details
 
 Edges without a `site` are dropped. These include every edge that isn't
-a modification (`Complex`, `Activation`, ...), and every edge from a
+a modification (`Binding`, `Activation`, ...), and every edge from a
 backend that reports no sites, such as STRING: filter an INDRA network
 before merging it with one from such a backend, if those edges should
 stay. Nodes are dropped when they had edges and lost them all. Nodes

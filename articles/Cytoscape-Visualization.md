@@ -46,7 +46,7 @@ nodes_fc <- data.frame(
 edges_fc <- data.frame(
     source      = c("TP53",   "TP53",   "MDM2",  "BCL2"),
     target      = c("MDM2",   "CDKN1A", "TP53",  "BAX"),
-    interaction = c("Activation", "IncreaseAmount", "Inhibition", "Complex"),
+    interaction = c("Activation", "IncreaseAmount", "Inhibition", "Binding"),
     stringsAsFactors = FALSE
 )
 
@@ -88,7 +88,7 @@ cytoscapeNetwork(nodes_ptm, edges_ptm, nodeFontSize = 14)
 # included_in_query = FALSE is faded, and entity_type sets the shape.
 # node_role sets the border: solid for "passed_cutoffs", dashed for any
 # other role, such as "user_added" for nodes added by the user.
-# Complex and Association edges have no arrow (the `directed` column).
+# Binding and Association edges have no arrow (the `directed` column).
 
 nodes_status <- data.frame(
     id                = c("TP53",    "MDM2",    "CDKN1A",  "GLUCOSE"),
@@ -104,7 +104,7 @@ nodes_status <- data.frame(
 edges_status <- data.frame(
     source      = c("TP53",    "TP53",           "GLUCOSE"),
     target      = c("MDM2",    "CDKN1A",         "TP53"),
-    interaction = c("Complex", "IncreaseAmount", "Association"),
+    interaction = c("Binding", "IncreaseAmount", "Association"),
     directed    = c(FALSE,     TRUE,             FALSE),
     stringsAsFactors = FALSE
 )

@@ -39,7 +39,7 @@ exportNetworkToHTML(
 
   Data frame with columns `source`, `target`, `interaction`. Optional:
   `directed` (an edge with `FALSE` has no arrow and is drawn once for
-  both directions; without the column, `Complex` and `Association` edges
+  both directions; without the column, `Binding` and `Association` edges
   are undirected), `site`, `evidence_url`, opened when an edge is
   clicked.
 

@@ -105,7 +105,7 @@ backend_capabilities(indra_backend())
 #> [28] "Degeranylgeranylation" "Palmitoylation"        "Depalmitoylation"     
 #> [31] "Myristoylation"        "Demyristoylation"      "Ribosylation"         
 #> [34] "Deribosylation"        "Methylation"           "Demethylation"        
-#> [37] "Complex"               "Association"           "Conversion"           
+#> [37] "Binding"               "Association"           "Conversion"           
 #> [40] "Translocation"        
 #> 
 #> $evidence_sources
