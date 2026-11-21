@@ -416,8 +416,9 @@ licenses.
 `cytoscapeNetwork` draws the network. The shape of a node comes from its
 `entity_type`: diphenhydramine is a diamond, the other metabolites are
 hexagons, and proteins are rounded rectangles. Proteins added through
-`include_entities` have no fill and a dashed border, because they were
-not measured. Click an edge to open its INDRA evidence.
+`include_entities` have a dashed border, because they were added rather
+than selected by the cutoffs, and no fill, because they were not
+measured. Click an edge to open its INDRA evidence.
 
 ``` r
 
@@ -438,13 +439,13 @@ previewNetworkInBrowser(network$nodes, network$edges,
 ``` r
 
 sessionInfo()
-#> R version 4.6.1 (2026-06-24)
+#> R version 4.6.2 (2026-10-29)
 #> Platform: x86_64-pc-linux-gnu
-#> Running under: Ubuntu 24.04.5 LTS
+#> Running under: Ubuntu 26.04.1 LTS
 #> 
 #> Matrix products: default
 #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+#> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
 #> 
 #> locale:
 #>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -463,34 +464,34 @@ sessionInfo()
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] tidyselect_1.2.1      viridisLite_0.4.3     dplyr_1.2.1          
-#>  [4] farver_2.1.2          S7_0.2.2              bitops_1.1-0         
+#>  [4] farver_2.1.2          S7_1.0.0              bitops_1.1-0         
 #>  [7] fastmap_1.2.0         XML_3.99-0.25         digest_0.6.39        
-#> [10] lifecycle_1.0.5       survival_3.8-6        statmod_1.5.2        
-#> [13] magrittr_2.0.5        compiler_4.6.1        r2r_0.1.2            
-#> [16] rlang_1.3.0           sass_0.4.10           tools_4.6.1          
+#> [10] lifecycle_1.0.5       survival_3.8-12       statmod_1.5.2        
+#> [13] magrittr_2.0.5        compiler_4.6.2        r2r_0.1.2            
+#> [16] rlang_1.3.0           sass_0.4.10           tools_4.6.2          
 #> [19] yaml_2.3.12           data.table_1.18.6.1   knitr_1.52           
 #> [22] stopwords_2.3         htmlwidgets_1.6.4     MSstatsConvert_1.22.1
 #> [25] marray_1.90.0         xml2_1.6.0            RColorBrewer_1.1-3   
-#> [28] KernSmooth_2.23-26    purrr_1.2.2           desc_1.4.3           
-#> [31] grid_4.6.1            preprocessCore_1.74.0 caTools_1.18.4       
-#> [34] ggplot2_4.0.3         scales_1.4.0          gtools_3.9.5         
-#> [37] MASS_7.3-65           cli_3.6.6             crayon_1.5.3         
+#> [28] KernSmooth_2.23-27    purrr_1.2.2           desc_1.4.3           
+#> [31] grid_4.6.2            preprocessCore_1.74.0 caTools_1.18.4       
+#> [34] ggplot2_4.0.4         scales_1.4.0          gtools_3.9.5         
+#> [37] MASS_7.3-66           cli_3.6.6             crayon_1.5.3         
 #> [40] rmarkdown_2.32        ragg_1.5.2            reformulas_0.4.4     
-#> [43] generics_0.1.4        otel_0.2.0            httr_1.4.9           
-#> [46] minqa_1.2.8           cachem_1.1.0          splines_4.6.1        
-#> [49] parallel_4.6.1        BiocManager_1.30.27   vctrs_0.7.3          
-#> [52] boot_1.3-32           Matrix_1.7-5          jsonlite_2.0.0       
-#> [55] bookdown_0.48         ggrepel_0.9.8         systemfonts_1.3.2    
+#> [43] generics_0.1.4        otel_0.3.0            httr_1.4.9           
+#> [46] minqa_1.2.8           cachem_1.1.0          splines_4.6.2        
+#> [49] parallel_4.6.2        BiocManager_1.30.27   vctrs_0.7.3          
+#> [52] boot_1.3-32           Matrix_1.7-6          jsonlite_2.0.0       
+#> [55] bookdown_0.48         ggrepel_0.9.8         systemfonts_1.3.3    
 #> [58] limma_3.68.5          plotly_4.12.1         lgr_0.5.2            
 #> [61] tidyr_1.3.2           jquerylib_0.1.4       glue_1.8.1           
 #> [64] nloptr_2.2.1          pkgdown_2.2.1         gtable_0.3.6         
-#> [67] lme4_2.0-6            mlapi_0.1.1           tibble_3.3.1         
+#> [67] lme4_2.1-0            mlapi_0.1.1           tibble_3.3.1         
 #> [70] pillar_1.11.1         htmltools_0.5.9       gplots_3.3.0         
 #> [73] float_0.3-4           rsparse_0.5.3         R6_2.6.1             
 #> [76] textshaping_1.0.5     Rdpack_2.6.6          evaluate_1.0.5       
-#> [79] lattice_0.22-9        rentrez_1.2.4         rbibutils_2.4.1      
+#> [79] lattice_0.23-1        rentrez_1.2.4         rbibutils_2.4.1      
 #> [82] backports_1.5.1       RhpcBLASctl_0.23-42   bslib_0.12.0         
-#> [85] text2vec_0.6.6        Rcpp_1.1.2            nlme_3.1-169         
+#> [85] text2vec_0.6.6        Rcpp_1.1.2            nlme_3.1-171         
 #> [88] checkmate_2.3.4       xfun_0.62             fs_2.1.0             
 #> [91] pkgconfig_2.0.3
 ```

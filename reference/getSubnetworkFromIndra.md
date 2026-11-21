@@ -180,22 +180,22 @@ head(subnetwork$edges)
 #>   source target    interaction directed site confidence evidence_count
 #> 1 O75306 O00217        Complex    FALSE <NA>  0.7981153              3
 #> 2 P08574 O75306        Complex    FALSE <NA>  0.8302067              1
-#> 3 P05067 O60313 DecreaseAmount     TRUE <NA>  0.4850742              3
+#> 3 P05067 O60313 DecreaseAmount     TRUE <NA>  0.5115171              3
 #> 4 P05067 P05362 IncreaseAmount     TRUE <NA>  0.5028536              3
 #> 5 P05067 P05090 IncreaseAmount     TRUE <NA>  0.4715316              2
-#> 6 P08574 P05023        Complex    FALSE <NA>  0.8302067              1
-#>                                                               evidence_url
-#> 1  https://db.indra.bio/statements/from_hash/35453498871697150?format=html
-#> 2   https://db.indra.bio/statements/from_hash/6349003830434161?format=html
-#> 3 https://db.indra.bio/statements/from_hash/-14390698362022978?format=html
-#> 4  https://db.indra.bio/statements/from_hash/29503060009374668?format=html
-#> 5  https://db.indra.bio/statements/from_hash/13542679335950199?format=html
-#> 6 https://db.indra.bio/statements/from_hash/-27854856016676857?format=html
-#>         statement_id backend_database query_type evidence_sources paperCount
-#> 1  35453498871697150            INDRA subnetwork   {"biogrid": 3}          1
-#> 2   6349003830434161            INDRA subnetwork   {"biogrid": 1}          1
-#> 3 -14390698362022978            INDRA subnetwork     {"reach": 3}          1
-#> 4  29503060009374668            INDRA subnetwork     {"reach": 3}          1
-#> 5  13542679335950199            INDRA subnetwork     {"reach": 2}          1
-#> 6 -27854856016676857            INDRA subnetwork   {"biogrid": 1}          1
+#> 6 O00217 O75306        Complex    FALSE <NA>  0.7981153              3
+#>                                                              evidence_url
+#> 1 https://db.indra.bio/statements/from_hash/35453498871697150?format=html
+#> 2  https://db.indra.bio/statements/from_hash/6349003830434161?format=html
+#> 3 https://db.indra.bio/statements/from_hash/30849589365071782?format=html
+#> 4 https://db.indra.bio/statements/from_hash/29503060009374668?format=html
+#> 5 https://db.indra.bio/statements/from_hash/13542679335950199?format=html
+#> 6 https://db.indra.bio/statements/from_hash/35453498871697150?format=html
+#>        statement_id backend_database query_type evidence_sources paperCount
+#> 1 35453498871697150            INDRA subnetwork   {"biogrid": 3}          1
+#> 2  6349003830434161            INDRA subnetwork   {"biogrid": 1}          1
+#> 3 30849589365071782            INDRA subnetwork     {"reach": 3}          1
+#> 4 29503060009374668            INDRA subnetwork     {"reach": 3}          1
+#> 5 13542679335950199            INDRA subnetwork     {"reach": 2}          1
+#> 6 35453498871697150            INDRA subnetwork   {"biogrid": 3}          1
 ```

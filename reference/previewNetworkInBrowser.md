@@ -24,11 +24,14 @@ previewNetworkInBrowser(
   underscore-separated PTM site list), and the node status columns of
   [`validate_network()`](https://vitek-lab.github.io/MSstatsBioNet/reference/validate_network.md):
   `entity_type` sets the node shape (e.g. a hexagon for `"metabolite"`);
-  `measured = FALSE` draws a node with no fill and a dashed grey border
-  ("not in input data"); `included_in_query = FALSE` fades it. A node
-  with an `NA` `logFC` has no fill. A protein with `site` rows takes its
-  colour from its row with no `site`; without one, only its sites are
-  coloured. Missing status columns count as `TRUE`.
+  `measured = FALSE` draws a node with no fill and a grey border ("not
+  in input data"); `included_in_query = FALSE` fades it. A node with an
+  `NA` `logFC` has no fill. A protein with `site` rows takes its colour
+  from its row with no `site`; without one, only its sites are coloured.
+  Missing status columns count as `TRUE`. `node_role` sets the border:
+  solid when `"passed_cutoffs"` is one of the node's `";"`-joined roles,
+  dashed otherwise (e.g. `"user_added"`). A missing column or an `NA`
+  role draws a solid border.
 
 - edges:
 

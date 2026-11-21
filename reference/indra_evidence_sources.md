@@ -67,6 +67,6 @@ curated <- get_network(indra, entities,
 head(curated$edges$evidence_sources)
 #> [1] "{\"biogrid\": 1}"                  "{\"biogrid\": 1}"                 
 #> [3] "{\"biogrid\": 1}"                  "{\"sparser\": 21, \"biogrid\": 2}"
-#> [5] "{\"biogrid\": 1}"                  "{\"sparser\": 21, \"biogrid\": 2}"
+#> [5] "{\"biogrid\": 1}"                  "{\"biogrid\": 1}"                 
 # }
 ```

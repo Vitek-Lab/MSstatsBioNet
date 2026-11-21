@@ -84,8 +84,10 @@ cytoscapeNetwork(nodes_ptm, edges_ptm, nodeFontSize = 14)
 
 # ── Example 4 · Nodes outside the input, and node shapes ───────────────────
 # The node status columns from get_network() change how a node is drawn:
-# measured = FALSE (not in the input data) has no fill and a dashed border,
+# measured = FALSE (not in the input data) has no fill and a grey border,
 # included_in_query = FALSE is faded, and entity_type sets the shape.
+# node_role sets the border: solid for "passed_cutoffs", dashed for any
+# other role, such as "user_added" for nodes added by the user.
 # Complex and Association edges have no arrow (the `directed` column).
 
 nodes_status <- data.frame(
@@ -93,6 +95,8 @@ nodes_status <- data.frame(
     entity_type       = c("protein", "protein", "protein", "metabolite"),
     measured          = c(TRUE,      TRUE,      FALSE,     TRUE),
     included_in_query = c(TRUE,      FALSE,     TRUE,      TRUE),
+    node_role         = c("passed_cutoffs", "mediator", "user_added",
+                          "passed_cutoffs"),
     logFC             = c(1.8,       0.1,       NA,        -1.2),
     stringsAsFactors  = FALSE
 )

@@ -73,29 +73,29 @@ network <- filter_by_curation(network, min_evidence = 2)
 head(network$edges)
 #>    source target interaction directed site confidence evidence_count
 #> 4  P05067 O60313     Complex    FALSE <NA>  0.6896123             23
-#> 6  P05067 P05362     Complex    FALSE <NA>  0.6549329             13
-#> 7  O60313 P05067     Complex    FALSE <NA>  0.6896123             23
+#> 5  P05067 P05362     Complex    FALSE <NA>  0.6549329             13
+#> 8  O60313 P05067     Complex    FALSE <NA>  0.6896123             23
 #> 9  O00217 O75306     Complex    FALSE <NA>  0.7981153              3
 #> 12 O00217 P08574     Complex    FALSE <NA>  0.8216256              3
 #> 14 P05362 P05067     Complex    FALSE <NA>  0.6549329             13
 #>                                                                evidence_url
 #> 4  https://db.indra.bio/statements/from_hash/-12253697417005038?format=html
-#> 6  https://db.indra.bio/statements/from_hash/-20220236678417803?format=html
-#> 7  https://db.indra.bio/statements/from_hash/-12253697417005038?format=html
+#> 5  https://db.indra.bio/statements/from_hash/-20220236678417803?format=html
+#> 8  https://db.indra.bio/statements/from_hash/-12253697417005038?format=html
 #> 9   https://db.indra.bio/statements/from_hash/35453498871697150?format=html
 #> 12 https://db.indra.bio/statements/from_hash/-15796466026283356?format=html
 #> 14 https://db.indra.bio/statements/from_hash/-20220236678417803?format=html
 #>          statement_id backend_database query_type              evidence_sources
 #> 4  -12253697417005038            INDRA subnetwork {"sparser": 21, "biogrid": 2}
-#> 6  -20220236678417803            INDRA subnetwork   {"sparser": 10, "reach": 3}
-#> 7  -12253697417005038            INDRA subnetwork {"sparser": 21, "biogrid": 2}
+#> 5  -20220236678417803            INDRA subnetwork   {"sparser": 10, "reach": 3}
+#> 8  -12253697417005038            INDRA subnetwork {"sparser": 21, "biogrid": 2}
 #> 9   35453498871697150            INDRA subnetwork                {"biogrid": 3}
 #> 12 -15796466026283356            INDRA subnetwork                {"biogrid": 3}
 #> 14 -20220236678417803            INDRA subnetwork   {"sparser": 10, "reach": 3}
 #>    paperCount
 #> 4           1
-#> 6           1
-#> 7           1
+#> 5           1
+#> 8           1
 #> 9           1
 #> 12          1
 #> 14          1
