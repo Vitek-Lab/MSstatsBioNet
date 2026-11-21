@@ -14,12 +14,17 @@
 #'                    the node status columns of \code{\link{validate_network}()}:
 #'                    \code{entity_type} sets the node shape (e.g. a hexagon
 #'                    for \code{"metabolite"}); \code{measured = FALSE} draws a
-#'                    node with no fill and a dashed grey border ("not in input
+#'                    node with no fill and a grey border ("not in input
 #'                    data"); \code{included_in_query = FALSE} fades it. A node
 #'                    with an \code{NA} \code{logFC} has no fill. A protein
 #'                    with \code{site} rows takes its colour from its row
 #'                    with no \code{site}; without one, only its sites are
 #'                    coloured. Missing status columns count as \code{TRUE}.
+#'                    \code{node_role} sets the border: solid when
+#'                    \code{"passed_cutoffs"} is one of the node's
+#'                    \code{";"}-joined roles, dashed otherwise (e.g.
+#'                    \code{"user_added"}). A missing column or an \code{NA}
+#'                    role draws a solid border.
 #' @param edges       Data frame with columns \code{source}, \code{target},
 #'                    \code{interaction}.  Optional: \code{directed} (an
 #'                    edge with \code{FALSE} has no arrow and is drawn once

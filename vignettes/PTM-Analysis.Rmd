@@ -217,7 +217,7 @@ Edges are prior knowledge from INDRA, not evidence from this experiment. Click a
 
 # Network Visualization
 
-`cytoscapeNetwork` draws a protein with sites as one node, with a small node for each site around it. The protein node is colored by the protein's change in the global profiling experiment, and each site node by the site's adjusted change. The legend's `logFC` covers both, so read a protein's color and its sites' colors as changes from different experiments. A protein with no global profiling result, such as HIF1A, has no fill and a solid border. Kinases that were not measured have no fill and a dashed border.
+`cytoscapeNetwork` draws a protein with sites as one node, with a small node for each site around it. The protein node is colored by the protein's change in the global profiling experiment, and each site node by the site's adjusted change. The legend's `logFC` covers both, so read a protein's color and its sites' colors as changes from different experiments. A protein with no global profiling result, such as HIF1A, has no fill and a solid border. Kinases added with `include_entities` did not pass the cutoffs, so they have a dashed border; those that were not measured also have no fill.
 
 ```{r}
 cytoscapeNetwork(network$nodes, network$edges,

@@ -223,7 +223,7 @@ This package is distributed under the [Artistic-2.0](https://opensource.org/lice
 
 # Network Visualization
 
-`cytoscapeNetwork` draws the network. The shape of a node comes from its `entity_type`: diphenhydramine is a diamond, the other metabolites are hexagons, and proteins are rounded rectangles. Proteins added through `include_entities` have no fill and a dashed border, because they were not measured. Click an edge to open its INDRA evidence.
+`cytoscapeNetwork` draws the network. The shape of a node comes from its `entity_type`: diphenhydramine is a diamond, the other metabolites are hexagons, and proteins are rounded rectangles. Proteins added through `include_entities` have a dashed border, because they were added rather than selected by the cutoffs, and no fill, because they were not measured. Click an edge to open its INDRA evidence.
 
 ```{r}
 cytoscapeNetwork(network$nodes, network$edges,

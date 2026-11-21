@@ -102,10 +102,13 @@ on nodes that are not in the input data, and that every edge's source and
 target are nodes. It stops with an error listing every problem found.
 
 * `cytoscapeNetwork()` draws the node status columns. Nodes not in the
-input data (`measured = FALSE`) have no fill and a dashed grey border, and
+input data (`measured = FALSE`) have no fill and a grey border, and
 the legend lists them as "not in input data"; nodes with
 `included_in_query = FALSE` are faded; nodes with an `NA` `logFC` have no
-fill. `entity_type` sets the node shape: hexagon for metabolites and lipids,
+fill. `node_role` sets the border: solid for nodes that passed the cutoffs,
+dashed for nodes in the network for another reason, such as `"user_added"`
+nodes from `force_include_other` or `include_entities`. A missing or `NA`
+`node_role` draws a solid border. `entity_type` sets the node shape: hexagon for metabolites and lipids,
 diamond for drugs, octagon for complexes, barrel for families. The legend
 shows only the node styles, shapes, and edge types present, and covers
 every statement type of the contract.

@@ -94,6 +94,23 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
                   ifelse(!in_query, "not_queried", "measured")))
 }
 
+#' Whether each node passed the cutoffs, from nodes$node_role
+#'
+#' \code{TRUE} when \code{"passed_cutoffs"} is one of the node's
+#' \code{";"}-joined roles (see \code{\link{merge_networks}()}). A missing
+#' \code{node_role} column or an \code{NA} role counts as \code{TRUE}, so
+#' nodes built by hand without roles draw with a solid border.
+#' @param nodes nodes data.frame
+#' @return logical vector, one per row
+#' @keywords internal
+#' @noRd
+.node_passed_cutoffs <- function(nodes) {
+    roles <- .get_column_or_default(nodes, "node_role", NA_character_)
+    vapply(strsplit(as.character(roles), ";", fixed = TRUE), function(r) {
+        all(is.na(r)) || "passed_cutoffs" %in% trimws(r)
+    }, logical(1))
+}
+
 #' Node shape for each entity type
 #' @param entity_types character vector of nodes$entity_type values
 #' @return character vector of Cytoscape shape names
@@ -328,8 +345,10 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
 #' Returns a list of named lists — jsonlite will serialise them cleanly.
 #' Node data carry \code{status} (\code{.node_display_status()}, plus
 #' \code{"sites_only"}) and \code{shape}, which the widget styles and the
-#' legend lists. A protein with PTM site rows takes its colour and status from
-#' its protein-level row (\code{site} empty); without one it is
+#' legend lists. Protein nodes also carry \code{passed_cutoffs}
+#' (\code{.node_passed_cutoffs()}): \code{FALSE} draws a dashed border.
+#' A protein with PTM site rows takes its colour, status, and
+#' \code{passed_cutoffs} from its protein-level row (\code{site} empty); without one it is
 #' \code{"sites_only"} and only its site nodes are coloured.
 #' @keywords internal
 #' @noRd
@@ -341,6 +360,7 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
         rep(NEUTRAL_NODE_COLOR, nrow(nodes))
     }
     node_status <- .node_display_status(nodes)
+    node_passed_cutoffs <- .node_passed_cutoffs(nodes)
     node_shapes <- .node_shape(.get_column_or_default(nodes, "entity_type",
                                                      NA_character_))
     
@@ -402,6 +422,7 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
                        label     = display_label,
                        color     = protein_color,
                        status    = protein_status,
+                       passed_cutoffs = node_passed_cutoffs[j],
                        shape     = node_shapes[j],
                        entity_type = if ("entity_type" %in% names(nodes) &&
                                          !is.na(nodes$entity_type[j]))
