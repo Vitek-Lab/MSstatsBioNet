@@ -347,9 +347,7 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
 #' Node data carry \code{status} (\code{.node_display_status()}, plus
 #' \code{"sites_only"}) and \code{shape}, which the widget styles and the
 #' legend lists. Main nodes also carry \code{passed_cutoffs}
-#' (\code{.node_passed_cutoffs()}): \code{FALSE} draws a dashed border,
-#' and \code{node_role} (\code{""} when missing), which the legend uses to
-#' name the reasons for dashed borders.
+#' (\code{.node_passed_cutoffs()}): \code{FALSE} draws a dashed border.
 #' Every main node has \code{node_type = "protein"}, whatever its
 #' \code{entity_type} (metabolites, drugs, and so on included); only PTM
 #' site nodes and compound containers have other node types.
@@ -368,9 +366,6 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
     }
     node_status <- .node_display_status(nodes)
     node_passed_cutoffs <- .node_passed_cutoffs(nodes)
-    node_roles <- as.character(.get_column_or_default(nodes, "node_role",
-                                                      NA_character_))
-    node_roles[is.na(node_roles)] <- ""
     node_shapes <- .node_shape(.get_column_or_default(nodes, "entity_type",
                                                      NA_character_))
     
@@ -433,7 +428,6 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
                        color     = protein_color,
                        status    = protein_status,
                        passed_cutoffs = node_passed_cutoffs[j],
-                       node_role = node_roles[j],
                        shape     = node_shapes[j],
                        entity_type = if ("entity_type" %in% names(nodes) &&
                                          !is.na(nodes$entity_type[j]))
