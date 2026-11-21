@@ -45,7 +45,16 @@ matches several entity rows gets no values, with a message.
 A protein that has only PTM site rows in the network, and matches a
 protein-level entity row, gets a new protein-level row (\code{site =
 NA}) with that row's values, so \code{\link{cytoscapeNetwork}()} colors
-the protein node by it.
+the protein node by it. The new row has \code{node_role = "user_added"}:
+it is in the network because of this call, not because it passed the
+cutoffs of the query.
+
+\code{node_role} of existing rows is not changed. It records why a node
+is in the network, from the query, and the copied values played no part
+in the query. So in \code{\link{cytoscapeNetwork}()} the border still
+shows the query (solid for \code{"passed_cutoffs"}) while the fill shows
+the copied values, e.g. a node can have a solid border and an infinite
+copied \code{logFC}.
 
 Matched node rows get \code{measured = TRUE}. Rows of \code{entities}
 that match no node are not added: \code{\link{get_network}()} decides

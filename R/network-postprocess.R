@@ -204,7 +204,16 @@ filter_by_ptm_site <- function(network) {
 #' A protein that has only PTM site rows in the network, and matches a
 #' protein-level entity row, gets a new protein-level row (\code{site =
 #' NA}) with that row's values, so \code{\link{cytoscapeNetwork}()} colors
-#' the protein node by it.
+#' the protein node by it. The new row has \code{node_role = "user_added"}:
+#' it is in the network because of this call, not because it passed the
+#' cutoffs of the query.
+#'
+#' \code{node_role} of existing rows is not changed. It records why a node
+#' is in the network, from the query, and the copied values played no part
+#' in the query. So in \code{\link{cytoscapeNetwork}()} the border still
+#' shows the query (solid for \code{"passed_cutoffs"}) while the fill shows
+#' the copied values, e.g. a node can have a solid border and an infinite
+#' copied \code{logFC}.
 #'
 #' Matched node rows get \code{measured = TRUE}. Rows of \code{entities}
 #' that match no node are not added: \code{\link{get_network}()} decides
@@ -324,9 +333,11 @@ add_entity_values <- function(network, entities, overwrite = FALSE) {
 
 #' Build a protein-level row for each protein with only PTM site rows
 #'
-#' A copy of the protein's first row with \code{site = NA}, the roles of
-#' all its rows, \code{measured = FALSE}, and no statistics, until
-#' add_entity_values() fills it from a matching entity row.
+#' A copy of the protein's first row with \code{site = NA},
+#' \code{node_role = "user_added"} (the row is not from the query, so its
+#' sites' roles are not its own), \code{measured = FALSE}, and no
+#' statistics, until add_entity_values() fills it from a matching entity
+#' row.
 #' @param nodes nodes data.frame with a \code{site} column
 #' @return nodes data.frame, one row per such protein
 #' @keywords internal
@@ -340,9 +351,7 @@ add_entity_values <- function(network, entities, overwrite = FALSE) {
     for (column in intersect(c("logFC", "adj.pvalue"), colnames(rows))) {
         rows[[column]] <- rep(NA_real_, nrow(rows))
     }
-    rows$node_role <- vapply(site_only_ids, function(id) {
-        .join_unique_values(nodes$node_role[nodes$id == id])
-    }, character(1), USE.NAMES = FALSE)
+    rows$node_role <- rep("user_added", nrow(rows))
     rows$included_in_query <- vapply(site_only_ids, function(id) {
         .any_or_na(nodes$included_in_query[nodes$id == id])
     }, logical(1), USE.NAMES = FALSE)
