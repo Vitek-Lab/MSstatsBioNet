@@ -68,7 +68,8 @@ grounded by \code{\link{convert_ids}()} and flagged by
 \code{\link{network_queries}}.}
 
 \item{interaction_types}{values of \code{edges$interaction} to keep
-(INDRA statement types, e.g. \code{"Activation"}). \code{NULL} keeps all.}
+(INDRA statement types, e.g. \code{"Activation"}; INDRA's \code{"Complex"}
+is called \code{"Binding"}). \code{NULL} keeps all.}
 
 \item{min_evidence}{minimum evidence count per edge}
 
@@ -146,7 +147,7 @@ indra <- indra_backend()
 entities <- convert_ids(indra, entities)
 entities <- select_entities(entities, pvalue_cutoff = 0.05)
 network <- get_network(indra, entities, subnetwork_query(),
-                       interaction_types = "Complex")
+                       interaction_types = "Binding")
 head(network$nodes)
 head(network$edges)
 }

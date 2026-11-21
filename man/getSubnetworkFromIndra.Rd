@@ -39,7 +39,8 @@ ProteinLevelData table, used to annotate edges with correlations and apply
 filtering}
 
 \item{statement_types}{list of interaction types to filter on.  Equivalent to
-statement type in INDRA.  Default is NULL.}
+statement type in INDRA, except that INDRA's \code{Complex} is called
+\code{Binding}.  Default is NULL.}
 
 \item{paper_count_cutoff}{Deprecated, and will be removed in a future
 release. It is ignored: paper counts are not available from INDRA, so this
@@ -92,9 +93,10 @@ the contract checked by \code{\link{validate_network}}.
 connects (a statement whose grounding matches several \code{Protein}
 rows, such as two isoforms of one gene, gives each of them an edge):
 \code{source},
-\code{target}, \code{interaction} (INDRA statement type),
+\code{target}, \code{interaction} (INDRA statement type, with
+\code{Complex} renamed to \code{Binding}),
 \code{directed} (\code{FALSE} for symmetric types such as
-\code{Complex}), \code{site} (PTM site on the target, or \code{NA}),
+\code{Binding}), \code{site} (PTM site on the target, or \code{NA}),
 \code{confidence} (INDRA belief score), \code{evidence_count},
 \code{evidence_url} (INDRA page for this statement), \code{statement_id}
 (INDRA statement hash, as character), \code{backend_database}

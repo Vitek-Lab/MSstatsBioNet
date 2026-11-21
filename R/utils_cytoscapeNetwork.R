@@ -145,9 +145,9 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
 #' @noRd
 .relProps <- function() {
     list(
-        complex = list(
-            types       = c("Complex", "Association"),
-            colors      = list(Complex     = "#8B4513",
+        binding = list(
+            types       = c("Binding", "Association"),
+            colors      = list(Binding     = "#8B4513",
                                Association = "#C08A5B"),
             style       = "solid",
             arrow       = "none",

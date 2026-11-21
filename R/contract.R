@@ -5,8 +5,9 @@ EDGE_CONTRACT_VERSION <- "1.0"
 
 #' Normalized statement-type vocabulary for edges$interaction
 #'
-#' The INDRA statement types are the vocabulary. Other backends map their
-#' relation labels onto it.
+#' The INDRA statement types are the vocabulary, except where
+#' \code{INDRA_TYPE_RENAMES} gives a different label. Other backends map
+#' their relation labels onto it.
 #' @keywords internal
 #' @noRd
 INTERACTION_TYPES <- c(
@@ -29,13 +30,31 @@ INTERACTION_TYPES <- c(
     "Ribosylation", "Deribosylation",
     "Methylation", "Demethylation",
     # Other relations
-    "Complex", "Association", "Conversion", "Translocation"
+    "Binding", "Association", "Conversion", "Translocation"
 )
+
+#' INDRA statement types that get a different label in edges$interaction
+#'
+#' Names are the INDRA \code{stmt_type}; values are the MSstatsBioNet label.
+#' @keywords internal
+#' @noRd
+INDRA_TYPE_RENAMES <- c(Complex = "Binding")
+
+#' Map INDRA statement types onto the MSstatsBioNet vocabulary
+#' @param stmt_types character vector of INDRA \code{stmt_type} values
+#' @return character vector with \code{INDRA_TYPE_RENAMES} applied
+#' @keywords internal
+#' @noRd
+.from_indra_type <- function(stmt_types) {
+    renamed <- stmt_types %in% names(INDRA_TYPE_RENAMES)
+    stmt_types[renamed] <- unname(INDRA_TYPE_RENAMES[stmt_types[renamed]])
+    stmt_types
+}
 
 #' Statement types whose edges are symmetric (directed = FALSE)
 #' @keywords internal
 #' @noRd
-UNDIRECTED_INTERACTION_TYPES <- c("Complex", "Association")
+UNDIRECTED_INTERACTION_TYPES <- c("Binding", "Association")
 
 #' Entity-type vocabulary for nodes$entity_type
 #' @keywords internal
@@ -98,15 +117,15 @@ OPTIONAL_NODE_COLUMNS <- c(
 #' vocabularies that the visualization and filtering functions rely on.
 #'
 #' Required edge columns: \code{source}, \code{target} (both matching
-#' \code{nodes$id}), \code{interaction} (an INDRA statement type such as
-#' \code{"Activation"} or \code{"Complex"}), \code{directed} (logical),
+#' \code{nodes$id}), \code{interaction} (a statement type such as
+#' \code{"Activation"} or \code{"Binding"}), \code{directed} (logical),
 #' \code{site} (PTM site on the target such as \code{"S148"}, \code{;}-joined
 #' when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 #' \code{NA} when the source provides no score), \code{evidence_count}
 #' (whole number, at least 1, not \code{NA}), \code{evidence_url},
 #' \code{statement_id} (character), \code{backend_database}, and
 #' \code{query_type}.
-#' Edges of the symmetric statement types \code{"Complex"} and
+#' Edges of the symmetric statement types \code{"Binding"} and
 #' \code{"Association"} must have \code{directed = FALSE}. Several edges
 #' can share a \code{statement_id}: an undirected statement can be listed
 #' in both directions, and a statement reaches every node with its

@@ -28,7 +28,7 @@
 #' @param edges       Data frame with columns \code{source}, \code{target},
 #'                    \code{interaction}.  Optional: \code{directed} (an
 #'                    edge with \code{FALSE} has no arrow and is drawn once
-#'                    for both directions; without the column, \code{Complex}
+#'                    for both directions; without the column, \code{Binding}
 #'                    and \code{Association} edges are undirected),
 #'                    \code{site}, \code{evidence_url}, opened when an edge is
 #'                    clicked.

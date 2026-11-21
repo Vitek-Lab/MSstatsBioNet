@@ -103,7 +103,7 @@ target are nodes. It stops with an error listing every problem found.
 
 * `cytoscapeNetwork()` draws the node status columns. Nodes not in the
 input data (`measured = FALSE`) have no fill and a grey border, and
-the legend lists them as "not in input data"; nodes with
+the legend lists them as "Not in input data"; nodes with
 `included_in_query = FALSE` are faded; nodes with an `NA` `logFC` have no
 fill. `node_role` sets the border: solid for nodes that passed the cutoffs,
 dashed for nodes in the network for another reason, such as `"user_added"`
@@ -127,10 +127,14 @@ by the old vignette, is removed.
 
 ## Breaking changes
 
+* The INDRA statement type `Complex` is called `Binding` in
+`edges$interaction`, in the `statement_types` argument of
+`getSubnetworkFromIndra()`, and in the `interaction_types` argument of
+`get_network()`. Passing `"Complex"` no longer matches any edge.
 * `cytoscapeNetwork()` reads the edge `directed` column: an undirected edge
 has no arrow and is drawn once for both directions, even when the reverse
-edge is missing. Edges without the column treat `Complex` and
-`Association` as undirected. Previously a `Complex` edge without its
+edge is missing. Edges without the column treat `Binding` and
+`Association` as undirected. Previously a `Binding` edge without its
 reverse was drawn as directed.
 * `cytoscapeNetwork()` colours a protein with PTM `site` rows from its
 row with no `site`. A protein with only site rows is drawn as an uncoloured
@@ -144,7 +148,7 @@ Columns are renamed, with no aliases: `stmt_hash` to `statement_id` (now
 always character, taken from INDRA's full-precision `matches_hash`),
 `evidenceLink` to `evidence_url`, `evidenceCount` to `evidence_count` (now
 integer), and `sourceCounts` to `evidence_sources`. New columns: `directed`
-(`FALSE` for symmetric types such as `Complex`), `confidence` (INDRA belief
+(`FALSE` for symmetric types such as `Binding`), `confidence` (INDRA belief
 score), `backend_database` (`"INDRA"`), and `query_type` (`"subnetwork"`).
 `filterSubnetworkByContext()`, the topic-model functions, and
 `cytoscapeNetwork()` read the new names, so edges built by hand for them

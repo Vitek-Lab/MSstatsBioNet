@@ -26,7 +26,7 @@ create_mock_edges <- function() {
     data.frame(
         source      = c("P53_HUMAN", "MDM2_HUMAN", "ATM_HUMAN", "P53_HUMAN", "BRCA1_HUMAN"),
         target      = c("MDM2_HUMAN", "P53_HUMAN",  "P53_HUMAN", "BRCA1_HUMAN", "P53_HUMAN"),
-        interaction = c("Inhibition", "Inhibition", "Phosphorylation", "Complex", "Complex"),
+        interaction = c("Inhibition", "Inhibition", "Phosphorylation", "Binding", "Binding"),
         evidence_url = c("link1", "link2", "link3", "link4", "link5"),
         stringsAsFactors = FALSE
     )
@@ -99,7 +99,7 @@ test_that(".relProps returns correct structure", {
     props <- MSstatsBioNet:::.relProps()
     
     expect_type(props, "list")
-    expect_true(all(c("complex", "regulatory", "phosphorylation",
+    expect_true(all(c("binding", "regulatory", "phosphorylation",
                       "modification", "other") %in% names(props)))
     
     expect_true("Inhibition" %in% names(props$regulatory$colors))
@@ -121,8 +121,8 @@ test_that(".classify maps interaction types to correct categories", {
     expect_equal(MSstatsBioNet:::.classify("Inhibition"),      "regulatory")
     expect_equal(MSstatsBioNet:::.classify("Activation"),      "regulatory")
     expect_equal(MSstatsBioNet:::.classify("Phosphorylation"), "phosphorylation")
-    expect_equal(MSstatsBioNet:::.classify("Complex"),         "complex")
-    expect_equal(MSstatsBioNet:::.classify("Association"),     "complex")
+    expect_equal(MSstatsBioNet:::.classify("Binding"),         "binding")
+    expect_equal(MSstatsBioNet:::.classify("Association"),     "binding")
     expect_equal(MSstatsBioNet:::.classify("Dephosphorylation"), "phosphorylation")
     expect_equal(MSstatsBioNet:::.classify("Ubiquitination"),  "modification")
     expect_equal(MSstatsBioNet:::.classify("Translocation"),   "other")
@@ -143,7 +143,7 @@ test_that(".edgeStyle returns correct colour for regulatory interactions", {
 })
 
 test_that(".edgeStyle returns no arrow for undirected complex edges", {
-    style <- MSstatsBioNet:::.edgeStyle("Complex", "complex", "undirected")
+    style <- MSstatsBioNet:::.edgeStyle("Binding", "binding", "undirected")
     expect_equal(style$arrow, "none")
     expect_equal(style$color, "#8B4513")
 })
@@ -184,7 +184,7 @@ test_that(".consolidateEdges marks complex as undirected", {
     edges <- create_mock_edges()
     result <- MSstatsBioNet:::.consolidateEdges(edges)
     
-    complex <- result[result$interaction == "Complex", ]
+    complex <- result[result$interaction == "Binding", ]
     expect_equal(nrow(complex), 1)
     expect_equal(complex$edge_type, "undirected")
 })
@@ -192,24 +192,24 @@ test_that(".consolidateEdges marks complex as undirected", {
 test_that(".consolidateEdges reads the directed column", {
     edges <- data.frame(source      = c("A", "B", "C"),
                         target      = c("B", "A", "D"),
-                        interaction = c("Activation", "Activation", "Complex"),
+                        interaction = c("Activation", "Activation", "Binding"),
                         directed    = c(FALSE, FALSE, TRUE),
                         stringsAsFactors = FALSE)
     result <- MSstatsBioNet:::.consolidateEdges(edges)
-    # Undirected A-B pair is drawn once; a directed Complex keeps its arrow
+    # Undirected A-B pair is drawn once; a directed Binding keeps its arrow
     expect_equal(nrow(result), 2)
     expect_equal(result$edge_type[result$interaction == "Activation"],
                  "undirected")
-    expect_equal(result$edge_type[result$interaction == "Complex"], "directed")
+    expect_equal(result$edge_type[result$interaction == "Binding"], "directed")
 })
 
 test_that(".consolidateEdges falls back to the statement type without directed", {
     edges <- data.frame(source      = c("A", "C", "E"),
                         target      = c("B", "D", "F"),
-                        interaction = c("Complex", "Association", "Activation"),
+                        interaction = c("Binding", "Association", "Activation"),
                         stringsAsFactors = FALSE)
     result <- MSstatsBioNet:::.consolidateEdges(edges)
-    # A Complex edge with no reverse edge is still undirected
+    # A Binding edge with no reverse edge is still undirected
     expect_equal(result$edge_type, c("undirected", "undirected", "directed"))
 
     edges$directed <- c(NA, FALSE, NA)
@@ -220,7 +220,7 @@ test_that(".consolidateEdges falls back to the statement type without directed",
 test_that(".consolidateEdges keeps undirected edges of different types", {
     edges <- data.frame(source      = c("A", "B"),
                         target      = c("B", "A"),
-                        interaction = c("Complex", "Association"),
+                        interaction = c("Binding", "Association"),
                         stringsAsFactors = FALSE)
     result <- MSstatsBioNet:::.consolidateEdges(edges)
     expect_equal(nrow(result), 2)

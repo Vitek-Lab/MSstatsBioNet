@@ -52,7 +52,7 @@ entities <- prepare_entities(input, entity_type = "protein",
                              id_type = "uniprot")
 entities <- convert_ids(indra, entities)
 entities <- select_entities(entities, pvalue_cutoff = 0.05)
-network <- get_network(indra, entities, interaction_types = "Complex")
+network <- get_network(indra, entities, interaction_types = "Binding")
 network <- filter_by_curation(network, min_evidence = 2)
 head(network$edges)
 }

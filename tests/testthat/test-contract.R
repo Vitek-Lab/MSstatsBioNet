@@ -16,7 +16,7 @@
         edges = data.frame(
             source = c("A", "B"),
             target = c("B", "C"),
-            interaction = c("Phosphorylation", "Complex"),
+            interaction = c("Phosphorylation", "Binding"),
             directed = c(TRUE, FALSE),
             site = c("S76", NA),
             confidence = c(0.99, NA),
@@ -161,7 +161,7 @@ test_that("validate_network rejects NA or infinite evidence_count", {
 
 test_that("validate_network requires directed == FALSE for symmetric types", {
     network <- .valid_network()
-    network$edges$directed[2] <- TRUE   # the Complex edge
+    network$edges$directed[2] <- TRUE   # the Binding edge
     expect_error(validate_network(network),
                  "directed must be FALSE for symmetric statement types")
 
@@ -264,4 +264,17 @@ test_that("validate_network lists every problem in one error", {
 test_that("UNDIRECTED_INTERACTION_TYPES are part of the interaction vocabulary", {
     expect_true(all(MSstatsBioNet:::UNDIRECTED_INTERACTION_TYPES %in%
                         MSstatsBioNet:::INTERACTION_TYPES))
+})
+
+test_that(".from_indra_type renames INDRA's Complex to Binding", {
+    expect_equal(MSstatsBioNet:::.from_indra_type(
+                     c("Complex", "Activation", "Association")),
+                 c("Binding", "Activation", "Association"))
+    expect_equal(MSstatsBioNet:::.from_indra_type(character(0)), character(0))
+})
+
+test_that("INDRA_TYPE_RENAMES maps onto the interaction vocabulary only", {
+    renames <- MSstatsBioNet:::INDRA_TYPE_RENAMES
+    expect_true(all(renames %in% MSstatsBioNet:::INTERACTION_TYPES))
+    expect_false(any(names(renames) %in% MSstatsBioNet:::INTERACTION_TYPES))
 })

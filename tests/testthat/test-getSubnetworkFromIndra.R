@@ -18,7 +18,7 @@ test_that("getSubnetworkFromIndra with different statement type works correctly"
         return(readRDS(system.file("extdata/indraResponse.rds", package = "MSstatsBioNet")))
     })
     suppressWarnings(
-        subnetwork <- getSubnetworkFromIndra(input, statement_types = c("Complex"))
+        subnetwork <- getSubnetworkFromIndra(input, statement_types = c("Binding"))
     )
     expect_equal(nrow(subnetwork$nodes), 8)
     expect_equal(nrow(subnetwork$edges), 16)
@@ -53,7 +53,7 @@ test_that("Exception is thrown for missing columns in input", {
 })
 
 # Build a subnetwork from the saved INDRA response, with the API call mocked
-.run_mocked_subnetwork <- function(..., statement_types = c("Complex")) {
+.run_mocked_subnetwork <- function(..., statement_types = c("Binding")) {
     input <- data.table::fread(
         system.file("extdata/groupComparisonModel.csv", package = "MSstatsBioNet")
     )
@@ -140,7 +140,7 @@ test_that("getSubnetworkFromIndra maps INDRA fields onto the contract columns", 
     suppressWarnings(subnetwork <- .run_mocked_subnetwork())
     edges <- subnetwork$edges
 
-    expect_true(all(edges$interaction == "Complex"))
+    expect_true(all(edges$interaction == "Binding"))
     expect_true(all(!edges$directed))
     expect_true(all(edges$backend_database == "INDRA"))
     expect_true(all(edges$query_type == "subnetwork"))
@@ -211,7 +211,7 @@ test_that("filter_by_curation() output of a real network meets the contract", {
 
 # Later phases must reproduce this output exactly. Regenerate the fixture
 # with _fixtures/make_golden_subnetwork.R only when a change is intended
-# (last: Phase 3c, node status columns).
+# (last: INDRA Complex renamed to Binding).
 test_that("getSubnetworkFromIndra reproduces the pinned golden output", {
     suppressWarnings(subnetwork <- .run_mocked_subnetwork(statement_types = NULL))
     golden <- readRDS(test_path("_fixtures", "golden_subnetwork.rds"))
@@ -381,6 +381,24 @@ test_that("a statement from a shared grounding to itself gives self-loops only",
     expect_equal(self_edges$source, c("A1", "A2"))
     expect_equal(self_edges$target, c("A1", "A2"))
     expect_silent(validate_network(subnetwork))
+})
+
+test_that("INDRA Complex statements are filtered and returned as Binding", {
+    input <- .make_annotated_input(c("A", "B"), "HGNC", c("1", "2"))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"),
+                        stmt_type = "Complex", hash = "1"),
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"),
+                        hash = "2"))
+    edges <- .run_with_statements(input, statements,
+                                  statement_types = "Binding")$edges
+    expect_true(nrow(edges) > 0)
+    expect_true(all(edges$interaction == "Binding"))
+    expect_true(all(!edges$directed))
+
+    expect_error(.run_with_statements(input, statements,
+                                      statement_types = "Complex"),
+                 "No edges remain")
 })
 
 test_that("rows that share a grounding each get an edge to a latent node", {
