@@ -99,7 +99,8 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
 #' \code{TRUE} when \code{"passed_cutoffs"} is one of the node's
 #' \code{";"}-joined roles (see \code{\link{merge_networks}()}). A missing
 #' \code{node_role} column or an \code{NA} role counts as \code{TRUE}, so
-#' nodes built by hand without roles draw with a solid border.
+#' nodes built by hand without roles draw with a solid border. Applies to
+#' nodes of every \code{entity_type}.
 #' @param nodes nodes data.frame
 #' @return logical vector, one per row
 #' @keywords internal
@@ -345,11 +346,15 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
 #' Returns a list of named lists — jsonlite will serialise them cleanly.
 #' Node data carry \code{status} (\code{.node_display_status()}, plus
 #' \code{"sites_only"}) and \code{shape}, which the widget styles and the
-#' legend lists. Protein nodes also carry \code{passed_cutoffs}
+#' legend lists. Main nodes also carry \code{passed_cutoffs}
 #' (\code{.node_passed_cutoffs()}): \code{FALSE} draws a dashed border.
+#' Every main node has \code{node_type = "protein"}, whatever its
+#' \code{entity_type} (metabolites, drugs, and so on included); only PTM
+#' site nodes and compound containers have other node types.
 #' A protein with PTM site rows takes its colour, status, and
-#' \code{passed_cutoffs} from its protein-level row (\code{site} empty); without one it is
-#' \code{"sites_only"} and only its site nodes are coloured.
+#' \code{passed_cutoffs} from its protein-level row (\code{site} empty);
+#' without one it is \code{"sites_only"} and only its site nodes are
+#' coloured.
 #' @keywords internal
 #' @noRd
 .buildElements <- function(nodes, edges, display_label_type = "id") {
