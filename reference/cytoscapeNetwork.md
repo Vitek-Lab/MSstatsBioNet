@@ -37,8 +37,8 @@ cytoscapeNetwork(
   from its row with no `site`; without one, only its sites are coloured.
   Missing status columns count as `TRUE`. `node_role` sets the border:
   solid when `"passed_cutoffs"` is one of the node's `";"`-joined roles,
-  dashed otherwise (e.g. `"user_added"`). A missing column or an `NA`
-  role draws a solid border.
+  dashed otherwise (e.g. `"one_condition_missing"` or `"user_added"`). A
+  missing column or an `NA` role draws a solid border.
 
 - edges:
 

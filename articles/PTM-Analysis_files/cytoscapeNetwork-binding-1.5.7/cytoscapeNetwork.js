@@ -331,7 +331,7 @@ HTMLWidgets.widget({
         if (nDashed < mainNodes.length) {
           borderItems += legendRow(borderSwatch("solid"), "Passed significance cutoffs");
         }
-        borderItems += legendRow(borderSwatch("dashed"), "User added, did not pass significance cutoffs");
+        borderItems += legendRow(borderSwatch("dashed"), "Did not pass significance cutoffs");
       }
 
       /* Node shape: listed when the network has more than one shape */

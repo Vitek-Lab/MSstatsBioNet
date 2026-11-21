@@ -143,11 +143,13 @@ given).
 the protein's `id`): `id`, `entity_type` (`"protein"`, `"ptm_site"`,
 `"metabolite"`, ...), `entity_name`, `namespace`, `entity_id`,
 `measured` (`TRUE` for analytes in `input`), `included_in_query`,
-`node_role` (`"passed_cutoffs"`, or `"user_added"` for nodes that are
-there only through `force_include_other`), `site`, `has_measured_sites`
-(`TRUE` for proteins with PTM site rows), `logFC`, and `adj.pvalue`.
-Nodes from `force_include_other` that are not in `input` have
-`measured = FALSE` and `NA` statistics.
+`node_role` (`"passed_cutoffs"`; `"one_condition_missing"` for nodes
+with an infinite `logFC`, there through `include_infinite_fc`; or
+`"user_added"` for nodes that are there only through
+`force_include_other`), `site`, `has_measured_sites` (`TRUE` for
+proteins with PTM site rows), `logFC`, and `adj.pvalue`. Nodes from
+`force_include_other` that are not in `input` have `measured = FALSE`
+and `NA` statistics.
 
 ## Examples
 

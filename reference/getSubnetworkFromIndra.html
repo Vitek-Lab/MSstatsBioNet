@@ -186,7 +186,9 @@ with the protein's <code>id</code>): <code>id</code>, <code>entity_type</code>
 (<code>"protein"</code>, <code>"ptm_site"</code>, <code>"metabolite"</code>, ...),
 <code>entity_name</code>, <code>namespace</code>, <code>entity_id</code>, <code>measured</code>
 (<code>TRUE</code> for analytes in <code>input</code>), <code>included_in_query</code>,
-<code>node_role</code> (<code>"passed_cutoffs"</code>, or <code>"user_added"</code> for
+<code>node_role</code> (<code>"passed_cutoffs"</code>;
+<code>"one_condition_missing"</code> for nodes with an infinite <code>logFC</code>,
+there through <code>include_infinite_fc</code>; or <code>"user_added"</code> for
 nodes that are there only through <code>force_include_other</code>),
 <code>site</code>, <code>has_measured_sites</code> (<code>TRUE</code> for proteins with
 PTM site rows), <code>logFC</code>, and <code>adj.pvalue</code>. Nodes from
