@@ -114,7 +114,9 @@ HTMLWidgets.widget({
         },
         /* ── node role (see .node_passed_cutoffs in R): sets the border ── */
         {
-          /* in the network for a reason other than passing the cutoffs */
+          /* in the network for a reason other than passing the cutoffs.
+             node_type 'protein' is every main node, whatever its
+             entity_type (metabolites, drugs, ... included) */
           selector: "node[node_type = 'protein'][!passed_cutoffs]",
           style: {
             "border-style": "dashed"
@@ -315,9 +317,10 @@ HTMLWidgets.widget({
         })
         .join("");
 
-      /* Node border by role: listed when some node did not pass the cutoffs */
-      var proteinNodes = cyInstance.nodes('[node_type = "protein"]');
-      var nDashed = proteinNodes.filter("[!passed_cutoffs]").length;
+      /* Node border by role: listed when some node did not pass the cutoffs.
+         node_type "protein" selects every main node, of any entity_type */
+      var mainNodes = cyInstance.nodes('[node_type = "protein"]');
+      var nDashed = mainNodes.filter("[!passed_cutoffs]").length;
       var borderItems = "";
       if (nDashed > 0) {
         var borderSwatch = function (style) {
@@ -325,7 +328,7 @@ HTMLWidgets.widget({
                  'border:2px ' + style + ' #333;background:transparent;' +
                  'margin-right:7px;flex-shrink:0;"></div>';
         };
-        if (nDashed < proteinNodes.length) {
+        if (nDashed < mainNodes.length) {
           borderItems += legendRow(borderSwatch("solid"), "passed cutoffs");
         }
         borderItems += legendRow(borderSwatch("dashed"), "added, did not pass cutoffs");

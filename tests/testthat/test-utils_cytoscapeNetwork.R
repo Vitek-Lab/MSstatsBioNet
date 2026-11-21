@@ -427,6 +427,25 @@ test_that(".buildElements draws every node as passed without node_role", {
     expect_true(all(vapply(nodes, `[[`, logical(1), "passed_cutoffs")))
 })
 
+test_that(".buildElements sets passed_cutoffs on nodes of every entity_type", {
+    nodes <- data.frame(
+        id          = c("GLUCOSE", "LACTATE", "IMATINIB", "AKT"),
+        entity_type = c("metabolite", "metabolite", "drug", "family"),
+        node_role   = c("passed_cutoffs", "user_added", "user_added",
+                        "passed_cutoffs;mediator"),
+        logFC       = c(1.2, -0.3, NA, 0.8),
+        stringsAsFactors = FALSE
+    )
+    main <- .main_node_data(MSstatsBioNet:::.buildElements(nodes,
+                                                           data.frame()))
+    expect_equal(names(main), nodes$id)
+    expect_equal(vapply(main, `[[`, character(1), "shape"),
+                 MSstatsBioNet:::.node_shape(nodes$entity_type),
+                 ignore_attr = TRUE)
+    expect_equal(unname(vapply(main, `[[`, logical(1), "passed_cutoffs")),
+                 c(TRUE, FALSE, FALSE, TRUE))
+})
+
 test_that(".buildElements takes passed_cutoffs from the protein-level row", {
     nodes <- data.frame(id        = c("P1", "P1"),
                         site      = c("S5", NA),
