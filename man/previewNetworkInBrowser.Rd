@@ -29,6 +29,7 @@ coloured. Missing status columns count as \code{TRUE}.
 \code{node_role} sets the border: solid when
 \code{"passed_cutoffs"} is one of the node's
 \code{";"}-joined roles, dashed otherwise (e.g.
+\code{"one_condition_missing"} or
 \code{"user_added"}). A missing column or an \code{NA}
 role draws a solid border.}
 

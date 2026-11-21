@@ -421,6 +421,23 @@ test_that(".buildElements sets passed_cutoffs from node_role", {
     expect_equal(nodes$LATENT$status, "latent")
 })
 
+test_that(".buildElements dashes one_condition_missing and passes node_role on", {
+    nodes <- data.frame(
+        id        = c("SIG", "INF", "NEGINF", "NOROLE"),
+        logFC     = c(1.5, Inf, -Inf, 0.5),
+        node_role = c("passed_cutoffs", "one_condition_missing",
+                      "one_condition_missing;mediator", NA),
+        stringsAsFactors = FALSE
+    )
+    main <- .main_node_data(MSstatsBioNet:::.buildElements(nodes,
+                                                           data.frame()))
+    expect_equal(unname(vapply(main, `[[`, logical(1), "passed_cutoffs")),
+                 c(TRUE, FALSE, FALSE, TRUE))
+    expect_equal(unname(vapply(main, `[[`, character(1), "node_role")),
+                 c("passed_cutoffs", "one_condition_missing",
+                   "one_condition_missing;mediator", ""))
+})
+
 test_that(".buildElements draws every node as passed without node_role", {
     nodes <- .main_node_data(MSstatsBioNet:::.buildElements(
         .node_status_fixture(), data.frame()))

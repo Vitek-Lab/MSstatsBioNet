@@ -110,7 +110,9 @@ with the protein's \code{id}): \code{id}, \code{entity_type}
 (\code{"protein"}, \code{"ptm_site"}, \code{"metabolite"}, ...),
 \code{entity_name}, \code{namespace}, \code{entity_id}, \code{measured}
 (\code{TRUE} for analytes in \code{input}), \code{included_in_query},
-\code{node_role} (\code{"passed_cutoffs"}, or \code{"user_added"} for
+\code{node_role} (\code{"passed_cutoffs"};
+\code{"one_condition_missing"} for nodes with an infinite \code{logFC},
+there through \code{include_infinite_fc}; or \code{"user_added"} for
 nodes that are there only through \code{force_include_other}),
 \code{site}, \code{has_measured_sites} (\code{TRUE} for proteins with
 PTM site rows), \code{logFC}, and \code{adj.pvalue}. Nodes from

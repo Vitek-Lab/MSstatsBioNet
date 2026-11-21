@@ -522,8 +522,7 @@ NODE_COLUMN_ORDER <- c("id", "entity_type", "entity_name", "namespace",
         entity_id         = entity_rows$entity_id,
         measured          = rep(TRUE, nrow(entity_rows)),
         included_in_query = rep(TRUE, nrow(entity_rows)),
-        node_role         = ifelse(entity_rows$included_in_query & !user_added,
-                                   "passed_cutoffs", "user_added"),
+        node_role         = .entity_node_roles(entity_rows, user_added),
         site              = .get_column_or_default(entity_rows, "site",
                                                    NA_character_),
         logFC             = .get_column_or_default(entity_rows, "logFC",
@@ -543,6 +542,26 @@ NODE_COLUMN_ORDER <- c("id", "entity_type", "entity_name", "namespace",
     nodes <- nodes[, NODE_COLUMN_ORDER]
     rownames(nodes) <- NULL
     nodes
+}
+
+#' Node role of each entity row in a network
+#'
+#' \code{"user_added"} for rows outside the query or selected only through
+#' \code{force_include}; otherwise \code{"one_condition_missing"} for rows
+#' with an infinite \code{logFC} (detected in one condition only, selected
+#' through \code{include_infinite_fc}), and \code{"passed_cutoffs"} for the
+#' rest.
+#' @param entity_rows rows of an entity table
+#' @param user_added logical, one per row: selected only through
+#' \code{force_include}
+#' @return character vector, one role per row
+#' @keywords internal
+#' @noRd
+.entity_node_roles <- function(entity_rows, user_added) {
+    infinite_fc <- is.infinite(.get_column_or_default(entity_rows, "logFC",
+                                                      NA_real_))
+    ifelse(!entity_rows$included_in_query | user_added, "user_added",
+           ifelse(infinite_fc, "one_condition_missing", "passed_cutoffs"))
 }
 
 #' Build latent nodes for backend nodes that match no entity row

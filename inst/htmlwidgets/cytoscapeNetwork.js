@@ -10,7 +10,8 @@
    The `x` object passed from R (via createWidget / jsonlite serialisation):
    {
      nodes        : [ { id, label, color, node_type, status, shape?,
-                        entity_type?, parent?, parent_protein? }, … ],
+                        entity_type?, passed_cutoffs?, node_role?, parent?,
+                        parent_protein? }, … ],
      edges        : [ { source, target, id, interaction, edge_type, category,
                         color, line_style, arrow_shape, width, tooltip,
                         evidence_url? }, … ],
@@ -331,7 +332,25 @@ HTMLWidgets.widget({
         if (nDashed < mainNodes.length) {
           borderItems += legendRow(borderSwatch("solid"), "Passed significance cutoffs");
         }
-        borderItems += legendRow(borderSwatch("dashed"), "User added, did not pass significance cutoffs");
+        /* name the reasons for the dashed borders, from the roles drawn */
+        var reasonLabels = {
+          one_condition_missing: "detected in one condition only",
+          user_added:            "user added"
+        };
+        var reasons = {};
+        mainNodes.filter("[!passed_cutoffs]").forEach(function (n) {
+          String(n.data("node_role") || "").split(";").forEach(function (r) {
+            r = r.trim();
+            if (reasonLabels[r]) reasons[r] = true;
+          });
+        });
+        var reasonText = Object.keys(reasonLabels)
+          .filter(function (r) { return reasons[r]; })
+          .map(function (r) { return reasonLabels[r]; })
+          .join("; ");
+        borderItems += legendRow(borderSwatch("dashed"),
+          "Did not pass significance cutoffs" +
+          (reasonText ? " (" + reasonText + ")" : ""));
       }
 
       /* Node shape: listed when the network has more than one shape */

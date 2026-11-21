@@ -310,6 +310,34 @@ test_that("force_include_other in the input keeps the row's statistics, as user_
     expect_equal(nodes$node_role[nodes$id == "A"], "passed_cutoffs")
 })
 
+test_that("infinite fold changes from include_infinite_fc are one_condition_missing", {
+    input <- .make_annotated_input(c("A", "B", "C"), "HGNC", c("1", "2", "3"),
+                                   log2FC = c(2, Inf, -Inf),
+                                   adj.pvalue = c(0.001, NA, NA))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB"), hash = "1"),
+        .make_statement(c("HGNC", "3", "GENEC"), c("HGNC", "1", "GENEA"), hash = "2"))
+    subnetwork <- .run_with_statements(input, statements, pvalueCutoff = 0.05,
+                                       include_infinite_fc = TRUE)
+    roles <- setNames(subnetwork$nodes$node_role, subnetwork$nodes$id)
+    expect_equal(roles[["A"]], "passed_cutoffs")
+    expect_equal(roles[["B"]], "one_condition_missing")
+    expect_equal(roles[["C"]], "one_condition_missing")
+    expect_silent(validate_network(subnetwork))
+})
+
+test_that("an infinite fold change selected only through force_include_other is user_added", {
+    input <- .make_annotated_input(c("A", "B"), "HGNC", c("1", "2"),
+                                   log2FC = c(2, Inf),
+                                   adj.pvalue = c(0.001, NA))
+    statements <- list(
+        .make_statement(c("HGNC", "1", "GENEA"), c("HGNC", "2", "GENEB")))
+    subnetwork <- .run_with_statements(input, statements, pvalueCutoff = 0.05,
+                                       force_include_other = "HGNC:2")
+    nodes <- subnetwork$nodes
+    expect_equal(nodes$node_role[nodes$id == "B"], "user_added")
+})
+
 test_that("a node is matched to the rows in the query before other rows", {
     # A2 grounds like A but fails the cutoff, so it doesn't make A ambiguous
     input <- .make_annotated_input(c("A", "A2", "B"), "HGNC", c("1", "1", "2"),
