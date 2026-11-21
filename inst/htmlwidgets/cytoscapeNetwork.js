@@ -295,13 +295,13 @@ HTMLWidgets.widget({
 
       /* Node fill by status: only the statuses present, worded relative to the input */
       var statusConfigs = [
-        { status: "latent",      label: "not in input data",
+        { status: "latent",      label: "Not in input data",
           box: "border:2px solid #999;background:transparent;" },
-        { status: "sites_only",  label: "no protein-level row in input",
+        { status: "sites_only",  label: "No protein-level row in input",
           box: "border:2px solid #333;background:transparent;" },
-        { status: "no_logfc",    label: "in input, no logFC shown",
+        { status: "no_logfc",    label: "In input, no logFC shown",
           box: "border:2px solid #333;background:transparent;" },
-        { status: "not_queried", label: "in input, not in query",
+        { status: "not_queried", label: "In input, not in query",
           box: "border:2px solid rgba(51,51,51,.5);background:rgba(255,165,144,.4);" }
       ];
       var statuses = {};
@@ -329,9 +329,9 @@ HTMLWidgets.widget({
                  'margin-right:7px;flex-shrink:0;"></div>';
         };
         if (nDashed < mainNodes.length) {
-          borderItems += legendRow(borderSwatch("solid"), "passed cutoffs");
+          borderItems += legendRow(borderSwatch("solid"), "Passed significance cutoffs");
         }
-        borderItems += legendRow(borderSwatch("dashed"), "added, did not pass cutoffs");
+        borderItems += legendRow(borderSwatch("dashed"), "User added, did not pass significance cutoffs");
       }
 
       /* Node shape: listed when the network has more than one shape */
@@ -345,8 +345,10 @@ HTMLWidgets.widget({
       });
       var shapes = Object.keys(shapeTypes);
       var shapeItems = shapes.length < 2 ? "" : shapes.map(function (shape) {
-        var types = Object.keys(shapeTypes[shape]).sort();
-        return legendRow(shapeIcon(shape), types.length ? types.join(", ") : "other");
+        var types = Object.keys(shapeTypes[shape]).sort().map(function (t) {
+          return t.charAt(0).toUpperCase() + t.slice(1);
+        });
+        return legendRow(shapeIcon(shape), types.length ? types.join(", ") : "Other");
       }).join("");
 
       var hasPtm = cyInstance.nodes('[node_type = "ptm"]').length > 0;
