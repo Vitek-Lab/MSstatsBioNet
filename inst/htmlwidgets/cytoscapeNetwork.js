@@ -87,23 +87,21 @@ HTMLWidgets.widget({
             "text-max-width":   "18px"
           }
         },
-        /* ── node status (see .node_display_status in R) ───────────────── */
+        /* ── node status (see .node_display_status in R): sets the fill ─── */
         {
-          /* not in the input data: no fill, dashed grey border */
+          /* not in the input data: no fill, grey border */
           selector: "node[status = 'latent']",
           style: {
             "background-opacity": 0,
-            "border-style":       "dashed",
             "border-color":       "#999",
             "color":              "#555"
           }
         },
         {
-          /* in the input, but no logFC to colour by: no fill, solid border */
+          /* in the input, but no logFC to colour by: no fill */
           selector: "node[status = 'sites_only'], node[status = 'no_logfc']",
           style: {
-            "background-opacity": 0,
-            "border-style":       "solid"
+            "background-opacity": 0
           }
         },
         {
@@ -112,6 +110,14 @@ HTMLWidgets.widget({
           style: {
             "background-opacity": 0.4,
             "border-opacity":     0.5
+          }
+        },
+        /* ── node role (see .node_passed_cutoffs in R): sets the border ── */
+        {
+          /* in the network for a reason other than passing the cutoffs */
+          selector: "node[node_type = 'protein'][!passed_cutoffs]",
+          style: {
+            "border-style": "dashed"
           }
         },
         /* ── invisible compound containers ──────────────────────────── */
@@ -285,10 +291,10 @@ HTMLWidgets.widget({
           type.replace(/([a-z])([A-Z])/g, "$1 $2"));
       }).join("");
 
-      /* Node status: only the statuses present, worded relative to the input */
+      /* Node fill by status: only the statuses present, worded relative to the input */
       var statusConfigs = [
         { status: "latent",      label: "not in input data",
-          box: "border:2px dashed #999;background:transparent;" },
+          box: "border:2px solid #999;background:transparent;" },
         { status: "sites_only",  label: "no protein-level row in input",
           box: "border:2px solid #333;background:transparent;" },
         { status: "no_logfc",    label: "in input, no logFC shown",
@@ -309,6 +315,22 @@ HTMLWidgets.widget({
         })
         .join("");
 
+      /* Node border by role: listed when some node did not pass the cutoffs */
+      var proteinNodes = cyInstance.nodes('[node_type = "protein"]');
+      var nDashed = proteinNodes.filter("[!passed_cutoffs]").length;
+      var borderItems = "";
+      if (nDashed > 0) {
+        var borderSwatch = function (style) {
+          return '<div style="width:22px;height:14px;border-radius:4px;box-sizing:border-box;' +
+                 'border:2px ' + style + ' #333;background:transparent;' +
+                 'margin-right:7px;flex-shrink:0;"></div>';
+        };
+        if (nDashed < proteinNodes.length) {
+          borderItems += legendRow(borderSwatch("solid"), "passed cutoffs");
+        }
+        borderItems += legendRow(borderSwatch("dashed"), "added, did not pass cutoffs");
+      }
+
       /* Node shape: listed when the network has more than one shape */
       var shapeTypes = {};
       cyInstance.nodes('[node_type = "protein"]').forEach(function (n) {
@@ -327,13 +349,14 @@ HTMLWidgets.widget({
       var hasPtm = cyInstance.nodes('[node_type = "ptm"]').length > 0;
 
       legendEl.innerHTML =
-        '<div style="font-weight:bold;margin-bottom:8px;font-size:13px;">Node color (logFC)</div>' +
+        '<div style="font-weight:bold;margin-bottom:8px;font-size:13px;">Node fill (logFC)</div>' +
         '<div style="display:flex;align-items:flex-start;margin-bottom:12px;">' +
         '  <div style="width:18px;height:110px;background:linear-gradient(to top,#ADD8E6,#D3D3D3,#FFA590);border:1px solid #999;border-radius:3px;margin-right:7px;flex-shrink:0;"></div>' +
         '  <div style="display:flex;flex-direction:column;justify-content:space-between;height:110px;font-size:11px;">' +
         '    <span>Upregulated</span><span>Neutral</span><span>Downregulated</span>' +
         '  </div></div>' +
         statusItems +
+        (borderItems ? legendHeading("Node border") + borderItems : '') +
         (shapeItems ? legendHeading("Node shape") + shapeItems : '') +
         (edgeItems ? legendHeading("Edge types") + edgeItems : '') +
         (hasPtm

@@ -387,6 +387,58 @@ test_that(".buildElements styles the node-status fixture three ways", {
     expect_false(nodes$FLAT$color == nodes$LATENT$color)
 })
 
+test_that(".node_passed_cutoffs reads passed_cutoffs among the node roles", {
+    nodes <- data.frame(
+        id = letters[1:7],
+        node_role = c("passed_cutoffs", "user_added",
+                      "passed_cutoffs;user_added", "mediator; passed_cutoffs",
+                      "mediator;user_added", NA, "not_passed_cutoffs"),
+        stringsAsFactors = FALSE
+    )
+    expect_equal(MSstatsBioNet:::.node_passed_cutoffs(nodes),
+                 c(TRUE, FALSE, TRUE, TRUE, FALSE, TRUE, FALSE))
+})
+
+test_that(".node_passed_cutoffs treats a missing node_role column as passed", {
+    nodes <- create_mock_nodes()
+    expect_true(all(MSstatsBioNet:::.node_passed_cutoffs(nodes)))
+    expect_length(MSstatsBioNet:::.node_passed_cutoffs(nodes), nrow(nodes))
+    expect_identical(MSstatsBioNet:::.node_passed_cutoffs(nodes[0, ]),
+                     logical(0))
+})
+
+test_that(".buildElements sets passed_cutoffs from node_role", {
+    fixture <- .node_status_fixture()
+    fixture$node_role <- c("passed_cutoffs", "user_added", "user_added")
+    nodes <- .main_node_data(MSstatsBioNet:::.buildElements(fixture,
+                                                            data.frame()))
+    expect_true(nodes$SIG$passed_cutoffs)
+    # measured but force-included: keeps its fill, dashed border
+    expect_false(nodes$FLAT$passed_cutoffs)
+    expect_equal(nodes$FLAT$status, "not_queried")
+    # latent and user_added: no fill and dashed border
+    expect_false(nodes$LATENT$passed_cutoffs)
+    expect_equal(nodes$LATENT$status, "latent")
+})
+
+test_that(".buildElements draws every node as passed without node_role", {
+    nodes <- .main_node_data(MSstatsBioNet:::.buildElements(
+        .node_status_fixture(), data.frame()))
+    expect_true(all(vapply(nodes, `[[`, logical(1), "passed_cutoffs")))
+})
+
+test_that(".buildElements takes passed_cutoffs from the protein-level row", {
+    nodes <- data.frame(id        = c("P1", "P1"),
+                        site      = c("S5", NA),
+                        logFC     = c(-2, 1.5),
+                        node_role = c("passed_cutoffs", "user_added"),
+                        stringsAsFactors = FALSE)
+    elements <- MSstatsBioNet:::.buildElements(nodes, data.frame())
+    expect_false(.main_node_data(elements)$P1$passed_cutoffs)
+    ptm <- Filter(function(el) identical(el$data$node_type, "ptm"), elements)
+    expect_null(ptm[[1]]$data$passed_cutoffs)
+})
+
 test_that(".buildElements colours a PTM protein from its protein-level row", {
     nodes <- data.frame(id    = c("P1", "P1", "P1"),
                         site  = c("S5", NA, "T9"),
