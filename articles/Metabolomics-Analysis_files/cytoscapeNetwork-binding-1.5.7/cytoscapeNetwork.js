@@ -296,13 +296,13 @@ HTMLWidgets.widget({
       /* Node fill by status: only the statuses present, worded relative to the input */
       var statusConfigs = [
         { status: "latent",      label: "Not in input data",
-          box: "border:2px solid #999;background:transparent;" },
+          box: "border:2px solid #999;background:#fff;" },
         { status: "sites_only",  label: "No protein-level row in input",
-          box: "border:2px solid #333;background:transparent;" },
+          box: "border:2px solid #333;background:#fff;" },
         { status: "no_logfc",    label: "In input, no logFC shown",
-          box: "border:2px solid #333;background:transparent;" },
+          box: "border:2px solid #333;background:#fff;" },
         { status: "not_queried", label: "In input, not in query",
-          box: "border:2px solid rgba(51,51,51,.5);background:rgba(255,165,144,.4);" }
+          box: "border:2px solid rgba(51,51,51,.5);background:#FFDBD3;" }
       ];
       var statuses = {};
       cyInstance.nodes().forEach(function (n) {
