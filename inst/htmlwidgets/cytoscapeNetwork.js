@@ -10,7 +10,7 @@
    The `x` object passed from R (via createWidget / jsonlite serialisation):
    {
      nodes        : [ { id, label, color, node_type, status, shape?,
-                        entity_type?, passed_cutoffs?, parent?, parent_protein? }, … ],
+                        entity_type?, parent?, parent_protein? }, … ],
      edges        : [ { source, target, id, interaction, edge_type, category,
                         color, line_style, arrow_shape, width, tooltip,
                         evidence_url? }, … ],
