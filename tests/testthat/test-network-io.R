@@ -25,7 +25,7 @@
 
 test_that("get_network() records one provenance row for INDRA", {
     .mock_indra_with_clock()
-    network <- .get_indra_network(interaction_types = "Complex",
+    network <- .get_indra_network(interaction_types = "Binding",
                                   min_evidence = 2)
     provenance <- network$provenance
     expect_s3_class(provenance, "data.frame")
@@ -40,7 +40,7 @@ test_that("get_network() records one provenance row for INDRA", {
     expect_equal(provenance$package_version,
                  as.character(utils::packageVersion("MSstatsBioNet")))
     parameters <- jsonlite::fromJSON(provenance$parameters)
-    expect_equal(parameters$interaction_types, "Complex")
+    expect_equal(parameters$interaction_types, "Binding")
     expect_equal(parameters$min_evidence, 2)
     expect_null(parameters$evidence_sources)
     expect_true("evidence_sources" %in% names(parameters))
@@ -88,7 +88,7 @@ test_that(".get_current_time() gives a UTC time", {
 
 test_that("merge_networks() keeps the provenance of each network", {
     .mock_indra_with_clock()
-    first <- .get_indra_network(interaction_types = "Complex")
+    first <- .get_indra_network(interaction_types = "Binding")
     second <- .get_indra_network()
     second$provenance$retrieved_at <- .retrieval_time + 3600
     network <- merge_networks(first, second)

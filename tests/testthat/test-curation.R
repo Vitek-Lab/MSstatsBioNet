@@ -7,7 +7,7 @@
         edges = data.frame(
             source           = c("A", "B", "A", "C"),
             target           = c("B", "C", "C", "D"),
-            interaction      = c("Activation", "Inhibition", "Complex",
+            interaction      = c("Activation", "Inhibition", "Binding",
                                  "Activation"),
             statement_id     = c("111", "222", "333", "111"),
             evidence_count   = c(5L, 2L, 1L, 3L),

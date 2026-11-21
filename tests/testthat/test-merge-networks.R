@@ -56,7 +56,7 @@ test_that("the same relation from two backends stays two edges", {
 
 test_that("an undirected statement listed in both directions keeps both rows", {
     complex <- .make_merge_network(source = c("A", "B"), target = c("B", "A"),
-                                   interaction = "Complex",
+                                   interaction = "Binding",
                                    statement_id = c("7", "7"))
     network <- merge_networks(complex, complex)
     expect_equal(nrow(network$edges), 2)
@@ -305,10 +305,10 @@ test_that("merging INDRA networks from one entity table gives their union", {
     indra <- indra_backend()
     full <- suppressMessages(get_network(indra, entities))
     complexes <- suppressMessages(
-        get_network(indra, entities, interaction_types = "Complex"))
+        get_network(indra, entities, interaction_types = "Binding"))
     others <- suppressMessages(
         get_network(indra, entities,
-                    interaction_types = setdiff(INTERACTION_TYPES, "Complex")))
+                    interaction_types = setdiff(INTERACTION_TYPES, "Binding")))
     network <- merge_networks(complexes, others)
     expect_equal(nrow(network$edges), nrow(full$edges))
     expect_setequal(paste(network$edges$source, network$edges$target,

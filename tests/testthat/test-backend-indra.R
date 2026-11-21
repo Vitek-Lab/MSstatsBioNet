@@ -63,8 +63,8 @@ test_that("get_network() passes the arguments on to the old filters", {
     .mock_indra_response()
     input <- .selected_input()
     network <- get_network(indra_backend(), input,
-                           interaction_types = "Complex", min_evidence = 2)
-    expect_true(all(network$edges$interaction == "Complex"))
+                           interaction_types = "Binding", min_evidence = 2)
+    expect_true(all(network$edges$interaction == "Binding"))
     expect_true(all(network$edges$evidence_count >= 2))
 
     network <- get_network(indra_backend(), input,
@@ -472,7 +472,7 @@ test_that("backend_capabilities() describes the INDRA backend", {
                  c("uniprot", "uniprot_mnemonic", "hgnc_symbol"))
     expect_setequal(capabilities$entity_properties,
                     c("is_transcription_factor", "is_kinase", "is_phosphatase"))
-    expect_true(all(c("Activation", "Complex") %in%
+    expect_true(all(c("Activation", "Binding") %in%
                     capabilities$interaction_types))
     expect_equal(capabilities$max_nodes[["subnetwork"]], 399)
 })

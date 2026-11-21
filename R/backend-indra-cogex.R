@@ -80,7 +80,8 @@
 
 #' Call INDRA Cogex API and return response
 #' @param res response from INDRA
-#' @param statement_types interaction types to filter by
+#' @param statement_types interaction types to filter by, in the
+#' MSstatsBioNet vocabulary (e.g. "Binding", not INDRA's "Complex")
 #' @param evidence_count_cutoff number of evidence to filter on for each paper
 #' @param sources_filter list of sources to filter by. Default is NULL, i.e. no filter
 #' @return filtered list of INDRA statements
@@ -91,7 +92,9 @@
                                  sources_filter = NULL) {
     if (!is.null(statement_types)) {
         res = Filter(
-            function(statement) statement$data$stmt_type %in% statement_types,
+            function(statement) {
+                .from_indra_type(statement$data$stmt_type) %in% statement_types
+            },
             res)
     }
     if (!is.null(sources_filter)) {
@@ -191,7 +194,8 @@
 .constructEdgesDataFrame <- function(res, grounding_lookup) {
     res <- .collapseDuplicateEdgesIntoEdgeToMetadataMapping(res, grounding_lookup)
     statements <- lapply(keys(res), function(x) query(res, x))
-    interaction <- vapply(statements, function(x) x$data$stmt_type, "")
+    interaction <- .from_indra_type(
+        vapply(statements, function(x) x$data$stmt_type, ""))
     edges <- data.frame(
         source = character(length(statements)),
         target = character(length(statements)),

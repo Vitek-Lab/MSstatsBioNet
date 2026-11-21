@@ -109,7 +109,7 @@ analysis results.
 subnetwork <- getSubnetworkFromIndra(
     annotated_df, 
     pvalueCutoff = 0.05, 
-    statement_types = c("Complex", "IncreaseAmount", "DecreaseAmount", "Inhibition", "Activation", "Phosphorylation")
+    statement_types = c("Binding", "IncreaseAmount", "DecreaseAmount", "Inhibition", "Activation", "Phosphorylation")
 )
 head(subnetwork$nodes)
 head(subnetwork$edges)

@@ -36,7 +36,8 @@
 #' \code{\link{subnetwork_query}()} (the default). See
 #' \code{\link{network_queries}}.
 #' @param interaction_types values of \code{edges$interaction} to keep
-#' (INDRA statement types, e.g. \code{"Activation"}). \code{NULL} keeps all.
+#' (INDRA statement types, e.g. \code{"Activation"}; INDRA's \code{"Complex"}
+#' is called \code{"Binding"}). \code{NULL} keeps all.
 #' @param min_evidence minimum evidence count per edge
 #' @param min_confidence minimum \code{confidence} per edge, in [0, 1].
 #' Edges with no confidence score (\code{NA}) are dropped too, and a message
@@ -80,7 +81,7 @@
 #' entities <- convert_ids(indra, entities)
 #' entities <- select_entities(entities, pvalue_cutoff = 0.05)
 #' network <- get_network(indra, entities, subnetwork_query(),
-#'                        interaction_types = "Complex")
+#'                        interaction_types = "Binding")
 #' head(network$nodes)
 #' head(network$edges)
 #' }
@@ -238,7 +239,7 @@ setMethod("get_entity_properties", "NetworkBackend",
 #'                              id_type = "uniprot")
 #' entities <- convert_ids(indra, entities)
 #' entities <- select_entities(entities, pvalue_cutoff = 0.05)
-#' network <- get_network(indra, entities, interaction_types = "Complex")
+#' network <- get_network(indra, entities, interaction_types = "Binding")
 #' evidence <- get_evidence(indra, head(network$edges, 2))
 #' head(evidence[, c("source", "target", "pmid", "text")])
 #' }
@@ -286,7 +287,7 @@ setMethod("get_evidence", "NetworkBackend",
 #'                              id_type = "uniprot")
 #' entities <- convert_ids(indra, entities)
 #' entities <- select_entities(entities, pvalue_cutoff = 0.05)
-#' network <- get_network(indra, entities, interaction_types = "Complex")
+#' network <- get_network(indra, entities, interaction_types = "Binding")
 #' get_curations(indra, head(network$edges, 2))
 #' }
 setGeneric("get_curations",

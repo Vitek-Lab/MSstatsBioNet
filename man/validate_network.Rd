@@ -20,15 +20,15 @@ vocabularies that the visualization and filtering functions rely on.
 }
 \details{
 Required edge columns: \code{source}, \code{target} (both matching
-\code{nodes$id}), \code{interaction} (an INDRA statement type such as
-\code{"Activation"} or \code{"Complex"}), \code{directed} (logical),
+\code{nodes$id}), \code{interaction} (a statement type such as
+\code{"Activation"} or \code{"Binding"}), \code{directed} (logical),
 \code{site} (PTM site on the target such as \code{"S148"}, \code{;}-joined
 when there are several, or \code{NA}), \code{confidence} (in [0, 1], or
 \code{NA} when the source provides no score), \code{evidence_count}
 (whole number, at least 1, not \code{NA}), \code{evidence_url},
 \code{statement_id} (character), \code{backend_database}, and
 \code{query_type}.
-Edges of the symmetric statement types \code{"Complex"} and
+Edges of the symmetric statement types \code{"Binding"} and
 \code{"Association"} must have \code{directed = FALSE}. Several edges
 can share a \code{statement_id}: an undirected statement can be listed
 in both directions, and a statement reaches every node with its

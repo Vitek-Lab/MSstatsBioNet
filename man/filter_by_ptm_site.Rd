@@ -26,7 +26,7 @@ of this filter and \code{\link{filter_by_curation}()} doesn't matter.
 }
 \details{
 Edges without a \code{site} are dropped. These include every edge that
-isn't a modification (\code{Complex}, \code{Activation}, ...), and every
+isn't a modification (\code{Binding}, \code{Activation}, ...), and every
 edge from a backend that reports no sites, such as STRING: filter an
 INDRA network before merging it with one from such a backend, if those
 edges should stay. Nodes are dropped when they had edges and lost them

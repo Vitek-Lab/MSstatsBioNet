@@ -42,7 +42,7 @@
 #'                              id_type = "uniprot")
 #' entities <- convert_ids(indra, entities)
 #' entities <- select_entities(entities, pvalue_cutoff = 0.05)
-#' network <- get_network(indra, entities, interaction_types = "Complex")
+#' network <- get_network(indra, entities, interaction_types = "Binding")
 #' network <- filter_by_curation(network, min_evidence = 2)
 #' head(network$edges)
 #' }
@@ -121,7 +121,7 @@ filter_by_curation <- function(network, min_evidence = 1, backend = NULL) {
 #' of this filter and \code{\link{filter_by_curation}()} doesn't matter.
 #'
 #' Edges without a \code{site} are dropped. These include every edge that
-#' isn't a modification (\code{Complex}, \code{Activation}, ...), and every
+#' isn't a modification (\code{Binding}, \code{Activation}, ...), and every
 #' edge from a backend that reports no sites, such as STRING: filter an
 #' INDRA network before merging it with one from such a backend, if those
 #' edges should stay. Nodes are dropped when they had edges and lost them

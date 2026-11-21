@@ -158,9 +158,9 @@ HTMLWidgets.widget({
             "text-background-padding": "2px"
           }
         },
-        /* ── undirected (complex) edges ──────────────────────────────── */
+        /* ── undirected (binding) edges ──────────────────────────────── */
         {
-          selector: "edge[category = 'complex']",
+          selector: "edge[category = 'binding']",
           style: {
             "line-style":         "solid",
             "target-arrow-shape": "none",
