@@ -32,8 +32,11 @@ coloured. Missing status columns count as \code{TRUE}.
 \code{"passed_cutoffs"} is one of the node's
 \code{";"}-joined roles, dashed otherwise (e.g.
 \code{"one_condition_missing"} or
-\code{"user_added"}). A missing column or an \code{NA}
-role draws a solid border.}
+\code{"user_added"}). PTM site nodes take the
+border from their own row's role. A protein with
+only \code{site} rows has no role of its own and
+draws dashed. A missing column draws every border
+solid, and an \code{NA} role draws a solid border.}
 
 \item{edges}{Data frame with columns \code{source}, \code{target},
 \code{interaction}.  Optional: \code{directed} (an

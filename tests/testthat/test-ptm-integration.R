@@ -136,13 +136,29 @@ test_that("add_entity_values() adds a protein-level row to a sites-only protein"
     expect_equal(protein_row$entity_type, "protein")
     expect_true(protein_row$measured)
     expect_true(protein_row$has_measured_sites)
-    expect_equal(protein_row$node_role, "passed_cutoffs")
+    # added by add_entity_values(), not by the query: its sites' roles are
+    # not its own
+    expect_equal(protein_row$node_role, "user_added")
     # placed before the protein's site rows
     expect_equal(which(result$nodes$id == "P00533")[1],
                  which(result$nodes$id == "P00533" &
                            is.na(result$nodes$site)))
-    # the site rows keep their own values
+    # the site rows keep their own values and roles
     expect_equal(egfr$logFC[!is.na(egfr$site)], c(1.5, -0.4))
+    expect_equal(egfr$node_role[!is.na(egfr$site)],
+                 c("passed_cutoffs", "passed_cutoffs"))
+    expect_silent(validate_network(result))
+})
+
+test_that("add_entity_values() does not change node_role, even for an infinite logFC", {
+    network <- .make_ptm_network(edge_sites = "Y1092")
+    global <- .make_global_entities(ids = "LONE", namespace = "HGNC",
+                                    entity_id = "9", log2FC = Inf)
+    result <- suppressMessages(add_entity_values(network, global,
+                                                 overwrite = TRUE))
+    lone <- result$nodes[result$nodes$id == "LONE", ]
+    expect_equal(lone$logFC, Inf)
+    expect_equal(lone$node_role, "passed_cutoffs")
     expect_silent(validate_network(result))
 })
 

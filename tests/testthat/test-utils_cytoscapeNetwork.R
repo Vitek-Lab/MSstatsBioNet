@@ -342,6 +342,13 @@ test_that(".buildElements uses grey when logFC column is absent", {
 })
 
 # Node data of the main (non-PTM, non-compound) nodes, keyed by id
+.ptm_node_data <- function(elements) {
+    ptm <- Filter(function(el) identical(el$data$node_type, "ptm"),
+                  elements)
+    stats::setNames(lapply(ptm, `[[`, "data"),
+                    vapply(ptm, function(el) el$data$label, character(1)))
+}
+
 .main_node_data <- function(elements) {
     main <- Filter(function(el) identical(el$data$node_type, "protein"),
                    elements)
@@ -468,8 +475,55 @@ test_that(".buildElements takes passed_cutoffs from the protein-level row", {
                         stringsAsFactors = FALSE)
     elements <- MSstatsBioNet:::.buildElements(nodes, data.frame())
     expect_false(.main_node_data(elements)$P1$passed_cutoffs)
-    ptm <- Filter(function(el) identical(el$data$node_type, "ptm"), elements)
-    expect_null(ptm[[1]]$data$passed_cutoffs)
+    # the site keeps its own role
+    expect_true(.ptm_node_data(elements)$S5$passed_cutoffs)
+})
+
+test_that(".buildElements sets passed_cutoffs on each PTM site from its own role", {
+    nodes <- data.frame(
+        id        = c("P1", "P1", "P1"),
+        site      = c(NA, "S5", "T9"),
+        logFC     = c(1.5, -2, Inf),
+        node_role = c("passed_cutoffs", "passed_cutoffs",
+                      "one_condition_missing"),
+        stringsAsFactors = FALSE
+    )
+    elements <- MSstatsBioNet:::.buildElements(nodes, data.frame())
+    expect_true(.main_node_data(elements)$P1$passed_cutoffs)
+    sites <- .ptm_node_data(elements)
+    expect_true(sites$S5$passed_cutoffs)
+    expect_false(sites$T9$passed_cutoffs)
+})
+
+test_that(".buildElements dashes a protein with only site rows, whatever its sites' roles", {
+    nodes <- data.frame(
+        id        = c("P1", "P1"),
+        site      = c("S5", "T9"),
+        logFC     = c(1.5, -2),
+        node_role = c("passed_cutoffs", "passed_cutoffs"),
+        stringsAsFactors = FALSE
+    )
+    elements <- MSstatsBioNet:::.buildElements(nodes, data.frame())
+    protein <- .main_node_data(elements)$P1
+    expect_equal(protein$status, "sites_only")
+    expect_false(protein$passed_cutoffs)
+    sites <- .ptm_node_data(elements)
+    expect_true(sites$S5$passed_cutoffs)
+    expect_true(sites$T9$passed_cutoffs)
+})
+
+test_that(".buildElements draws every border solid without node_role, PTM sites included", {
+    nodes <- data.frame(
+        id    = c("P1", "P1", "P2", "P2"),
+        site  = c(NA, "S5", "S7", "T9"),
+        logFC = c(1.5, Inf, -2, 0.3),
+        stringsAsFactors = FALSE
+    )
+    elements <- MSstatsBioNet:::.buildElements(nodes, data.frame())
+    expect_true(all(vapply(.main_node_data(elements), `[[`, logical(1),
+                           "passed_cutoffs")))
+    expect_true(all(vapply(.ptm_node_data(elements), `[[`, logical(1),
+                           "passed_cutoffs")))
 })
 
 test_that(".buildElements colours a PTM protein from its protein-level row", {

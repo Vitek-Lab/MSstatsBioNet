@@ -346,15 +346,17 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
 #' Returns a list of named lists — jsonlite will serialise them cleanly.
 #' Node data carry \code{status} (\code{.node_display_status()}, plus
 #' \code{"sites_only"}) and \code{shape}, which the widget styles and the
-#' legend lists. Main nodes also carry \code{passed_cutoffs}
-#' (\code{.node_passed_cutoffs()}): \code{FALSE} draws a dashed border.
+#' legend lists. Main nodes and PTM site nodes also carry
+#' \code{passed_cutoffs} (\code{.node_passed_cutoffs()} of their own row):
+#' \code{FALSE} draws a dashed border.
 #' Every main node has \code{node_type = "protein"}, whatever its
 #' \code{entity_type} (metabolites, drugs, and so on included); only PTM
 #' site nodes and compound containers have other node types.
 #' A protein with PTM site rows takes its colour, status, and
-#' \code{passed_cutoffs} from its protein-level row (\code{site} empty);
-#' without one it is \code{"sites_only"} and only its site nodes are
-#' coloured.
+#' \code{passed_cutoffs} from its protein-level row (\code{site} empty).
+#' Without one it is \code{"sites_only"}, only its site nodes are
+#' coloured, and, when \code{nodes} has a \code{node_role} column, it has
+#' \code{passed_cutoffs = FALSE}: its sites' roles are not its own.
 #' @keywords internal
 #' @noRd
 .buildElements <- function(nodes, edges, display_label_type = "id") {
@@ -366,6 +368,7 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
     }
     node_status <- .node_display_status(nodes)
     node_passed_cutoffs <- .node_passed_cutoffs(nodes)
+    has_node_roles <- "node_role" %in% names(nodes)
     node_shapes <- .node_shape(.get_column_or_default(nodes, "entity_type",
                                                      NA_character_))
     
@@ -415,9 +418,13 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
             j <- protein_row[i]
             protein_color  <- node_colors[j]
             protein_status <- node_status[j]
+            protein_passed <- node_passed_cutoffs[j]
             if (!has_protein_row[i] && protein_status != "latent") {
                 protein_color  <- NO_DATA_NODE_COLOR
                 protein_status <- "sites_only"
+            }
+            if (!has_protein_row[i] && has_node_roles) {
+                protein_passed <- FALSE
             }
             display_label <- if (label_col == "entity_name" &&
                                  !is.na(nodes$entity_name[j]) &&
@@ -427,7 +434,7 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
                        label     = display_label,
                        color     = protein_color,
                        status    = protein_status,
-                       passed_cutoffs = node_passed_cutoffs[j],
+                       passed_cutoffs = protein_passed,
                        shape     = node_shapes[j],
                        entity_type = if ("entity_type" %in% names(nodes) &&
                                          !is.na(nodes$entity_type[j]))
@@ -453,6 +460,7 @@ NODE_SHAPES <- c(protein    = "round-rectangle",
                         label          = site,
                         color          = color,
                         status         = node_status[i],
+                        passed_cutoffs = node_passed_cutoffs[i],
                         parent_protein = row$id,
                         parent         = compound_id,
                         node_type      = "ptm"
