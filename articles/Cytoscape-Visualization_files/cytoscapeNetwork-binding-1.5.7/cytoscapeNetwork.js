@@ -76,7 +76,8 @@ HTMLWidgets.widget({
             "height":           35,
             "background-color": "data(color)",
             "border-color":     "#333",
-            "border-width":     1.5,
+            /* wide enough for a dashed border to read on a 35px circle */
+            "border-width":     2.5,
             "label":            "data(label)",
             "font-size":        "10px",
             "font-weight":      "normal",
@@ -116,8 +117,10 @@ HTMLWidgets.widget({
         {
           /* in the network for a reason other than passing the cutoffs.
              node_type 'protein' is every main node, whatever its
-             entity_type (metabolites, drugs, ... included) */
-          selector: "node[node_type = 'protein'][!passed_cutoffs]",
+             entity_type (metabolites, drugs, ... included); 'ptm' is a
+             PTM site, styled from its own row's role */
+          selector: "node[node_type = 'protein'][!passed_cutoffs], " +
+                    "node[node_type = 'ptm'][!passed_cutoffs]",
           style: {
             "border-style": "dashed"
           }
@@ -318,9 +321,10 @@ HTMLWidgets.widget({
         .join("");
 
       /* Node border by role: listed when some node did not pass the cutoffs.
-         node_type "protein" selects every main node, of any entity_type */
-      var mainNodes = cyInstance.nodes('[node_type = "protein"]');
-      var nDashed = mainNodes.filter("[!passed_cutoffs]").length;
+         node_type "protein" selects every main node, of any entity_type,
+         and "ptm" every PTM site node */
+      var borderedNodes = cyInstance.nodes('[node_type = "protein"], [node_type = "ptm"]');
+      var nDashed = borderedNodes.filter("[!passed_cutoffs]").length;
       var borderItems = "";
       if (nDashed > 0) {
         var borderSwatch = function (style) {
@@ -328,7 +332,7 @@ HTMLWidgets.widget({
                  'border:2px ' + style + ' #333;background:transparent;' +
                  'margin-right:7px;flex-shrink:0;"></div>';
         };
-        if (nDashed < mainNodes.length) {
+        if (nDashed < borderedNodes.length) {
           borderItems += legendRow(borderSwatch("solid"), "Passed significance cutoffs");
         }
         borderItems += legendRow(borderSwatch("dashed"), "Did not pass significance cutoffs");

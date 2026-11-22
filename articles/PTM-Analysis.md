@@ -311,21 +311,21 @@ knitr::kable(protein_rows[, c("entity_name", "node_role", "measured",
                               "logFC", "adj.pvalue")])
 ```
 
-|     | entity_name | node_role      | measured |   logFC | adj.pvalue |
-|:----|:------------|:---------------|:---------|--------:|-----------:|
-| 1   | BRD4        | passed_cutoffs | TRUE     | -0.3303 |   0.026840 |
-| 3   | LMNA        | passed_cutoffs | TRUE     |  0.4678 |   0.016000 |
-| 5   | PML         | passed_cutoffs | TRUE     |  1.0720 |   0.000125 |
-| 7   | IQGAP1      | passed_cutoffs | TRUE     |  0.7732 |   0.003143 |
-| 9   | CDK18       | passed_cutoffs | TRUE     |  1.0550 |   0.019570 |
-| 16  | MAPK3       | user_added     | TRUE     |  0.4066 |   0.308800 |
-| 17  | AKT1        | user_added     | TRUE     |  0.4694 |   0.004076 |
-| 18  | CDK1        | user_added     | FALSE    |      NA |         NA |
-| 19  | CSNK2A1     | user_added     | FALSE    |      NA |         NA |
-| 20  | MAPK1       | user_added     | TRUE     |  0.3307 |   0.532000 |
-| 21  | SRC         | user_added     | FALSE    |      NA |         NA |
-| 22  | PRKCA       | user_added     | FALSE    |      NA |         NA |
-| 23  | PRKACA      | user_added     | TRUE     | -0.1899 |   0.151600 |
+|     | entity_name | node_role  | measured |   logFC | adj.pvalue |
+|:----|:------------|:-----------|:---------|--------:|-----------:|
+| 1   | BRD4        | user_added | TRUE     | -0.3303 |   0.026840 |
+| 3   | LMNA        | user_added | TRUE     |  0.4678 |   0.016000 |
+| 5   | PML         | user_added | TRUE     |  1.0720 |   0.000125 |
+| 7   | IQGAP1      | user_added | TRUE     |  0.7732 |   0.003143 |
+| 9   | CDK18       | user_added | TRUE     |  1.0550 |   0.019570 |
+| 16  | MAPK3       | user_added | TRUE     |  0.4066 |   0.308800 |
+| 17  | AKT1        | user_added | TRUE     |  0.4694 |   0.004076 |
+| 18  | CDK1        | user_added | FALSE    |      NA |         NA |
+| 19  | CSNK2A1     | user_added | FALSE    |      NA |         NA |
+| 20  | MAPK1       | user_added | TRUE     |  0.3307 |   0.532000 |
+| 21  | SRC         | user_added | FALSE    |      NA |         NA |
+| 22  | PRKCA       | user_added | FALSE    |      NA |         NA |
+| 23  | PRKACA      | user_added | TRUE     | -0.1899 |   0.151600 |
 
 Kinases that were not measured in the global profiling experiment keep
 `measured = FALSE`. Proteins that have sites in the network but no

@@ -53,7 +53,17 @@ A protein that has only PTM site rows in the network, and matches a
 protein-level entity row, gets a new protein-level row (`site = NA`)
 with that row's values, so
 [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
-colors the protein node by it.
+colors the protein node by it. The new row has
+`node_role = "user_added"`: it is in the network because of this call,
+not because it passed the cutoffs of the query.
+
+`node_role` of existing rows is not changed. It records why a node is in
+the network, from the query, and the copied values played no part in the
+query. So in
+[`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
+the border still shows the query (solid for `"passed_cutoffs"`) while
+the fill shows the copied values, e.g. a node can have a solid border
+and an infinite copied `logFC`.
 
 Matched node rows get `measured = TRUE`. Rows of `entities` that match
 no node are not added:

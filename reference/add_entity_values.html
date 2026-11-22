@@ -103,7 +103,15 @@ matches several entity rows gets no values, with a message.</p>
 <p>A protein that has only PTM site rows in the network, and matches a
 protein-level entity row, gets a new protein-level row (<code>site =
 NA</code>) with that row's values, so <code><a href="cytoscapeNetwork.html">cytoscapeNetwork()</a></code> colors
-the protein node by it.</p>
+the protein node by it. The new row has <code>node_role = "user_added"</code>:
+it is in the network because of this call, not because it passed the
+cutoffs of the query.</p>
+<p><code>node_role</code> of existing rows is not changed. It records why a node
+is in the network, from the query, and the copied values played no part
+in the query. So in <code><a href="cytoscapeNetwork.html">cytoscapeNetwork()</a></code> the border still
+shows the query (solid for <code>"passed_cutoffs"</code>) while the fill shows
+the copied values, e.g. a node can have a solid border and an infinite
+copied <code>logFC</code>.</p>
 <p>Matched node rows get <code>measured = TRUE</code>. Rows of <code>entities</code>
 that match no node are not added: <code><a href="get_network.html">get_network()</a></code> decides
 which nodes are in the network. Edges and the other elements of

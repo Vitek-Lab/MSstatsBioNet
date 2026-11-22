@@ -93,8 +93,11 @@ coloured. Missing status columns count as <code>TRUE</code>.
 <code>"passed_cutoffs"</code> is one of the node's
 <code>";"</code>-joined roles, dashed otherwise (e.g.
 <code>"one_condition_missing"</code> or
-<code>"user_added"</code>). A missing column or an <code>NA</code>
-role draws a solid border.</p></dd>
+<code>"user_added"</code>). PTM site nodes take the
+border from their own row's role. A protein with
+only <code>site</code> rows has no role of its own and
+draws dashed. A missing column draws every border
+solid, and an <code>NA</code> role draws a solid border.</p></dd>
 
 
 <dt id="arg-edges">edges<a class="anchor" aria-label="anchor" href="#arg-edges"></a></dt>
