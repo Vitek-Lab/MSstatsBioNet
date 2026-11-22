@@ -300,7 +300,7 @@ HTMLWidgets.widget({
       var statusConfigs = [
         { status: "latent",      label: "Not in input data",
           box: "border:2px solid #999;background:#fff;" },
-        { status: "sites_only",  label: "No protein-level row in input",
+        { status: "sites_only",  label: "No protein-level measurement",
           box: "border:2px solid #333;background:#fff;" },
         { status: "no_logfc",    label: "In input, no logFC shown",
           box: "border:2px solid #333;background:#fff;" },
