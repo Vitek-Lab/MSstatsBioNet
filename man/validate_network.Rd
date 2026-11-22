@@ -40,10 +40,11 @@ Required node columns: \code{id}, \code{entity_type} (e.g.
 \code{entity_id} (the grounding, \code{NA} when unknown),
 \code{measured} (logical: the node is in the input data),
 \code{included_in_query} (logical: the node was part of the query), and
-\code{node_role} (why the node is in the network, e.g.
-\code{"passed_cutoffs"}, \code{"one_condition_missing"}, or
-\code{"user_added"} (put there by the user: forced into the query, or a
-protein-level row added by \code{\link{add_entity_values}()}), or
+\code{node_role} (how the row's values compare to the cutoffs of
+\code{\link{select_entities}()}: \code{"passed_cutoffs"},
+\code{"one_condition_missing"}, or \code{"user_added"} (put there by
+the user: forced into the query, or with values copied by
+\code{\link{add_entity_values}()} that did not pass), or
 several joined by
 \code{";"} after \code{\link{merge_networks}()}). An \code{id} can repeat,
 once per PTM site row of the same protein. When present, \code{site},
