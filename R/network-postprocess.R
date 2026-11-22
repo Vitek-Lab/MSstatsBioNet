@@ -183,8 +183,8 @@ filter_by_ptm_site <- function(network) {
 
 #' Copy the values of an entity table onto a network's nodes
 #'
-#' Sets \code{logFC} and \code{adj.pvalue} of the nodes that match a row
-#' of \code{entities}, without querying a backend. Use it to show the
+#' Sets \code{logFC}, \code{adj.pvalue}, and \code{node_role} of the nodes
+#' that match a row of \code{entities}, without querying a backend. Use it to show the
 #' results of another experiment on a network: for example, a network built
 #' from MSstatsPTM's \code{ADJUSTED.Model}, with its protein nodes colored
 #' by the global profiling results (\code{PROTEIN.Model}).
@@ -204,16 +204,23 @@ filter_by_ptm_site <- function(network) {
 #' A protein that has only PTM site rows in the network, and matches a
 #' protein-level entity row, gets a new protein-level row (\code{site =
 #' NA}) with that row's values, so \code{\link{cytoscapeNetwork}()} colors
-#' the protein node by it. The new row has \code{node_role = "user_added"}:
-#' it is in the network because of this call, not because it passed the
-#' cutoffs of the query.
+#' the protein node by it.
 #'
-#' \code{node_role} of existing rows is not changed. It records why a node
-#' is in the network, from the query, and the copied values played no part
-#' in the query. So in \code{\link{cytoscapeNetwork}()} the border still
-#' shows the query (solid for \code{"passed_cutoffs"}) while the fill shows
-#' the copied values, e.g. a node can have a solid border and an infinite
-#' copied \code{logFC}.
+#' Each matched node row gets its \code{node_role} from its entity row, as
+#' set by \code{\link{select_entities}()}: \code{"passed_cutoffs"} for a
+#' selected row, \code{"one_condition_missing"} for a row with an infinite
+#' \code{logFC} selected through \code{include_infinite_fc}, and
+#' \code{"user_added"} for a row selected only through
+#' \code{force_include} or not selected at all. A row that fails the
+#' cutoffs is \code{"user_added"} because it is shown only because this
+#' call put its values on the network. The new role replaces the node
+#' row's old one, so the border and the fill drawn by
+#' \code{\link{cytoscapeNetwork}()} come from the same row, judged by the
+#' cutoffs of the experiment that row comes from. For example, a protein
+#' node filled from the global profiling results gets a solid border when
+#' its global change passes the cutoffs, while its PTM site nodes keep the
+#' roles from the PTM query. Node rows that match no entity row keep their
+#' roles.
 #'
 #' Matched node rows get \code{measured = TRUE}. Rows of \code{entities}
 #' that match no node are not added: \code{\link{get_network}()} decides
@@ -223,14 +230,14 @@ filter_by_ptm_site <- function(network) {
 #'
 #' @param network list of \code{nodes} and \code{edges} from
 #' \code{\link{get_network}()}
-#' @param entities entity table from \code{\link{prepare_entities}()},
-#' grounded by \code{\link{convert_ids}()}. Its \code{included_in_query}
-#' column is ignored.
+#' @param entities entity table from \code{\link{select_entities}()},
+#' grounded by \code{\link{convert_ids}()}. Its cutoffs set the
+#' \code{node_role} of the matched nodes.
 #' @param overwrite whether to replace the \code{logFC} and
 #' \code{adj.pvalue} of node rows that already have them. \code{FALSE}
 #' (default) stops and names those nodes.
-#' @return \code{network}, with the values of \code{entities} on the
-#' matching nodes
+#' @return \code{network}, with the values and roles of \code{entities} on
+#' the matching nodes
 #' @seealso \code{\link{filter_by_ptm_site}()}, \code{\link{merge_networks}()}
 #' @export
 #' @examples
@@ -262,8 +269,9 @@ filter_by_ptm_site <- function(network) {
 #' global$namespace <- "HGNC"
 #' global$entity_id <- c("3236", "11283")
 #' global$entity_name <- c("EGFR", "SRC")
+#' global <- select_entities(global, pvalue_cutoff = 0.05)
 #' network <- add_entity_values(network, global)
-#' network$nodes[, c("id", "site", "measured", "logFC")]
+#' network$nodes[, c("id", "site", "measured", "node_role", "logFC")]
 add_entity_values <- function(network, entities, overwrite = FALSE) {
     .check_add_entity_values_input(network, entities, overwrite)
     nodes <- as.data.frame(network$nodes, stringsAsFactors = FALSE)
@@ -293,6 +301,9 @@ add_entity_values <- function(network, entities, overwrite = FALSE) {
         nodes[[column]] <- values
     }
     nodes$measured[has_match] <- TRUE
+    entity_roles <- .entity_node_roles(entities,
+                                       entities$user_added %in% TRUE)
+    nodes$node_role[has_match] <- entity_roles[rows[has_match]]
     added <- is_new[keep]
     nodes$entity_type[added] <- entities$entity_type[rows[added]]
     # Each new protein-level row goes just before the first row of its node
@@ -316,6 +327,10 @@ add_entity_values <- function(network, entities, overwrite = FALSE) {
 .check_add_entity_values_input <- function(network, entities, overwrite) {
     validate_network(network)
     .validate_entities(entities)
+    if (!"user_added" %in% colnames(entities)) {
+        stop("entities must be the output of select_entities().",
+             call. = FALSE)
+    }
     if (!is.logical(overwrite) || length(overwrite) != 1 || is.na(overwrite)) {
         stop("`overwrite` must be TRUE or FALSE.", call. = FALSE)
     }
@@ -334,10 +349,9 @@ add_entity_values <- function(network, entities, overwrite = FALSE) {
 #' Build a protein-level row for each protein with only PTM site rows
 #'
 #' A copy of the protein's first row with \code{site = NA},
-#' \code{node_role = "user_added"} (the row is not from the query, so its
-#' sites' roles are not its own), \code{measured = FALSE}, and no
-#' statistics, until add_entity_values() fills it from a matching entity
-#' row.
+#' \code{node_role = "user_added"}, \code{measured = FALSE}, and no
+#' statistics. The role is a placeholder: add_entity_values() keeps only
+#' the rows that match an entity row, and sets their role from it.
 #' @param nodes nodes data.frame with a \code{site} column
 #' @return nodes data.frame, one row per such protein
 #' @keywords internal

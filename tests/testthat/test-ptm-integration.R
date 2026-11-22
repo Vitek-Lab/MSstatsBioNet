@@ -34,19 +34,22 @@
     )
 }
 
-# Global profiling results, grounded as convert_ids() would
+# Global profiling results, grounded as convert_ids() would, and selected
+# by select_entities() with the cutoffs in `...` (none by default, which
+# selects every row with a finite logFC and an adj.pvalue)
 .make_global_entities <- function(ids = c("P00533", "P12931"),
                                   namespace = c("HGNC", "HGNC"),
                                   entity_id = c("3236", "11283"),
-                                  log2FC = seq_along(ids) / 10) {
+                                  log2FC = seq_along(ids) / 10,
+                                  adj.pvalue = rep(0.05, length(ids)),
+                                  ...) {
     entities <- prepare_entities(
-        data.frame(Protein = ids, log2FC = log2FC,
-                   adj.pvalue = rep(0.05, length(ids))),
+        data.frame(Protein = ids, log2FC = log2FC, adj.pvalue = adj.pvalue),
         entity_type = "protein", id_type = "uniprot")
     entities$namespace <- namespace
     entities$entity_id <- entity_id
     entities$entity_name <- ifelse(is.na(entity_id), NA_character_, ids)
-    entities
+    select_entities(entities, ...)
 }
 
 test_that("filter_by_ptm_site() keeps edges whose site is a site of their target", {
@@ -136,9 +139,8 @@ test_that("add_entity_values() adds a protein-level row to a sites-only protein"
     expect_equal(protein_row$entity_type, "protein")
     expect_true(protein_row$measured)
     expect_true(protein_row$has_measured_sites)
-    # added by add_entity_values(), not by the query: its sites' roles are
-    # not its own
-    expect_equal(protein_row$node_role, "user_added")
+    # its role comes from the global selection, not its sites
+    expect_equal(protein_row$node_role, "passed_cutoffs")
     # placed before the protein's site rows
     expect_equal(which(result$nodes$id == "P00533")[1],
                  which(result$nodes$id == "P00533" &
@@ -150,16 +152,73 @@ test_that("add_entity_values() adds a protein-level row to a sites-only protein"
     expect_silent(validate_network(result))
 })
 
-test_that("add_entity_values() does not change node_role, even for an infinite logFC", {
+test_that("add_entity_values() sets node_role from the selection of entities", {
+    network <- .make_ptm_network(edge_sites = "Y1092")
+    global <- .make_global_entities(log2FC = c(0.1, 2),
+                                    adj.pvalue = c(0.3, 0.01),
+                                    pvalue_cutoff = 0.05)
+    result <- suppressMessages(add_entity_values(network, global))
+    nodes <- result$nodes
+    egfr <- nodes[nodes$id == "P00533" & is.na(nodes$site), ]
+    # fails the global cutoffs: shown only because of this call
+    expect_equal(egfr$node_role, "user_added")
+    # a latent node matched by grounding takes the selection's role
+    expect_equal(nodes$node_role[nodes$id == "SRC"], "passed_cutoffs")
+    # site rows and unmatched rows keep their roles
+    expect_equal(nodes$node_role[!is.na(nodes$site)],
+                 c("passed_cutoffs", "passed_cutoffs"))
+    expect_equal(nodes$node_role[nodes$id == "LONE"], "passed_cutoffs")
+    expect_silent(validate_network(result))
+})
+
+test_that("add_entity_values() replaces a passed_cutoffs role when the copied values fail", {
     network <- .make_ptm_network(edge_sites = "Y1092")
     global <- .make_global_entities(ids = "LONE", namespace = "HGNC",
-                                    entity_id = "9", log2FC = Inf)
+                                    entity_id = "9", adj.pvalue = 0.5,
+                                    pvalue_cutoff = 0.05)
     result <- suppressMessages(add_entity_values(network, global,
                                                  overwrite = TRUE))
-    lone <- result$nodes[result$nodes$id == "LONE", ]
-    expect_equal(lone$logFC, Inf)
-    expect_equal(lone$node_role, "passed_cutoffs")
-    expect_silent(validate_network(result))
+    expect_equal(result$nodes$node_role[result$nodes$id == "LONE"],
+                 "user_added")
+})
+
+test_that("add_entity_values() gives an infinite logFC its role from include_infinite_fc", {
+    network <- .make_ptm_network(edge_sites = "Y1092")
+    make_global <- function(...) {
+        .make_global_entities(ids = "LONE", namespace = "HGNC",
+                              entity_id = "9", log2FC = Inf, ...)
+    }
+    lone_role <- function(global) {
+        result <- suppressMessages(add_entity_values(network, global,
+                                                     overwrite = TRUE))
+        expect_silent(validate_network(result))
+        lone <- result$nodes[result$nodes$id == "LONE", ]
+        expect_equal(lone$logFC, Inf)
+        lone$node_role
+    }
+    expect_equal(lone_role(make_global(include_infinite_fc = TRUE)),
+                 "one_condition_missing")
+    expect_equal(lone_role(make_global()), "user_added")
+})
+
+test_that("add_entity_values() gives a row forced into the selection user_added", {
+    network <- .make_ptm_network(edge_sites = "Y1092")
+    global <- .make_global_entities(adj.pvalue = c(0.5, 0.5),
+                                    pvalue_cutoff = 0.05,
+                                    force_include = "P00533")
+    expect_true(global$user_added[global$id == "P00533"])
+    result <- suppressMessages(add_entity_values(network, global))
+    egfr <- result$nodes[result$nodes$id == "P00533" &
+                             is.na(result$nodes$site), ]
+    expect_equal(egfr$node_role, "user_added")
+})
+
+test_that("add_entity_values() requires the output of select_entities()", {
+    network <- .make_ptm_network(edge_sites = "Y1092")
+    entities <- .make_global_entities()
+    entities$user_added <- NULL
+    expect_error(add_entity_values(network, entities),
+                 "must be the output of select_entities\\(\\)")
 })
 
 test_that("add_entity_values() matches a latent node by grounding", {
@@ -169,7 +228,7 @@ test_that("add_entity_values() matches a latent node by grounding", {
     src <- result$nodes[result$nodes$id == "SRC", ]
     expect_equal(src$logFC, 0.2)
     expect_true(src$measured)
-    expect_equal(src$node_role, "user_added")
+    expect_equal(src$node_role, "passed_cutoffs")
 })
 
 test_that("add_entity_values() matches by grounding only rows not matched by id", {
@@ -264,6 +323,7 @@ test_that("add_entity_values() copies site values from a PTM entity table", {
     entities$namespace <- "HGNC"
     entities$entity_id <- "3236"
     entities$entity_name <- "EGFR"
+    entities <- select_entities(entities, pvalue_cutoff = 0.05)
     result <- suppressMessages(add_entity_values(network, entities))
     expect_equal(result$nodes$logFC[2], 3)
     # no protein-level entity row, so no protein-level node row is added

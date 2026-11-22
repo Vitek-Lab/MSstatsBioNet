@@ -190,16 +190,17 @@ Run `filter_by_ptm_site` before `merge_networks` when combining with a backend t
 - a protein with only site rows in the network gets a protein-level row, with the protein's change;
 - a kinase added with `include_entities` is matched by its HGNC grounding, since its `id` is INDRA's gene symbol, and gets its change too.
 
-The entity table must come from `convert_ids`, so that nodes can be matched by grounding.
+The entity table must come from `convert_ids`, so that nodes can be matched by grounding, and then from `select_entities`, whose cutoffs set the `node_role` of each node that gets values. A protein whose global change passes the cutoffs is `passed_cutoffs`. One that does not is `user_added`: it is shown only because we chose to add these values. Here we use the same cutoff as for the sites.
 
 ```{r}
+proteins <- select_entities(proteins, pvalue_cutoff = 0.05)
 network <- add_entity_values(network, proteins)
 protein_rows <- network$nodes[is.na(network$nodes$site), ]
 knitr::kable(protein_rows[, c("entity_name", "node_role", "measured",
                               "logFC", "adj.pvalue")])
 ```
 
-Kinases that were not measured in the global profiling experiment keep `measured = FALSE`. Proteins that have sites in the network but no protein-level row, such as HIF1A, were not measured in the global profiling experiment either. Their sites are the `Adjusted = FALSE` rows of `ADJUSTED.Model`, so their change is not adjusted for protein abundance.
+Kinases that were not measured in the global profiling experiment keep `measured = FALSE` and their `user_added` role. The site rows keep the roles from the PTM query. Proteins that have sites in the network but no protein-level row, such as HIF1A, were not measured in the global profiling experiment either. Their sites are the `Adjusted = FALSE` rows of `ADJUSTED.Model`, so their change is not adjusted for protein abundance.
 
 ```{r}
 site_rows <- network$nodes[!is.na(network$nodes$site), ]
@@ -217,7 +218,7 @@ Edges are prior knowledge from INDRA, not evidence from this experiment. Click a
 
 # Network Visualization
 
-`cytoscapeNetwork` draws a protein with sites as one node, with a small node for each site around it. The protein node is colored by the protein's change in the global profiling experiment, and each site node by the site's adjusted change. The legend's `logFC` covers both, so read a protein's color and its sites' colors as changes from different experiments. A protein with no global profiling result, such as HIF1A, has no fill and a solid border. Kinases added with `include_entities` did not pass the cutoffs, so they have a dashed border; those that were not measured also have no fill.
+`cytoscapeNetwork` draws a protein with sites as one node, with a small node for each site around it. The protein node is colored by the protein's change in the global profiling experiment, and each site node by the site's adjusted change. The legend's `logFC` covers both, so read a protein's color and its sites' colors as changes from different experiments. Borders follow the same rule: a node's border is solid when the values that fill it passed the cutoffs of their own experiment. So a protein node's border shows the global profiling cutoffs, and each site node's border shows the PTM cutoffs. A kinase added with `include_entities` whose global change passes, such as AKT1, has a solid border; the other kinases have a dashed border, and those that were not measured also have no fill. A protein with no global profiling result, such as HIF1A, has no fill and a dashed border.
 
 ```{r}
 cytoscapeNetwork(network$nodes, network$edges,
