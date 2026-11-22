@@ -1,10 +1,10 @@
 # Copy the values of an entity table onto a network's nodes
 
-Sets `logFC` and `adj.pvalue` of the nodes that match a row of
-`entities`, without querying a backend. Use it to show the results of
-another experiment on a network: for example, a network built from
-MSstatsPTM's `ADJUSTED.Model`, with its protein nodes colored by the
-global profiling results (`PROTEIN.Model`).
+Sets `logFC`, `adj.pvalue`, and `node_role` of the nodes that match a
+row of `entities`, without querying a backend. Use it to show the
+results of another experiment on a network: for example, a network built
+from MSstatsPTM's `ADJUSTED.Model`, with its protein nodes colored by
+the global profiling results (`PROTEIN.Model`).
 
 ## Usage
 
@@ -22,10 +22,10 @@ add_entity_values(network, entities, overwrite = FALSE)
 - entities:
 
   entity table from
-  [`prepare_entities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/prepare_entities.md),
+  [`select_entities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/select_entities.md),
   grounded by
   [`convert_ids()`](https://vitek-lab.github.io/MSstatsBioNet/reference/convert_ids.md).
-  Its `included_in_query` column is ignored.
+  Its cutoffs set the `node_role` of the matched nodes.
 
 - overwrite:
 
@@ -34,7 +34,7 @@ add_entity_values(network, entities, overwrite = FALSE)
 
 ## Value
 
-`network`, with the values of `entities` on the matching nodes
+`network`, with the values and roles of `entities` on the matching nodes
 
 ## Details
 
@@ -53,17 +53,24 @@ A protein that has only PTM site rows in the network, and matches a
 protein-level entity row, gets a new protein-level row (`site = NA`)
 with that row's values, so
 [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
-colors the protein node by it. The new row has
-`node_role = "user_added"`: it is in the network because of this call,
-not because it passed the cutoffs of the query.
+colors the protein node by it.
 
-`node_role` of existing rows is not changed. It records why a node is in
-the network, from the query, and the copied values played no part in the
-query. So in
+Each matched node row gets its `node_role` from its entity row, as set
+by
+[`select_entities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/select_entities.md):
+`"passed_cutoffs"` for a selected row, `"one_condition_missing"` for a
+row with an infinite `logFC` selected through `include_infinite_fc`, and
+`"user_added"` for a row selected only through `force_include` or not
+selected at all. A row that fails the cutoffs is `"user_added"` because
+it is shown only because this call put its values on the network. The
+new role replaces the node row's old one, so the border and the fill
+drawn by
 [`cytoscapeNetwork()`](https://vitek-lab.github.io/MSstatsBioNet/reference/cytoscapeNetwork.md)
-the border still shows the query (solid for `"passed_cutoffs"`) while
-the fill shows the copied values, e.g. a node can have a solid border
-and an infinite copied `logFC`.
+come from the same row, judged by the cutoffs of the experiment that row
+comes from. For example, a protein node filled from the global profiling
+results gets a solid border when its global change passes the cutoffs,
+while its PTM site nodes keep the roles from the PTM query. Node rows
+that match no entity row keep their roles.
 
 Matched node rows get `measured = TRUE`. Rows of `entities` that match
 no node are not added:
@@ -108,12 +115,13 @@ global <- prepare_entities(
 global$namespace <- "HGNC"
 global$entity_id <- c("3236", "11283")
 global$entity_name <- c("EGFR", "SRC")
+global <- select_entities(global, pvalue_cutoff = 0.05)
 network <- add_entity_values(network, global)
 #> Copied the values of entities to 1 node row(s), and added a protein-level row to 1 protein(s) with only PTM site rows.
-network$nodes[, c("id", "site", "measured", "logFC")]
-#>       id  site measured logFC
-#> 1 P00533  <NA>     TRUE   0.2
-#> 2 P00533 S1039     TRUE   1.5
-#> 3 P00533 Y1092     TRUE  -0.4
-#> 4    SRC  <NA>     TRUE   1.1
+network$nodes[, c("id", "site", "measured", "node_role", "logFC")]
+#>       id  site measured      node_role logFC
+#> 1 P00533  <NA>     TRUE     user_added   0.2
+#> 2 P00533 S1039     TRUE passed_cutoffs   1.5
+#> 3 P00533 Y1092     TRUE passed_cutoffs  -0.4
+#> 4    SRC  <NA>     TRUE passed_cutoffs   1.1
 ```

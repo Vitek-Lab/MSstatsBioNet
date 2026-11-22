@@ -40,12 +40,13 @@ Required node columns: `id`, `entity_type` (e.g. `"protein"`,
 `"ptm_site"`, `"metabolite"`, `"family"`), `entity_name`, `namespace`
 and `entity_id` (the grounding, `NA` when unknown), `measured` (logical:
 the node is in the input data), `included_in_query` (logical: the node
-was part of the query), and `node_role` (why the node is in the network,
-e.g. `"passed_cutoffs"`, `"one_condition_missing"`, or `"user_added"`
-(put there by the user: forced into the query, or a protein-level row
-added by
-[`add_entity_values()`](https://vitek-lab.github.io/MSstatsBioNet/reference/add_entity_values.md)),
-or several joined by `";"` after
+was part of the query), and `node_role` (how the row's values compare to
+the cutoffs of
+[`select_entities()`](https://vitek-lab.github.io/MSstatsBioNet/reference/select_entities.md):
+`"passed_cutoffs"`, `"one_condition_missing"`, or `"user_added"` (put
+there by the user: forced into the query, or with values copied by
+[`add_entity_values()`](https://vitek-lab.github.io/MSstatsBioNet/reference/add_entity_values.md)
+that did not pass), or several joined by `";"` after
 [`merge_networks()`](https://vitek-lab.github.io/MSstatsBioNet/reference/merge_networks.md)).
 An `id` can repeat, once per PTM site row of the same protein. When
 present, `site`, `has_measured_sites`, `logFC`, and `adj.pvalue` are

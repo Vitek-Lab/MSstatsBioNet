@@ -90,10 +90,11 @@ grounding (see <code><a href="get_network.html">get_network()</a></code>).</p>
 <code>entity_id</code> (the grounding, <code>NA</code> when unknown),
 <code>measured</code> (logical: the node is in the input data),
 <code>included_in_query</code> (logical: the node was part of the query), and
-<code>node_role</code> (why the node is in the network, e.g.
-<code>"passed_cutoffs"</code>, <code>"one_condition_missing"</code>, or
-<code>"user_added"</code> (put there by the user: forced into the query, or a
-protein-level row added by <code><a href="add_entity_values.html">add_entity_values()</a></code>), or
+<code>node_role</code> (how the row's values compare to the cutoffs of
+<code><a href="select_entities.html">select_entities()</a></code>: <code>"passed_cutoffs"</code>,
+<code>"one_condition_missing"</code>, or <code>"user_added"</code> (put there by
+the user: forced into the query, or with values copied by
+<code><a href="add_entity_values.html">add_entity_values()</a></code> that did not pass), or
 several joined by
 <code>";"</code> after <code><a href="merge_networks.html">merge_networks()</a></code>). An <code>id</code> can repeat,
 once per PTM site row of the same protein. When present, <code>site</code>,

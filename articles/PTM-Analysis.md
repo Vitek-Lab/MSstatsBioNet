@@ -299,10 +299,15 @@ the global profiling table:
   too.
 
 The entity table must come from `convert_ids`, so that nodes can be
-matched by grounding.
+matched by grounding, and then from `select_entities`, whose cutoffs set
+the `node_role` of each node that gets values. A protein whose global
+change passes the cutoffs is `passed_cutoffs`. One that does not is
+`user_added`: it is shown only because we chose to add these values.
+Here we use the same cutoff as for the sites.
 
 ``` r
 
+proteins <- select_entities(proteins, pvalue_cutoff = 0.05)
 network <- add_entity_values(network, proteins)
 #> 1 row(s) of entities have no grounding and can match nodes only by id.
 #> Copied the values of entities to 4 node row(s), and added a protein-level row to 5 protein(s) with only PTM site rows.
@@ -311,24 +316,25 @@ knitr::kable(protein_rows[, c("entity_name", "node_role", "measured",
                               "logFC", "adj.pvalue")])
 ```
 
-|     | entity_name | node_role  | measured |   logFC | adj.pvalue |
-|:----|:------------|:-----------|:---------|--------:|-----------:|
-| 1   | BRD4        | user_added | TRUE     | -0.3303 |   0.026840 |
-| 3   | LMNA        | user_added | TRUE     |  0.4678 |   0.016000 |
-| 5   | PML         | user_added | TRUE     |  1.0720 |   0.000125 |
-| 7   | IQGAP1      | user_added | TRUE     |  0.7732 |   0.003143 |
-| 9   | CDK18       | user_added | TRUE     |  1.0550 |   0.019570 |
-| 16  | MAPK3       | user_added | TRUE     |  0.4066 |   0.308800 |
-| 17  | AKT1        | user_added | TRUE     |  0.4694 |   0.004076 |
-| 18  | CDK1        | user_added | FALSE    |      NA |         NA |
-| 19  | CSNK2A1     | user_added | FALSE    |      NA |         NA |
-| 20  | MAPK1       | user_added | TRUE     |  0.3307 |   0.532000 |
-| 21  | SRC         | user_added | FALSE    |      NA |         NA |
-| 22  | PRKCA       | user_added | FALSE    |      NA |         NA |
-| 23  | PRKACA      | user_added | TRUE     | -0.1899 |   0.151600 |
+|     | entity_name | node_role      | measured |   logFC | adj.pvalue |
+|:----|:------------|:---------------|:---------|--------:|-----------:|
+| 1   | BRD4        | passed_cutoffs | TRUE     | -0.3303 |   0.026840 |
+| 3   | LMNA        | passed_cutoffs | TRUE     |  0.4678 |   0.016000 |
+| 5   | PML         | passed_cutoffs | TRUE     |  1.0720 |   0.000125 |
+| 7   | IQGAP1      | passed_cutoffs | TRUE     |  0.7732 |   0.003143 |
+| 9   | CDK18       | passed_cutoffs | TRUE     |  1.0550 |   0.019570 |
+| 16  | MAPK3       | user_added     | TRUE     |  0.4066 |   0.308800 |
+| 17  | AKT1        | passed_cutoffs | TRUE     |  0.4694 |   0.004076 |
+| 18  | CDK1        | user_added     | FALSE    |      NA |         NA |
+| 19  | CSNK2A1     | user_added     | FALSE    |      NA |         NA |
+| 20  | MAPK1       | user_added     | TRUE     |  0.3307 |   0.532000 |
+| 21  | SRC         | user_added     | FALSE    |      NA |         NA |
+| 22  | PRKCA       | user_added     | FALSE    |      NA |         NA |
+| 23  | PRKACA      | user_added     | TRUE     | -0.1899 |   0.151600 |
 
 Kinases that were not measured in the global profiling experiment keep
-`measured = FALSE`. Proteins that have sites in the network but no
+`measured = FALSE` and their `user_added` role. The site rows keep the
+roles from the PTM query. Proteins that have sites in the network but no
 protein-level row, such as HIF1A, were not measured in the global
 profiling experiment either. Their sites are the `Adjusted = FALSE` rows
 of `ADJUSTED.Model`, so their change is not adjusted for protein
@@ -376,10 +382,14 @@ node for each site around it. The protein node is colored by the
 protein’s change in the global profiling experiment, and each site node
 by the site’s adjusted change. The legend’s `logFC` covers both, so read
 a protein’s color and its sites’ colors as changes from different
-experiments. A protein with no global profiling result, such as HIF1A,
-has no fill and a solid border. Kinases added with `include_entities`
-did not pass the cutoffs, so they have a dashed border; those that were
-not measured also have no fill.
+experiments. Borders follow the same rule: a node’s border is solid when
+the values that fill it passed the cutoffs of their own experiment. So a
+protein node’s border shows the global profiling cutoffs, and each site
+node’s border shows the PTM cutoffs. A kinase added with
+`include_entities` whose global change passes, such as AKT1, has a solid
+border; the other kinases have a dashed border, and those that were not
+measured also have no fill. A protein with no global profiling result,
+such as HIF1A, has no fill and a dashed border.
 
 ``` r
 
